@@ -1,0 +1,96 @@
+═══════════════════════════════════════════════════════════════
+    SISTEMA DE GESTÃO ESCOLAR - GUIA RÁPIDO
+═══════════════════════════════════════════════════════════════
+
+📋 SCRIPTS DISPONÍVEIS:
+
+1. ✅ iniciar-sistema.ps1
+   - Inicia o Backend e o Frontend automaticamente
+   - Verifica e libera portas em uso
+   - Abre o navegador
+   - Clique com botão direito → "Executar com PowerShell"
+
+2. ⛔ parar-sistema.ps1
+   - Para todos os servidores
+   - Libera as portas 3333 e 5173
+   - Finaliza processos Node.js
+
+3. 🔄 reiniciar-sistema.ps1
+   - Para e inicia o sistema novamente
+   - Útil quando o sistema trava
+
+═══════════════════════════════════════════════════════════════
+
+🚀 COMO USAR:
+
+OPÇÃO 1 - Jeito Fácil:
+   1. Clique com botão direito em "iniciar-sistema.ps1"
+   2. Escolha "Executar com PowerShell"
+   3. Aguarde as 2 janelas abrirem (Backend e Frontend)
+   4. O navegador abrirá automaticamente
+
+OPÇÃO 2 - Pelo PowerShell:
+   1. Abra PowerShell nesta pasta
+   2. Execute: .\iniciar-sistema.ps1
+
+═══════════════════════════════════════════════════════════════
+
+🔧 URLs DO SISTEMA:
+
+   Backend:  http://localhost:3333
+   Frontend: http://localhost:5173
+
+═══════════════════════════════════════════════════════════════
+
+⚠️ PROBLEMAS COMUNS:
+
+1. "Não é possível executar scripts"
+   Solução: Abra PowerShell como Administrador e execute:
+   Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+2. Porta já em uso
+   Solução: Execute "parar-sistema.ps1" primeiro
+
+3. Servidor caindo
+   Solução: Execute "reiniciar-sistema.ps1"
+
+4. Erro no banco de dados
+   - Verifique se o PostgreSQL está rodando
+   - Usuário: postgres
+   - Senha: admin123
+
+═══════════════════════════════════════════════════════════════
+
+📝 DICAS:
+
+✓ Mantenha as janelas do PowerShell abertas enquanto usar o sistema
+✓ Não feche as janelas do Backend e Frontend
+✓ Use "parar-sistema.ps1" antes de desligar o computador
+✓ Em caso de erro, tente "reiniciar-sistema.ps1"
+
+═══════════════════════════════════════════════════════════════
+
+📚 PÁGINAS DO SISTEMA:
+
+   • Dashboard:      /dashboard
+   • Alunos:         /alunos
+   • Professores:    /professores
+   • Turmas:         /turmas
+   • Disciplinas:    /disciplinas
+   • Notas:          /notas
+   • Frequência:     /frequencia
+   • Configurações:  /configuracoes
+
+═══════════════════════════════════════════════════════════════
+
+🎯 COMANDOS MANUAIS (se necessário):
+
+Backend:
+   cd backend
+   npm run dev
+
+Frontend:
+   cd frontend
+   npm run dev
+
+═══════════════════════════════════════════════════════════════

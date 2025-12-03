@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id              String            @id @default(uuid())
+  nome            String
+  email           String            @unique
+  senha           String
+  tipo            String            @default("USUARIO") // ADMIN, USUARIO
+  ativo           Boolean           @default(true)
+  resetToken      String?
+  resetTokenExpira DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("usuarios")
+}
+
+model Aluno {
+  id              String            @id @default(uuid())
+  nome            String
+  cpf             String            @unique
+  dataNascimento  DateTime
+  email           String            @unique
+  telefone        String?
+  endereco        String?
+  responsavel     String
+  telefoneResp    String
+  turmaId         String?
+  turma           Turma?            @relation(fields: [turmaId], references: [id])
+  matriculas      Matricula[]
+  notas           Nota[]
+  frequencias     Frequencia[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("alunos")
+}
+
+model Professor {
+  id              String            @id @default(uuid())
+  nome            String
+  cpf             String            @unique
+  email           String            @unique
+  telefone        String
+  especialidade   String
+  disciplinas     Disciplina[]
+  turmas          Turma[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("professores")
+}
+
+model Turma {
+  id              String            @id @default(uuid())
+  nome            String
+  ano             Int
+  periodo         String            // Manhã, Tarde, Noite
+  professorId     String?
+  professor       Professor?        @relation(fields: [professorId], references: [id])
+  alunos          Aluno[]
+  disciplinas     Disciplina[]
+  matriculas      Matricula[]
+  frequencias     Frequencia[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("turmas")
+}
+
+model Disciplina {
+  id              String            @id @default(uuid())
+  nome            String
+  cargaHoraria    Int
+  professorId     String?
+  professor       Professor?        @relation(fields: [professorId], references: [id])
+  turmas          Turma[]
+  notas           Nota[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("disciplinas")
+}
+
+model Matricula {
+  id              String            @id @default(uuid())
+  alunoId         String
+  aluno           Aluno             @relation(fields: [alunoId], references: [id])
+  turmaId         String
+  turma           Turma             @relation(fields: [turmaId], references: [id])
+  dataMatricula   DateTime          @default(now())
+  status          String            @default("ATIVA") // ATIVA, CANCELADA, CONCLUIDA
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("matriculas")
+}
+
+model Nota {
+  id              String            @id @default(uuid())
+  alunoId         String
+  aluno           Aluno             @relation(fields: [alunoId], references: [id])
+  disciplinaId    String
+  disciplina      Disciplina        @relation(fields: [disciplinaId], references: [id])
+  nota            Float
+  bimestre        Int               // 1, 2, 3, 4
+  observacao      String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("notas")
+}
+
+model Frequencia {
+  id              String            @id @default(uuid())
+  alunoId         String
+  aluno           Aluno             @relation(fields: [alunoId], references: [id])
+  turmaId         String
+  turma           Turma             @relation(fields: [turmaId], references: [id])
+  data            DateTime
+  presente        Boolean           @default(true)
+  observacao      String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("frequencias")
+}
+
+model Configuracao {
+  id              String            @id @default(uuid())
+  nomeEscola      String
+  redeEscolar     String?
+  endereco        String
+  telefone        String?
+  email           String?
+  logoUrl         String?
+  temaModo        String            @default("light") // light ou dark
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("configuracoes")
+}
