@@ -7,7 +7,6 @@ import './Auth.css'
 
 const Login = () => {
   const navigate = useNavigate()
-  const { theme } = useTheme()
   const [formData, setFormData] = useState({
     email: '',
     senha: '',
