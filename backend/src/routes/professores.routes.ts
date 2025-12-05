@@ -6,7 +6,7 @@ export const professoresRouter = Router();
 
 const professorSchema = z.object({
   nome: z.string().min(3),
-  cpf: z.string().length(11),
+  cpf: z.string().min(11).max(14),
   email: z.string().email(),
   telefone: z.string(),
   especialidade: z.string(),

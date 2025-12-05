@@ -7,8 +7,8 @@ export const turmasRouter = Router();
 const turmaSchema = z.object({
   nome: z.string(),
   ano: z.number().int().min(2020).max(2030),
-  periodo: z.enum(['Manhã', 'Tarde', 'Noite']),
-  professorId: z.string().optional(),
+  periodo: z.enum(['Manhã', 'Tarde', 'Noite', 'Integral']),
+  professorId: z.string().nullable().optional(),
 });
 
 // GET todas as turmas

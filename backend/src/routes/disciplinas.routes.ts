@@ -7,7 +7,7 @@ export const disciplinasRouter = Router();
 const disciplinaSchema = z.object({
   nome: z.string(),
   cargaHoraria: z.number().int().positive(),
-  professorId: z.string().optional(),
+  professorId: z.string().nullable().optional(),
 });
 
 // GET todas as disciplinas

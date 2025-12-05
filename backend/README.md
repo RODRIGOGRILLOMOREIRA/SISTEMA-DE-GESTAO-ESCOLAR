@@ -39,6 +39,24 @@ API RESTful completa para gerenciamento escolar, desenvolvida com Node.js, TypeS
 - **tsx** 4.7.0 - TypeScript executor para Node.js
 - **@types/node**, **@types/express**, **@types/cors** - Tipos TypeScript
 
+## 🎯 Funcionalidades Principais
+
+### Sistema de Notas Avançado
+- ✅ **Cálculo Automático da Média M1** (soma de 3 avaliações)
+- ✅ **Nota Final do Trimestre** (maior entre M1 e EAC)
+- ✅ **Média Final Anual** com fórmula ponderada: `(T1×1 + T2×2 + T3×3) ÷ 6`
+- ✅ **Status de Aprovação Automático** (≥ 6.0)
+- ✅ **Salvamento Atômico** (upsert para evitar duplicação)
+- ✅ **Atualização em Tempo Real** de todas as médias
+
+### API RESTful Completa
+- ✅ CRUD completo para todas as entidades
+- ✅ Validação de dados com Zod
+- ✅ Autenticação JWT
+- ✅ Upload de imagens (logo da escola)
+- ✅ CORS configurado
+- ✅ Logging de queries (debug mode)
+
 ## 🏗️ Arquitetura
 
 ### Estrutura de Diretórios
@@ -47,7 +65,8 @@ API RESTful completa para gerenciamento escolar, desenvolvida com Node.js, TypeS
 backend/
 ├── prisma/
 │   ├── migrations/              # Migrações do banco de dados
-│   ├── schema.prisma           # Schema do Prisma (modelos)
+│   ├── schema.prisma           # Schema do Prisma (modelos + notas_finais)
+│   └── seed.ts                 # Seed inicial (admin + config)
 │   ├── seed.ts                 # Dados iniciais (seed)
 │   └── reset.ts                # Script de reset do banco
 ├── src/
@@ -347,11 +366,83 @@ http://localhost:3333/api
 
 | Método | Rota | Descrição | Autenticação |
 |--------|------|-----------|--------------|
-| GET | `/notas` | Lista todas | Sim |
-| GET | `/notas/:id` | Busca por ID | Sim |
-| POST | `/notas` | Lança notas | Sim |
-| PUT | `/notas/:id` | Atualiza notas | Sim |
-| DELETE | `/notas/:id` | Deleta registro | Sim |
+| GET | `/notas` | Lista todas as notas | Sim |
+| GET | `/notas/aluno/:alunoId/disciplina/:disciplinaId` | Busca notas completas (3 trimestres + nota final) | Sim |
+| GET | `/notas/final/aluno/:alunoId` | Busca todas as médias finais de um aluno | Sim |
+| POST | `/notas/salvar` | Lança/atualiza notas (upsert com cálculos automáticos) | Sim |
+| DELETE | `/notas/:id` | Deleta nota e recalcula média final | Sim |
+
+#### Sistema de Notas - Cálculos Automáticos
+
+**Endpoint: POST `/notas/salvar`**
+
+Payload:
+```json
+{
+  "alunoId": "uuid",
+  "disciplinaId": "uuid",
+  "trimestre": 1,  // 1, 2 ou 3
+  "avaliacao01": 8.0,
+  "avaliacao02": 7.5,
+  "avaliacao03": 9.0,
+  "avaliacaoEAC": 7.0,
+  "observacao": "Bom desempenho"
+}
+```
+
+**Cálculos Executados Automaticamente:**
+
+1. **Média M1** (Momento 1)
+   ```javascript
+   mediaM1 = avaliacao01 + avaliacao02 + avaliacao03
+   ```
+
+2. **Nota Final do Trimestre**
+   ```javascript
+   notaFinalTrimestre = Math.max(mediaM1, avaliacaoEAC)
+   ```
+
+3. **Média Final Anual** (após ter os 3 trimestres)
+   ```javascript
+   mediaFinal = (T1 × 1 + T2 × 2 + T3 × 3) / 6
+   ```
+
+4. **Status de Aprovação**
+   ```javascript
+   aprovado = mediaFinal >= 6.0
+   ```
+
+Resposta:
+```json
+{
+  "nota": {
+    "id": "uuid",
+    "alunoId": "uuid",
+    "disciplinaId": "uuid",
+    "trimestre": 1,
+    "avaliacao01": 8.0,
+    "avaliacao02": 7.5,
+    "avaliacao03": 9.0,
+    "mediaM1": 24.5,
+    "avaliacaoEAC": 7.0,
+    "notaFinalTrimestre": 24.5,
+    "observacao": "Bom desempenho"
+  },
+  "notaFinal": {
+    "alunoId": "uuid",
+    "disciplinaId": "uuid",
+    "trimestre1": 24.5,
+    "trimestre2": null,
+    "trimestre3": null,
+    "mediaFinal": null,
+    "aprovado": false
+  }
+}
+```
+
+**Tabelas Utilizadas:**
+- `notas`: Armazena notas de cada trimestre
+- `notas_finais`: Armazena média final anual (atualizada automaticamente)
 
 ### Frequência (`/frequencia`)
 
@@ -608,17 +699,53 @@ Padrão de resposta de erro:
 
 ```json
 {
-  "error": "Mensagem de erro descritiva"
+  "error": "Mensagem de erro descritiva",
+  "details": [] // Opcional, para erros de validação
 }
 ```
 
 Códigos HTTP:
 - `200` - Sucesso
 - `201` - Criado
+- `204` - Sem conteúdo (delete bem-sucedido)
 - `400` - Requisição inválida
 - `401` - Não autorizado
 - `404` - Não encontrado
 - `500` - Erro interno do servidor
+
+## 🚀 Atualizações Recentes
+
+### Sistema de Notas Completo ✨
+- ✅ Tabela `notas_finais` para armazenar médias anuais
+- ✅ Cálculo automático da Média M1 (soma de 3 avaliações)
+- ✅ Cálculo da nota final do trimestre (maior entre M1 e EAC)
+- ✅ Cálculo da média final anual: `(T1×1 + T2×2 + T3×3) ÷ 6`
+- ✅ Determinação automática do status de aprovação (≥ 6.0)
+- ✅ Endpoint `/notas/salvar` com upsert automático
+- ✅ Atualização automática de médias finais ao salvar qualquer nota
+- ✅ Unique constraint para evitar duplicação de notas
+
+### Melhorias na API 🔧
+- ✅ Validação robusta com Zod
+- ✅ Logging detalhado de queries (modo debug)
+- ✅ Campos nullable tratados corretamente
+- ✅ Upload de imagens em base64
+- ✅ CORS configurado para frontend
+- ✅ Seed automático de dados iniciais
+
+## 📚 Documentação Adicional
+
+- [README Principal](../README.md)
+- [Frontend README](../frontend/README.md)
+- [Sistema de Notas Completo](../SISTEMA-DE-NOTAS.md)
+
+## 🤝 Contribuindo
+
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/NovaFeature`)
+3. Commit suas mudanças (`git commit -m 'Adiciona NovaFeature'`)
+4. Push para a branch (`git push origin feature/NovaFeature`)
+5. Abra um Pull Request
 
 ---
 

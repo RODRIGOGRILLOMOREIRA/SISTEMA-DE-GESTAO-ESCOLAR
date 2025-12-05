@@ -36,10 +36,10 @@ const Dashboard = () => {
   }
 
   const cards = [
-    { title: 'Alunos', value: stats.alunos, icon: Users, color: '#3b82f6' },
+    { title: 'Disciplinas', value: stats.disciplinas, icon: BookOpen, color: '#f59e0b' },
     { title: 'Professores', value: stats.professores, icon: GraduationCap, color: '#8b5cf6' },
     { title: 'Turmas', value: stats.turmas, icon: School, color: '#10b981' },
-    { title: 'Disciplinas', value: stats.disciplinas, icon: BookOpen, color: '#f59e0b' },
+    { title: 'Alunos', value: stats.alunos, icon: Users, color: '#3b82f6' },
   ]
 
   return (

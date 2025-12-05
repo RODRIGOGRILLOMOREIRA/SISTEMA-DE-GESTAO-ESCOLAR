@@ -24,6 +24,17 @@ const Layout = () => {
 
   useEffect(() => {
     loadConfig()
+    
+    // Listener para atualizar quando as configurações mudarem
+    const handleConfigUpdate = () => {
+      loadConfig()
+    }
+    
+    window.addEventListener('configUpdated', handleConfigUpdate)
+    
+    return () => {
+      window.removeEventListener('configUpdated', handleConfigUpdate)
+    }
   }, [])
 
   const loadConfig = async () => {
@@ -37,10 +48,10 @@ const Layout = () => {
 
   const menuItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/alunos', icon: Users, label: 'Alunos' },
+    { path: '/disciplinas', icon: BookOpen, label: 'Disciplinas' },
     { path: '/professores', icon: GraduationCap, label: 'Professores' },
     { path: '/turmas', icon: School, label: 'Turmas' },
-    { path: '/disciplinas', icon: BookOpen, label: 'Disciplinas' },
+    { path: '/alunos', icon: Users, label: 'Alunos' },
     { path: '/notas', icon: ClipboardCheck, label: 'Notas' },
     { path: '/frequencia', icon: UserCheck, label: 'Frequência' },
     { path: '/configuracoes', icon: Settings, label: 'Configurações' },

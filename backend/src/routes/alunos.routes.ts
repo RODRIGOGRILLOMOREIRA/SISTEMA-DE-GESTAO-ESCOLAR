@@ -6,14 +6,14 @@ export const alunosRouter = Router();
 
 const alunoSchema = z.object({
   nome: z.string().min(3),
-  cpf: z.string().length(11),
+  cpf: z.string().min(11).max(14),
   dataNascimento: z.string(),
   email: z.string().email(),
-  telefone: z.string().optional(),
-  endereco: z.string().optional(),
+  telefone: z.string().nullable().optional(),
+  endereco: z.string().nullable().optional(),
   responsavel: z.string(),
   telefoneResp: z.string(),
-  turmaId: z.string().optional(),
+  turmaId: z.string().nullable().optional(),
 });
 
 // GET todos os alunos

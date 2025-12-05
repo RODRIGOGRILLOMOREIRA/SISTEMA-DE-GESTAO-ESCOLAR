@@ -85,6 +85,9 @@ const Configuracoes = () => {
       // Recarregar a página para aplicar mudanças
       await loadConfig()
       
+      // Disparar evento para atualizar o Layout
+      window.dispatchEvent(new Event('configUpdated'))
+      
     } catch (error: any) {
       console.error('❌ Erro ao salvar configurações:', error)
       console.error('Detalhes do erro:', error.response?.data)

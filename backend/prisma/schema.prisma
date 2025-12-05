@@ -109,13 +109,35 @@ model Nota {
   aluno           Aluno             @relation(fields: [alunoId], references: [id])
   disciplinaId    String
   disciplina      Disciplina        @relation(fields: [disciplinaId], references: [id])
-  nota            Float
-  bimestre        Int               // 1, 2, 3, 4
+  trimestre       Int               // 1, 2, 3
+  avaliacao01     Float?            // 0.0 a 10.0
+  avaliacao02     Float?            // 0.0 a 10.0
+  avaliacao03     Float?            // 0.0 a 10.0
+  mediaM1         Float?            // Soma das 3 avaliações
+  avaliacaoEAC    Float?            // Momento 2 - EAC
+  notaFinalTrimestre Float?         // Maior nota entre mediaM1 e avaliacaoEAC
   observacao      String?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
+  @@unique([alunoId, disciplinaId, trimestre])
   @@map("notas")
+}
+
+model NotaFinal {
+  id              String            @id @default(uuid())
+  alunoId         String
+  disciplinaId    String
+  trimestre1      Float?            // Nota final do 1º trimestre
+  trimestre2      Float?            // Nota final do 2º trimestre
+  trimestre3      Float?            // Nota final do 3º trimestre
+  mediaFinal      Float?            // (T1*1 + T2*2 + T3*3) / 6
+  aprovado        Boolean           @default(false) // true se mediaFinal >= 6.0
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([alunoId, disciplinaId])
+  @@map("notas_finais")
 }
 
 model Frequencia {

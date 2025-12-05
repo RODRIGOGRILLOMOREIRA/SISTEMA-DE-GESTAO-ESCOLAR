@@ -38,6 +38,32 @@ Interface moderna e responsiva para gerenciamento escolar, desenvolvida com Reac
 - **ESLint** - Linter JavaScript/TypeScript
 - **@vitejs/plugin-react** - Plugin React para Vite
 
+## 🎯 Funcionalidades Principais
+
+### Sistema de Notas Avançado
+- ✅ **Seleção Intuitiva**: Turma → Aluno → Disciplina (botões modernos)
+- ✅ **4 Cards Visuais**: 3 trimestres + 1 nota final do ano
+- ✅ **Código de Cores**: Verde (≥7.0), Amarela (5.0-6.9), Vermelha (<5.0)
+- ✅ **Cálculos em Tempo Real**: Todas as médias calculadas automaticamente
+- ✅ **Status Visual**: APROVADO (verde) ou REPROVADO (vermelho)
+- ✅ **Modal de Edição**: Interface intuitiva para lançamento de notas
+- ✅ **Salvamento Automático**: Persistência no banco de dados
+
+### Interface Moderna
+- ✅ **Tema Claro/Escuro**: Alternância suave com CSS Variables
+- ✅ **Sidebar Dinâmica**: Atualização automática de logo e nome
+- ✅ **Modals Responsivos**: Edição/criação em popup
+- ✅ **Animações Suaves**: Transições e hover effects
+- ✅ **Design Responsivo**: Mobile-first approach
+- ✅ **Ícones Modernos**: Lucide React icons
+
+### Gestão Completa
+- ✅ **CRUD Completo**: Todas as entidades (Alunos, Professores, Turmas, Disciplinas)
+- ✅ **Autenticação**: Login, logout, recuperação de senha
+- ✅ **Configurações**: Upload de logo, personalização do sistema
+- ✅ **Dashboard**: Visão geral com estatísticas
+- ✅ **Frequência**: Registro de presença
+
 ## 🏗️ Arquitetura
 
 ### Estrutura de Diretórios
@@ -47,7 +73,7 @@ frontend/
 ├── public/                     # Arquivos públicos estáticos
 ├── src/
 │   ├── components/
-│   │   ├── Layout.tsx          # Layout principal com sidebar
+│   │   ├── Layout.tsx          # Layout principal com sidebar e eventos
 │   │   ├── Layout.css
 │   │   ├── PrivateRoute.tsx    # HOC para proteção de rotas
 │   │   └── ...
@@ -190,20 +216,53 @@ frontend/
 - Validação de código único
 - Cálculo automático de carga horária total
 
-### 7. Lançamento de Notas
+### 7. Lançamento de Notas Avançado
 
-**Interface:**
-- Seleção de turma e disciplina
-- Listagem de alunos matriculados
-- Campos para AV1, AV2, AV3
-- Cálculo automático de média
-- Status visual (aprovado/reprovado/recuperação)
+**Interface de Seleção (3 etapas):**
+1. **Seleção de Turma** - Botões visuais com nome, ano e período
+2. **Seleção de Aluno** - Lista filtrada pela turma escolhida
+3. **Seleção de Disciplina** - Cards com carga horária e professor
+
+**Cards de Visualização:**
+
+📘 **Cards dos Trimestres (3x):**
+- Momento 1:
+  - Avaliação 01 (0.0 - 10.0)
+  - Avaliação 02 (0.0 - 10.0)
+  - Avaliação 03 (0.0 - 10.0)
+  - Média M1 (soma automática)
+- Momento 2:
+  - Avaliação EAC (0.0 - 10.0)
+- Nota Final do Trimestre (maior entre M1 e EAC)
+- Botão de edição em cada card
+
+📊 **Card de Nota Final do Ano:**
+- Exibe notas finais dos 3 trimestres
+- Média Final calculada: `(T1×1 + T2×2 + T3×3) ÷ 6`
+- Status visual:
+  - 🟢 **APROVADO** (≥ 6.0) - Botão verde com ícone check
+  - 🔴 **REPROVADO** (< 6.0) - Botão vermelho com ícone X
+  - ⚪ **PENDENTE** - Aguardando lançamento de notas
+
+**Modal de Edição:**
+- Formulário intuitivo com campos numéricos
+- Validação em tempo real (0.0 - 10.0)
+- Cálculo automático da Média M1
+- Campo de observações
+- Botão "Salvar Notas" com feedback de salvamento
+
+**Código de Cores:**
+- 🟢 Verde: Nota ≥ 7.0
+- 🟡 Amarela: Nota entre 5.0 e 6.9
+- 🔴 Vermelha: Nota < 5.0
 
 **Recursos:**
-- Salvamento individual ou em lote
-- Validação de notas (0-10)
-- Cores diferentes por status
-- Feedback visual instantâneo
+- Salvamento automático no banco de dados
+- Atualização em tempo real de todas as médias
+- Persistência de dados para relatórios
+- Cálculos executados no backend
+- Interface responsiva (desktop, tablet, mobile)
+- Animações suaves e feedback visual
 
 ### 8. Controle de Frequência
 
@@ -281,9 +340,10 @@ npm run lint             # Executa ESLint
 **Funcionalidades:**
 - Menu lateral fixo
 - Indicador de página ativa
-- Logo dinâmica das configurações
+- Logo dinâmica das configurações (atualização automática via eventos)
 - Avatar do usuário
 - Tema claro/escuro
+- Event Listener `configUpdated` para sincronização em tempo real
 
 ### PrivateRoute
 
@@ -564,6 +624,64 @@ export const alunosAPI = {
 }
 ```
 
+## 📊 Sistema de Notas - Fluxo Completo
+
+### 1. Fluxo de Seleção
+
+```
+Usuário → Seleciona Turma
+       → Seleciona Aluno (lista filtrada)
+       → Seleciona Disciplina
+       → Visualiza 4 cards (3 trimestres + nota final)
+```
+
+### 2. Lançamento de Notas
+
+```
+Usuário → Clica em "Editar" no card do trimestre
+       → Preenche avaliações no modal
+       → Clica em "Salvar Notas"
+       → Sistema calcula automaticamente:
+          ✓ Média M1 = soma das 3 avaliações
+          ✓ Nota Final = maior entre M1 e EAC
+          ✓ Média Final Anual = (T1×1 + T2×2 + T3×3) ÷ 6
+          ✓ Status de Aprovação (≥ 6.0)
+       → Dados salvos no banco
+       → Interface atualiza em tempo real
+```
+
+### 3. API Calls
+
+```typescript
+// Buscar notas do aluno na disciplina
+const response = await api.get(`/notas/aluno/${alunoId}/disciplina/${disciplinaId}`)
+// Retorna: { notas: [], notaFinal: {} }
+
+// Salvar notas
+const response = await api.post('/notas/salvar', {
+  alunoId,
+  disciplinaId,
+  trimestre,
+  avaliacao01,
+  avaliacao02,
+  avaliacao03,
+  avaliacaoEAC,
+  observacao
+})
+// Retorna: { nota: {}, notaFinal: {} }
+```
+
+### 4. Eventos Customizados
+
+**Atualização de Configurações:**
+```typescript
+// Em Configuracoes.tsx - Dispara evento após salvar
+window.dispatchEvent(new Event('configUpdated'))
+
+// Em Layout.tsx - Escuta e atualiza
+window.addEventListener('configUpdated', handleConfigUpdate)
+```
+
 ## 🔒 Segurança
 
 ### Armazenamento Local
@@ -603,6 +721,30 @@ const logout = () => {
 - **Tree Shaking**: Eliminação de código não utilizado
 - **CSS Modules**: Estilos isolados e otimizados
 - **Image Optimization**: Compressão e lazy loading de imagens
+- **Event-Driven Updates**: Sincronização eficiente entre componentes
+
+## 🚀 Atualizações Recentes
+
+### Sistema de Notas Avançado ✨
+- ✅ Interface moderna com seleção por Turma → Aluno → Disciplina
+- ✅ 4 cards visuais (3 trimestres + nota final anual)
+- ✅ Cálculos automáticos de todas as médias
+- ✅ Status de aprovação com código de cores
+- ✅ Salvamento automático no banco de dados
+- ✅ Atualização em tempo real da interface
+
+### Melhorias na Interface 🎨
+- ✅ Botões de seleção modernos com animações
+- ✅ Sistema de eventos para sincronização (configUpdated)
+- ✅ Atualização dinâmica de logo e nome da escola
+- ✅ Cards responsivos com gradientes e sombras
+- ✅ Feedback visual aprimorado (loading, success, error)
+
+## 📚 Documentação Adicional
+
+- [README Principal](../README.md)
+- [Backend README](../backend/README.md)
+- [Sistema de Notas Completo](../SISTEMA-DE-NOTAS.md)
 
 ---
 

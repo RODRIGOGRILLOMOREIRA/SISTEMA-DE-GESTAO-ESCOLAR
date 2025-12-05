@@ -33,6 +33,7 @@ const resetPasswordSchema = z.object({
 // POST /api/auth/login
 authRouter.post('/login', async (req, res) => {
   try {
+    console.log('📥 Login request:', { email: req.body.email, senha: '***' });
     const { email, senha } = loginSchema.parse(req.body);
 
     // Buscar usuário
@@ -40,17 +41,25 @@ authRouter.post('/login', async (req, res) => {
       where: { email },
     });
 
+    console.log('👤 Usuário encontrado:', usuario ? 'Sim' : 'Não');
+
     if (!usuario) {
+      console.log('❌ Usuário não encontrado');
       return res.status(401).json({ error: 'Email ou senha inválidos' });
     }
 
     if (!usuario.ativo) {
+      console.log('❌ Usuário inativo');
       return res.status(401).json({ error: 'Usuário inativo' });
     }
 
     // Verificar senha
+    console.log('🔐 Verificando senha...');
     const senhaValida = await bcrypt.compare(senha, usuario.senha);
+    console.log('✓ Senha válida:', senhaValida);
+    
     if (!senhaValida) {
+      console.log('❌ Senha inválida');
       return res.status(401).json({ error: 'Email ou senha inválidos' });
     }
 
