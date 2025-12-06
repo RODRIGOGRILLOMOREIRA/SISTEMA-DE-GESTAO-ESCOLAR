@@ -46,8 +46,8 @@ model Aluno {
 model Professor {
   id              String            @id @default(uuid())
   nome            String
-  cpf             String            @unique
-  email           String            @unique
+  cpf             String
+  email           String
   telefone        String
   especialidade   String
   disciplinas     Disciplina[]

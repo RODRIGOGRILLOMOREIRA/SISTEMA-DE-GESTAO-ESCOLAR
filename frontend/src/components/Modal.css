@@ -22,14 +22,15 @@
 }
 
 .modal {
-  background-color: var(--surface-color);
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
   animation: slideUp 0.3s ease-out;
+  border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 @keyframes slideUp {
@@ -48,19 +49,20 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: var(--text-primary);
+  color: white;
+  font-weight: 600;
 }
 
 .modal-close {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
   cursor: pointer;
   padding: 4px;
   display: flex;
@@ -71,8 +73,9 @@
 }
 
 .modal-close:hover {
-  background-color: var(--hover-color);
-  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  transform: scale(1.1);
 }
 
 .modal-body {
@@ -86,30 +89,35 @@
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: var(--text-primary);
-  font-weight: 500;
+  color: white;
+  font-weight: 600;
   font-size: 0.9rem;
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
+.modal .form-group input,
+.modal .form-group select,
+.modal .form-group textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid var(--border-color);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   font-size: 1rem;
-  background-color: var(--background-color);
-  color: var(--text-primary);
+  font-weight: 600;
+  background-color: white !important;
+  color: #0c1e4d !important;
   transition: all 0.2s;
+  -webkit-text-fill-color: #0c1e4d !important;
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
+.modal .form-group input:focus,
+.modal .form-group select:focus,
+.modal .form-group textarea:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: white;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+  background-color: white !important;
+  color: #0c1e4d !important;
+  -webkit-text-fill-color: #0c1e4d !important;
 }
 
 .form-group textarea {
@@ -118,9 +126,31 @@
   font-family: inherit;
 }
 
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-  color: var(--text-secondary);
+.modal .form-group input::placeholder,
+.modal .form-group textarea::placeholder {
+  color: #6b7280 !important;
+  opacity: 0.7;
+  -webkit-text-fill-color: #6b7280 !important;
+}
+
+.modal .form-group select option {
+  color: #0c1e4d !important;
+  background-color: white;
+  font-weight: 600;
+}
+
+/* Força a cor do texto em todos os estados */
+.modal input[type="text"],
+.modal input[type="email"],
+.modal input[type="tel"],
+.modal input[type="number"],
+.modal input[type="date"],
+.modal input[type="password"],
+.modal textarea,
+.modal select {
+  color: #0c1e4d !important;
+  -webkit-text-fill-color: #0c1e4d !important;
+  background-color: white !important;
 }
 
 .form-row {
@@ -134,44 +164,47 @@
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 24px;
-  border-top: 1px solid var(--border-color);
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .btn-cancel {
   padding: 10px 20px;
-  border: 1px solid var(--border-color);
-  background-color: transparent;
-  color: var(--text-primary);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
   border-radius: 8px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-cancel:hover {
-  background-color: var(--hover-color);
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: white;
+  transform: translateY(-2px);
 }
 
 .btn-submit {
   padding: 10px 24px;
-  border: none;
-  background-color: var(--primary-color);
+  border: 2px solid white;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border-radius: 8px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-submit:hover {
-  background-color: #2563eb;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
 }
 
 .btn-submit:disabled {
@@ -181,15 +214,20 @@
 }
 
 .form-error {
-  color: #ef4444;
+  color: #fecaca;
+  background-color: rgba(239, 68, 68, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
   font-size: 0.875rem;
   margin-top: 4px;
+  border-left: 3px solid #ef4444;
 }
 
 .form-group.error input,
 .form-group.error select,
 .form-group.error textarea {
   border-color: #ef4444;
+  background-color: rgba(254, 202, 202, 0.1);
 }
 
 @media (max-width: 640px) {
