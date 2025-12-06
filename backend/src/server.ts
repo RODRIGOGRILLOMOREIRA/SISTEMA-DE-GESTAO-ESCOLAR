@@ -6,9 +6,12 @@ import { alunosRouter } from './routes/alunos.routes';
 import { professoresRouter } from './routes/professores.routes';
 import { turmasRouter } from './routes/turmas.routes';
 import { disciplinasRouter } from './routes/disciplinas.routes';
+import { disciplinaTurmaRouter } from './routes/disciplinaTurma.routes';
 import { notasRouter } from './routes/notas.routes';
 import { frequenciasRouter } from './routes/frequencias.routes';
 import { configuracoesRouter } from './routes/configuracoes.routes';
+import { equipeDiretivaRouter } from './routes/equipeDiretiva.routes';
+import { funcionariosRouter } from './routes/funcionarios.routes';
 
 dotenv.config();
 
@@ -33,9 +36,12 @@ app.use('/api/alunos', alunosRouter);
 app.use('/api/professores', professoresRouter);
 app.use('/api/turmas', turmasRouter);
 app.use('/api/disciplinas', disciplinasRouter);
+app.use('/api/disciplinas-turmas', disciplinaTurmaRouter);
 app.use('/api/notas', notasRouter);
 app.use('/api/frequencias', frequenciasRouter);
 app.use('/api/configuracoes', configuracoesRouter);
+app.use('/api/equipe-diretiva', equipeDiretivaRouter);
+app.use('/api/funcionarios', funcionariosRouter);
 
 // Start server
 app.listen(PORT, () => {

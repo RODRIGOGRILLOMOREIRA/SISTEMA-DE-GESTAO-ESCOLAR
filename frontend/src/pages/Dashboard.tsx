@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Users, GraduationCap, School, BookOpen } from 'lucide-react'
-import { alunosAPI, professoresAPI, turmasAPI, disciplinasAPI } from '../lib/api'
+import { alunosAPI, professoresAPI, turmasAPI, disciplinasAPI, configuracoesAPI } from '../lib/api'
 import './Dashboard.css'
 
 const Dashboard = () => {
@@ -10,10 +10,21 @@ const Dashboard = () => {
     turmas: 0,
     disciplinas: 0,
   })
+  const [nomeEscola, setNomeEscola] = useState('SGE')
 
   useEffect(() => {
     loadStats()
+    loadConfig()
   }, [])
+
+  const loadConfig = async () => {
+    try {
+      const response = await configuracoesAPI.get()
+      setNomeEscola(response.data.nomeEscola || 'SGE')
+    } catch (error) {
+      console.error('Erro ao carregar configurações:', error)
+    }
+  }
 
   const loadStats = async () => {
     try {
@@ -44,7 +55,7 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
-      <h1>Dashboard</h1>
+      <h1>SGE - {nomeEscola}</h1>
       <div className="stats-grid">
         {cards.map((card) => {
           const Icon = card.icon

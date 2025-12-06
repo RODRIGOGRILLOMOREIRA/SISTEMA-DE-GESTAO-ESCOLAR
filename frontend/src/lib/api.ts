@@ -55,16 +55,21 @@ export interface Professor {
   email: string;
   telefone: string;
   especialidade: string;
+  area?: string;
+  componentes?: string;
+  turmasVinculadas?: string;
 }
 
 export interface Turma {
   id: string;
   nome: string;
   ano: number;
+  anoLetivo: number;
   periodo: string;
   professorId?: string;
   professor?: Professor;
   alunos?: Aluno[];
+  disciplinas?: Disciplina[];
 }
 
 export interface Disciplina {
@@ -72,6 +77,17 @@ export interface Disciplina {
   nome: string;
   cargaHoraria: number;
   professorId?: string;
+  professor?: Professor;
+  turmas?: Turma[];
+}
+
+export interface DisciplinaTurma {
+  id: string;
+  disciplinaId: string;
+  turmaId: string;
+  professorId?: string;
+  disciplina?: Disciplina;
+  turma?: Turma;
   professor?: Professor;
 }
 
@@ -128,6 +144,17 @@ export const disciplinasAPI = {
   create: (data: Omit<Disciplina, 'id'>) => api.post<Disciplina>('/disciplinas', data),
   update: (id: string, data: Partial<Disciplina>) => api.put<Disciplina>(`/disciplinas/${id}`, data),
   delete: (id: string) => api.delete(`/disciplinas/${id}`),
+};
+
+export const disciplinaTurmaAPI = {
+  getAll: (params?: { turmaId?: string; disciplinaId?: string }) => 
+    api.get<DisciplinaTurma[]>('/disciplinas-turmas', { params }),
+  getById: (id: string) => api.get<DisciplinaTurma>(`/disciplinas-turmas/${id}`),
+  create: (data: { disciplinaId: string; turmaId: string; professorId?: string }) => 
+    api.post<DisciplinaTurma>('/disciplinas-turmas', data),
+  update: (id: string, data: { professorId?: string }) => 
+    api.put<DisciplinaTurma>(`/disciplinas-turmas/${id}`, data),
+  delete: (id: string) => api.delete(`/disciplinas-turmas/${id}`),
 };
 
 export const notasAPI = {
@@ -197,4 +224,49 @@ export const authAPI = {
   resetPasswordDirect: (data: { email: string; novaSenha: string }) => 
     api.post('/auth/reset-password-direct', data),
   me: () => api.get<Usuario>('/auth/me'),
+};
+
+// Equipe Diretiva Types
+export interface EquipeDiretiva {
+  id: string;
+  nome: string;
+  cpf: string;
+  email: string;
+  telefone?: string;
+  cargo: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const equipeDiretivaAPI = {
+  getAll: () => api.get<EquipeDiretiva[]>('/equipe-diretiva'),
+  getById: (id: string) => api.get<EquipeDiretiva>(`/equipe-diretiva/${id}`),
+  create: (data: Omit<EquipeDiretiva, 'id' | 'createdAt' | 'updatedAt'>) => 
+    api.post<EquipeDiretiva>('/equipe-diretiva', data),
+  update: (id: string, data: Partial<EquipeDiretiva>) => 
+    api.put<EquipeDiretiva>(`/equipe-diretiva/${id}`, data),
+  delete: (id: string) => api.delete(`/equipe-diretiva/${id}`),
+};
+
+// Funcionários Types
+export interface Funcionario {
+  id: string;
+  nome: string;
+  cpf: string;
+  email: string;
+  telefone?: string;
+  cargo: string;
+  setor?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const funcionariosAPI = {
+  getAll: () => api.get<Funcionario[]>('/funcionarios'),
+  getById: (id: string) => api.get<Funcionario>(`/funcionarios/${id}`),
+  create: (data: Omit<Funcionario, 'id' | 'createdAt' | 'updatedAt'>) => 
+    api.post<Funcionario>('/funcionarios', data),
+  update: (id: string, data: Partial<Funcionario>) => 
+    api.put<Funcionario>(`/funcionarios/${id}`, data),
+  delete: (id: string) => api.delete(`/funcionarios/${id}`),
 };

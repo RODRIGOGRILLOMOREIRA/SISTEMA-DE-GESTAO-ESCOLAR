@@ -34,6 +34,7 @@ const Notas = () => {
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [alunos, setAlunos] = useState<Aluno[]>([])
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([])
+  const [disciplinasDaTurma, setDisciplinasDaTurma] = useState<Disciplina[]>([])
   const [selectedTurma, setSelectedTurma] = useState<string>('')
   const [selectedAluno, setSelectedAluno] = useState<string>('')
   const [selectedDisciplina, setSelectedDisciplina] = useState<string>('')
@@ -51,9 +52,12 @@ const Notas = () => {
   useEffect(() => {
     if (selectedTurma) {
       loadAlunosByTurma()
+      loadDisciplinasByTurma()
     } else {
       setAlunos([])
+      setDisciplinasDaTurma([])
       setSelectedAluno('')
+      setSelectedDisciplina('')
     }
   }, [selectedTurma])
 
@@ -69,8 +73,19 @@ const Notas = () => {
         turmasAPI.getAll(),
         disciplinasAPI.getAll()
       ])
-      setTurmas(turmasRes.data)
-      setDisciplinas(disciplinasRes.data)
+      // Ordenar turmas de forma crescente pelo ano (1º ao 9º)
+      const turmasOrdenadas = turmasRes.data.sort((a, b) => {
+        // Primeiro por ano (crescente)
+        if (a.ano !== b.ano) return a.ano - b.ano
+        // Depois por nome (crescente)
+        return a.nome.localeCompare(b.nome)
+      })
+      // Ordenar disciplinas em ordem alfabética crescente (A → Z)
+      const disciplinasOrdenadas = disciplinasRes.data.sort((a, b) => {
+        return a.nome.localeCompare(b.nome)
+      })
+      setTurmas(turmasOrdenadas)
+      setDisciplinas(disciplinasOrdenadas)
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
     } finally {
@@ -85,6 +100,28 @@ const Notas = () => {
       setAlunos(alunosFiltrados)
     } catch (error) {
       console.error('Erro ao carregar alunos:', error)
+    }
+  }
+
+  const loadDisciplinasByTurma = async () => {
+    try {
+      // Buscar a turma com suas disciplinas vinculadas
+      const response = await turmasAPI.getById(selectedTurma)
+      const turmaComDisciplinas = response.data
+      
+      // Filtrar apenas as disciplinas que estão vinculadas à turma
+      if (turmaComDisciplinas.disciplinas && turmaComDisciplinas.disciplinas.length > 0) {
+        // Ordenar disciplinas em ordem alfabética
+        const disciplinasOrdenadas = turmaComDisciplinas.disciplinas.sort((a, b) => {
+          return a.nome.localeCompare(b.nome)
+        })
+        setDisciplinasDaTurma(disciplinasOrdenadas)
+      } else {
+        setDisciplinasDaTurma([])
+      }
+    } catch (error) {
+      console.error('Erro ao carregar disciplinas da turma:', error)
+      setDisciplinasDaTurma([])
     }
   }
 
@@ -137,6 +174,31 @@ const Notas = () => {
       return parseFloat((av1 + av2 + av3).toFixed(1))
     }
     return null
+  }
+
+  const calcularMediaParcialAno = (): { valor: number | null; texto: string } => {
+    const t1 = notaFinal?.trimestre1
+    const t2 = notaFinal?.trimestre2
+    const t3 = notaFinal?.trimestre3
+
+    // Se tem trimestre 3, usa a fórmula final
+    if (t3 !== null && t3 !== undefined) {
+      const mediaFinalCalc = t1 && t2 && t3 ? parseFloat(((t1 * 1 + t2 * 2 + t3 * 3) / 6).toFixed(2)) : null
+      return { valor: mediaFinalCalc, texto: 'Média Parcial do Ano' }
+    }
+    
+    // Se tem trimestre 2, usa a fórmula parcial com T1 e T2
+    if (t2 !== null && t2 !== undefined) {
+      const mediaParcial = t1 && t2 ? parseFloat(((t1 * 1 + t2 * 2) / 3).toFixed(2)) : null
+      return { valor: mediaParcial, texto: 'Média Parcial do Ano (T1+T2)' }
+    }
+    
+    // Se tem apenas trimestre 1, usa ele mesmo como nota parcial
+    if (t1 !== null && t1 !== undefined) {
+      return { valor: t1, texto: 'Média Parcial do Ano (T1)' }
+    }
+    
+    return { valor: null, texto: 'Média Parcial do Ano' }
   }
 
   const getNotaColor = (nota: number | null): string => {
@@ -261,7 +323,6 @@ const Notas = () => {
             >
               <div className="selection-btn-content">
                 <span className="selection-btn-title">{turma.nome}</span>
-                <span className="selection-btn-subtitle">{turma.ano}º Ano - {turma.periodo}</span>
               </div>
             </button>
           ))}
@@ -307,18 +368,25 @@ const Notas = () => {
             <h2>3. Selecione a Disciplina</h2>
           </div>
           <div className="selection-grid">
-            {disciplinas.map(disciplina => (
-              <button
-                key={disciplina.id}
-                className={`selection-btn ${selectedDisciplina === disciplina.id ? 'active' : ''}`}
-                onClick={() => setSelectedDisciplina(disciplina.id)}
-              >
-                <div className="selection-btn-content">
-                  <span className="selection-btn-title">{disciplina.nome}</span>
-                  <span className="selection-btn-subtitle">{disciplina.cargaHoraria}h - {disciplina.professor?.nome || 'Sem professor'}</span>
-                </div>
-              </button>
-            ))}
+            {disciplinasDaTurma.length === 0 ? (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#666' }}>
+                <p>Nenhuma disciplina cadastrada para esta turma.</p>
+                <p style={{ marginTop: '10px', fontSize: '0.9em' }}>Cadastre disciplinas para esta turma na aba "Disciplinas".</p>
+              </div>
+            ) : (
+              disciplinasDaTurma.map(disciplina => (
+                <button
+                  key={disciplina.id}
+                  className={`selection-btn ${selectedDisciplina === disciplina.id ? 'active' : ''}`}
+                  onClick={() => setSelectedDisciplina(disciplina.id)}
+                >
+                  <div className="selection-btn-content">
+                    <span className="selection-btn-title">{disciplina.nome}</span>
+                    <span className="selection-btn-subtitle">{disciplina.cargaHoraria}h - {disciplina.professor?.nome || 'Sem professor'}</span>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
         </div>
       )}
@@ -430,6 +498,25 @@ const Notas = () => {
                       {notaFinal?.trimestre3?.toFixed(2) || '-'}
                     </span>
                   </div>
+                  <div className="nota-item media-parcial-ano">
+                    <span className="nota-label" style={{ 
+                      fontSize: '0.95rem', 
+                      fontWeight: '600',
+                      color: '#2563eb'
+                    }}>
+                      {calcularMediaParcialAno().texto}:
+                    </span>
+                    <span className={`nota-valor ${getNotaColor(calcularMediaParcialAno().valor)}`} style={{ 
+                      fontSize: '1.1rem', 
+                      fontWeight: '700',
+                      padding: '6px 12px',
+                      backgroundColor: '#eff6ff',
+                      borderRadius: '6px',
+                      border: '2px solid #3b82f6'
+                    }}>
+                      {calcularMediaParcialAno().valor?.toFixed(2) || '-'}
+                    </span>
+                  </div>
                   <div className="nota-item media-final">
                     <span className="nota-label">Média Final:</span>
                     <span className={`nota-valor ${getNotaColor(notaFinal?.mediaFinal || null)}`}>
@@ -482,7 +569,7 @@ const Notas = () => {
                   <h3>Momento 1</h3>
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Avaliação 01 (0.0 - 10.0)</label>
+                      <label style={{ color: '#334155' }}>Avaliação 01 (0.0 - 10.0)</label>
                       <input
                         type="number"
                         step="0.1"
@@ -495,7 +582,7 @@ const Notas = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>Avaliação 02 (0.0 - 10.0)</label>
+                      <label style={{ color: '#334155' }}>Avaliação 02 (0.0 - 10.0)</label>
                       <input
                         type="number"
                         step="0.1"
@@ -510,7 +597,7 @@ const Notas = () => {
 
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Avaliação 03 (0.0 - 10.0)</label>
+                      <label style={{ color: '#334155' }}>Avaliação 03 (0.0 - 10.0)</label>
                       <input
                         type="number"
                         step="0.1"
@@ -523,7 +610,7 @@ const Notas = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>Média M1 (Automática)</label>
+                      <label style={{ color: '#334155' }}>Média M1 (Automática)</label>
                       <input
                         type="text"
                         value={editingNota.mediaM1?.toFixed(1) || '-'}
@@ -537,7 +624,7 @@ const Notas = () => {
                 <div className="momento-form">
                   <h3>Momento 2</h3>
                   <div className="form-group">
-                    <label>Avaliação EAC (0.0 - 10.0)</label>
+                    <label style={{ color: '#334155' }}>Avaliação EAC (0.0 - 10.0)</label>
                     <input
                       type="number"
                       step="0.1"
@@ -551,7 +638,7 @@ const Notas = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Observações</label>
+                  <label style={{ color: '#334155' }}>Observações</label>
                   <textarea
                     value={editingNota.observacao || ''}
                     onChange={(e) => setEditingNota({ ...editingNota, observacao: e.target.value })}

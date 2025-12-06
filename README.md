@@ -1,65 +1,123 @@
 # Sistema de Gestão Escolar
 
-Sistema completo de gestão escolar desenvolvido com TypeScript, React e Node.js, com cálculos automáticos de notas e média final anual.
+Sistema completo de gestão escolar desenvolvido com TypeScript, React e Node.js, com cálculos automáticos de notas, média parcial progressiva e interface moderna otimizada.
 
 ## 🚀 Tecnologias
 
 ### Backend
 - **Node.js** com Express
 - **TypeScript** para type-safety
-- **Prisma ORM** para gerenciamento do banco de dados
-- **PostgreSQL** como banco de dados
-- **Zod** para validação de dados
-- **JWT** para autenticação
-- **bcryptjs** para hash de senhas
+- **Prisma ORM 5.22.0** para gerenciamento do banco de dados
+- **PostgreSQL 18** como banco de dados
+- **Zod** para validação de dados robusta
+- **Arquitetura RESTful** com rotas organizadas
 
 ### Frontend
-- **React 18** com TypeScript
-- **Vite** como bundler
-- **React Router** para navegação
-- **Axios** para requisições HTTP
-- **Lucide React** para ícones modernos
-- **Context API** para gerenciamento de estado
-- **Tema claro/escuro** dinâmico
+- **React 18.2.0** com TypeScript 5.3.3
+- **Vite 5.4.21** como bundler de alta performance
+- **React Router 6.20.1** para navegação SPA
+- **Axios 1.6.2** para requisições HTTP
+- **Lucide React 0.294.0** para ícones modernos
+- **CSS Modules** com tema responsivo
+- **Interface otimizada** sem barras de rolagem
 
 ## 📋 Funcionalidades
 
-### Gestão Acadêmica
-- ✅ **Gestão de Alunos** - CRUD completo com CPF, responsável, turma
-- ✅ **Gestão de Professores** - Cadastro com especialidade e disciplinas
-- ✅ **Gestão de Turmas** - Organização por ano e período (Manhã/Tarde/Noite/Integral)
-- ✅ **Gestão de Disciplinas** - Carga horária e vinculação com professores
+### Gestão Acadêmica Completa
+
+#### 👨‍🎓 Gestão de Alunos
+- CRUD completo com validação de CPF
+- Cadastro com nome, CPF, data de nascimento, responsável
+- Vinculação automática a turmas
+- Listagem ordenada alfabeticamente
+- Deleção em cascata (remove automaticamente notas associadas)
+
+#### 👨‍🏫 Gestão de Professores (Sistema Professor-Centric)
+- Cadastro com área de atuação (Anos Iniciais/Anos Finais/Ambos)
+- Seleção de **componentes curriculares** via checkboxes
+- Vinculação a **múltiplas turmas** simultaneamente
+- Criação automática de **DisciplinaTurma** ao cadastrar professor
+- Modal otimizado (1200px) com layout em duas colunas
+- 10 componentes curriculares padronizados:
+  - ARTES, CIÊNCIAS, EDUCAÇÃO FÍSICA, ENSINO RELIGIOSO
+  - GEOGRAFIA, HISTÓRIA, INGLÊS, MATEMÁTICA, PORTUGUÊS, PROJETO DE VIDA
+
+#### 🏫 Gestão de Turmas
+- Organização por **categoria** (Anos Iniciais 1º-5º / Anos Finais 6º-9º)
+- Cadastro com ano, nome, período (Manhã/Tarde/Noite/Integral)
+- Campo **anoLetivo** (padrão: 2025)
+- Navegação por categorias com botões modernos
+- Listagem de turmas ordenada (6ª, 7ª, 8ª, 9ª)
+- Layout responsivo em grid compacto
+
+#### 📚 Gestão de Disciplinas
+- Navegação em 3 níveis: **Categoria → Turma → Disciplinas**
+- Carga horária e professor responsável
+- Botões modernizados e compactos
+- Badge estilizado para nome da turma
+- Autocomplete para busca de professores
+- Vinculação automática via DisciplinaTurma
 
 ### Sistema de Notas Avançado
-- ✅ **Lançamento de Notas por Trimestre** (1º, 2º e 3º)
-  - **Momento 1**: 3 avaliações + média automática (soma das 3)
-  - **Momento 2**: Avaliação EAC
-  - **Nota Final do Trimestre**: Maior nota entre M1 e EAC
-- ✅ **Cálculo Automático da Média Final Anual**
-  - Fórmula: `(T1×1 + T2×2 + T3×3) ÷ 6`
-  - Atualização em tempo real
-- ✅ **Status de Aprovação Automático**
-  - APROVADO: Média ≥ 6.0 (botão verde)
-  - REPROVADO: Média < 6.0 (botão vermelho)
-- ✅ **Salvamento Automático no Banco de Dados**
-- ✅ **Interface Moderna com Seleção por Turma → Aluno → Disciplina**
-- ✅ **Cards Visuais com Código de Cores**
-  - Verde: Nota ≥ 7.0
-  - Amarela: Nota entre 5.0 e 6.9
-  - Vermelha: Nota < 5.0
 
-### Outras Funcionalidades
-- ✅ **Controle de Frequência** - Registro de presença por data
-- ✅ **Dashboard com Estatísticas** - Visão geral do sistema
-- ✅ **Configurações Personalizáveis**
-  - Upload de logo da escola
-  - Nome e dados da instituição
-  - Tema claro/escuro
-- ✅ **Autenticação Completa**
-  - Login com JWT
-  - Recuperação de senha
-  - Gerenciamento de usuários
-- ✅ **Interface Responsiva** - Funciona em desktop, tablet e mobile
+#### 📊 Lançamento de Notas por Trimestre
+- **3 Trimestres** independentes (1º, 2º, 3º)
+- **Momento 1**: 3 avaliações (0.0 a 10.0)
+  - Média M1 = soma das 3 avaliações
+  - Cálculo automático em tempo real
+- **Momento 2**: Avaliação EAC (0.0 a 10.0)
+- **Nota Final do Trimestre**: Maior valor entre M1 e EAC
+- Modal de edição compacto (88vh) sem barra de rolagem
+- Tema cinza moderno com ótimo contraste
+
+#### 📈 Média Parcial Progressiva do Ano (NOVO!)
+Sistema inteligente que atualiza a média conforme as notas são lançadas:
+
+1. **Apenas T1 lançado:**
+   - Mostra: "Média Parcial do Ano (T1)"
+   - Fórmula: `T1 × 1 ÷ 1 = T1`
+
+2. **T1 e T2 lançados:**
+   - Mostra: "Média Parcial do Ano (T1+T2)"
+   - Fórmula: `(T1×1 + T2×2) ÷ 3`
+
+3. **T1, T2 e T3 lançados:**
+   - Mostra: "Média Parcial do Ano"
+   - Fórmula: `(T1×1 + T2×2 + T3×3) ÷ 6`
+
+- ✅ Atualização automática a cada trimestre
+- ✅ Badge destacado em azul com borda
+- ✅ Aluno sempre ciente do aproveitamento atual
+
+#### ✅ Status de Aprovação Automático
+- **APROVADO**: Média Final ≥ 6.0 (badge verde com ícone CheckCircle)
+- **REPROVADO**: Média Final < 6.0 (badge vermelho com ícone XCircle)
+- **Aguardando**: Notas ainda não lançadas (badge cinza)
+
+#### 🎨 Interface Visual com Código de Cores
+- **Verde**: Nota ≥ 7.0 (ótimo desempenho)
+- **Amarelo**: Nota entre 5.0 e 6.9 (atenção)
+- **Vermelho**: Nota < 5.0 (necessita recuperação)
+- Cards com gradientes e sombras modernas
+- Transições suaves e animações
+
+### 🎨 Design e UX
+
+#### Interface Moderna
+- **Modal redesenhado**: Fundo degradê cinza (#e2e8f0 → #cbd5e1 → #94a3b8)
+- **Header escuro**: Cinza (#475569 → #334155) com título branco
+- **Campos otimizados**: Fundo claro com borda cinza, texto escuro
+- **Labels**: Cinza escuro (#334155) para excelente legibilidade
+- **Títulos de seção**: Cinza escuro harmonizado
+- **Botões**:
+  - Cancelar: Vermelho claro (#fee2e2) com texto vermelho forte
+  - Salvar: Verde (#10b981) com texto branco
+
+#### Navegação Intuitiva
+- Seleção progressiva: **Turma → Aluno → Disciplina → Trimestre**
+- Breadcrumbs visuais com botões "Voltar" compactos
+- Grid responsivo adaptável
+- Filtros automáticos por categoria de ano
 
 ## 🏗️ Estrutura do Projeto
 
@@ -67,101 +125,165 @@ Sistema completo de gestão escolar desenvolvido com TypeScript, React e Node.js
 PROJETO SISTEMA DE GESTÃO ESCOLAR/
 ├── backend/
 │   ├── prisma/
-│   │   └── schema.prisma
+│   │   ├── schema.prisma           # Schema do banco (Professor, Turma, Aluno, Disciplina, DisciplinaTurma, Nota, NotaFinal)
+│   │   └── migrations/             # Histórico de migrações
+│   ├── scripts/
+│   │   └── padronizar-disciplinas.ts  # Script para criar 10 disciplinas padrão
 │   ├── src/
 │   │   ├── routes/
-│   │   ├── controllers/
-│   │   ├── services/
+│   │   │   ├── alunos.ts
+│   │   │   ├── disciplinas.ts
+│   │   │   ├── notas.ts
+│   │   │   ├── professores.ts
+│   │   │   └── turmas.ts
 │   │   ├── lib/
-│   │   └── server.ts
+│   │   │   └── prisma.ts           # Cliente Prisma singleton
+│   │   └── server.ts               # Express server (porta 3333)
 │   ├── package.json
 │   └── tsconfig.json
 │
-└── frontend/
-    ├── src/
-    │   ├── components/
-    │   ├── pages/
-    │   ├── lib/
-    │   ├── App.tsx
-    │   └── main.tsx
-    ├── package.json
-    └── tsconfig.json
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Modal.tsx           # Modal reutilizável com tema cinza
+│   │   │   ├── Modal.css           # Estilos globais do modal
+│   │   │   └── DisciplinasAutocomplete.tsx
+│   │   ├── pages/
+│   │   │   ├── Alunos.tsx
+│   │   │   ├── Disciplinas.tsx     # Navegação por categorias e turmas
+│   │   │   ├── Notas.tsx           # Sistema de notas com média parcial progressiva
+│   │   │   ├── Notas.css           # Estilos do modal de notas compacto
+│   │   │   ├── Professores.tsx     # Cadastro professor-centric
+│   │   │   ├── Turmas.tsx
+│   │   │   └── CommonPages.css     # Estilos compartilhados
+│   │   ├── services/
+│   │   │   └── api.ts              # Axios configurado + endpoints
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── vite.config.ts
+│
+└── README.md                       # Este arquivo
 ```
 
-## 🔧 Instalação
+## 🔧 Instalação e Configuração
 
-### Backend
+### Pré-requisitos
+- **Node.js** 18+ e npm
+- **PostgreSQL** 18+ rodando
+- **Git** para clonar o repositório
 
-1. Entre na pasta do backend:
-```bash
+### 1. Backend
+
+Entre na pasta do backend:
+```powershell
 cd backend
 ```
 
-2. Instale as dependências:
-```bash
+Instale as dependências:
+```powershell
 npm install
 ```
 
-3. Configure o arquivo `.env`:
-```bash
-cp .env.example .env
-```
-Edite o arquivo `.env` com suas credenciais do banco de dados.
-
-4. Execute as migrations do Prisma:
-```bash
-npm run prisma:migrate
+Configure o banco de dados PostgreSQL:
+```powershell
+# Crie o banco de dados
+psql -U postgres
+CREATE DATABASE gestao_escolar;
+\q
 ```
 
-5. Inicie o servidor:
-```bash
+Configure as variáveis de ambiente criando arquivo `.env`:
+```env
+DATABASE_URL="postgresql://postgres:sua_senha@localhost:5432/gestao_escolar?schema=public"
+PORT=3333
+```
+
+Execute as migrations do Prisma:
+```powershell
+npx prisma migrate dev
+```
+
+Gere as 10 disciplinas padronizadas:
+```powershell
+npx ts-node scripts/padronizar-disciplinas.ts
+```
+
+Inicie o servidor:
+```powershell
 npm run dev
 ```
 
-O backend estará rodando em `http://localhost:3333`
+✅ Backend rodando em `http://localhost:3333`
 
-### Frontend
+### 2. Frontend
 
-1. Entre na pasta do frontend:
-```bash
+Abra novo terminal e entre na pasta do frontend:
+```powershell
 cd frontend
 ```
 
-2. Instale as dependências:
-```bash
+Instale as dependências:
+```powershell
 npm install
 ```
 
-3. Inicie o servidor de desenvolvimento:
-```bash
+Inicie o servidor de desenvolvimento:
+```powershell
 npm run dev
 ```
 
-O frontend estará rodando em `http://localhost:5173`
+✅ Frontend rodando em `http://localhost:5173`
+
+### 3. Acesse o Sistema
+
+Abra o navegador em: **http://localhost:5173**
 
 ## 📊 Banco de Dados
 
-O sistema utiliza PostgreSQL. Certifique-se de ter o PostgreSQL instalado e rodando.
+### Schema Prisma
 
-### Estrutura das Tabelas
+O sistema utiliza **PostgreSQL 18** com **Prisma ORM 5.22.0**.
 
-- **usuarios**: Dados de acesso ao sistema
-- **alunos**: Dados dos estudantes (CPF, responsável, turma)
-- **professores**: Dados dos docentes (especialidade)
-- **turmas**: Informações das turmas (ano, período)
-- **disciplinas**: Matérias lecionadas (carga horária)
-- **matriculas**: Vínculo aluno-turma (status)
-- **notas**: Notas detalhadas por trimestre
-  - Avaliações 01, 02, 03
-  - Média M1 (calculada)
-  - Avaliação EAC
-  - Nota final do trimestre (calculada)
-- **notas_finais**: Média final anual e aprovação
-  - Notas dos 3 trimestres
-  - Média final calculada: `(T1×1 + T2×2 + T3×3) ÷ 6`
-  - Status de aprovação (boolean)
-- **frequencias**: Registro de presença/ausência
-- **configuracoes**: Personalização do sistema (logo, tema)
+#### Modelos Principais:
+
+**Professor** (Sistema Professor-Centric)
+- `id`, `nome`, `cpf`, `email`, `telefone`
+- `area`: String? (Anos Iniciais/Anos Finais/Ambos)
+- `componentes`: String? (JSON com array de disciplinas selecionadas)
+- `turmasVinculadas`: String? (JSON com array de IDs de turmas)
+- Criação automática de **DisciplinaTurma** ao cadastrar
+
+**Turma**
+- `id`, `ano` (1-9), `nome` (A, B, C...), `periodo` (enum)
+- `anoLetivo`: Int @default(2025)
+- Relações: alunos[], disciplinas (DisciplinaTurma[])
+
+**Disciplina** (10 padronizadas)
+- `id`, `nome`, `cargaHoraria`
+- Criadas via script: ARTES, CIÊNCIAS, EDUCAÇÃO FÍSICA, ENSINO RELIGIOSO, GEOGRAFIA, HISTÓRIA, INGLÊS, MATEMÁTICA, PORTUGUÊS, PROJETO DE VIDA
+
+**DisciplinaTurma** (Junction Table)
+- `id`, `disciplinaId`, `turmaId`, `professorId`
+- @@unique([disciplinaId, turmaId]) - Previne duplicatas
+- Criado automaticamente ao vincular professor
+
+**Aluno**
+- `id`, `nome`, `cpf`, `dataNascimento`, `responsavel`, `turmaId`
+- Relações: turma, matriculas[], notas[]
+
+**Nota** (Por Trimestre)
+- `id`, `alunoId`, `disciplinaTurmaId`, `trimestre` (1/2/3)
+- Momento 1: `avaliacao01`, `avaliacao02`, `avaliacao03`, `mediaM1` (calculada)
+- Momento 2: `avaliacaoEAC`
+- `notaFinal`: Decimal? (maior entre M1 e EAC)
+
+**NotaFinal** (Anual)
+- `id`, `alunoId`, `disciplinaTurmaId`
+- `notaT1`, `notaT2`, `notaT3`: Decimal?
+- `mediaFinal`: Decimal? = `(T1×1 + T2×2 + T3×3) ÷ 6`
+- `aprovado`: Boolean? (≥ 6.0)
 
 ## 🔐 Variáveis de Ambiente
 
@@ -210,17 +332,17 @@ VITE_API_URL=http://localhost:3333/api
 
 ### Notas
 - `GET /api/notas` - Lista todas as notas
-- `GET /api/notas/aluno/:alunoId/disciplina/:disciplinaId` - Busca notas completas (trimestres + nota final)
+- `GET /api/notas/aluno/:alunoId/disciplinaTurma/:disciplinaTurmaId` - Busca notas completas (3 trimestres + nota final)
 - `GET /api/notas/final/aluno/:alunoId` - Busca todas as notas finais do aluno
-- `POST /api/notas/salvar` - Lança/atualiza nota (upsert com cálculos automáticos)
+- `POST /api/notas` - Cria nova nota com cálculos automáticos
+- `PUT /api/notas/:id` - Atualiza nota (recalcula M1, nota final, média anual)
 - `DELETE /api/notas/:id` - Remove nota (recalcula média final)
 
-### Frequências
-- `GET /api/frequencias` - Lista todas as frequências
-- `GET /api/frequencias/aluno/:alunoId` - Busca frequências de um aluno
-- `POST /api/frequencias` - Registra frequência
-- `PUT /api/frequencias/:id` - Atualiza frequência
-- `DELETE /api/frequencias/:id` - Remove frequência
+### DisciplinaTurma
+- `GET /api/disciplinas-turma` - Lista todas as vinculações
+- `GET /api/disciplinas-turma/turma/:turmaId` - Lista disciplinas de uma turma
+- `POST /api/disciplinas-turma` - Cria vinculação (automático ao cadastrar professor)
+- `DELETE /api/disciplinas-turma/:id` - Remove vinculação
 
 ## 🛠️ Scripts Disponíveis
 
@@ -241,29 +363,43 @@ VITE_API_URL=http://localhost:3333/api
 
 ### Cálculos Automáticos
 
-#### Nota Final do Trimestre
+#### 1. Nota Final do Trimestre
 ```
-Nota Final = Maior valor entre (Média M1, Avaliação EAC)
+Nota Final Trimestre = Maior valor entre (Média M1, Avaliação EAC)
 
 Onde:
 - Média M1 = Avaliação01 + Avaliação02 + Avaliação03
+- Avaliação EAC = prova de recuperação
 ```
 
-#### Média Final Anual
+#### 2. Média Parcial Progressiva (Atualização Contínua)
+
+O sistema exibe a média parcial conforme as notas são lançadas:
+
+**Caso 1: Apenas T1 lançado**
+```
+Média Parcial = T1 × 1 ÷ 1 = T1
+Exibe: "Média Parcial do Ano (T1)"
+```
+
+**Caso 2: T1 e T2 lançados**
+```
+Média Parcial = (T1 × 1 + T2 × 2) ÷ 3
+Exibe: "Média Parcial do Ano (T1+T2)"
+```
+
+**Caso 3: T1, T2 e T3 lançados**
 ```
 Média Final = (T1 × 1 + T2 × 2 + T3 × 3) ÷ 6
-
-Onde:
-- T1 = Nota final do 1º trimestre
-- T2 = Nota final do 2º trimestre
-- T3 = Nota final do 3º trimestre
+Exibe: "Média Parcial do Ano"
 ```
 
-#### Critério de Aprovação
-- **Média Final ≥ 6.0** → APROVADO ✅
-- **Média Final < 6.0** → REPROVADO ❌
+#### 3. Critério de Aprovação
+- **Média Final ≥ 6.0** → APROVADO ✅ (badge verde)
+- **Média Final < 6.0** → REPROVADO ❌ (badge vermelho)
+- **Sem notas** → Aguardando (badge cinza)
 
-### Exemplo Prático
+### Exemplo Prático Completo
 
 ```
 1º Trimestre:
@@ -272,32 +408,91 @@ Onde:
 - Avaliação 03: 9.0
 - Média M1: 24.5
 - Avaliação EAC: 7.0
-- Nota Final T1: 24.5 (maior entre 24.5 e 7.0)
+- Nota Final T1: 24.5 ✅ (maior entre 24.5 e 7.0)
+→ Média Parcial (T1): 24.5
 
 2º Trimestre: Nota Final = 21.0
+→ Média Parcial (T1+T2): (24.5×1 + 21.0×2) ÷ 3 = 22.17
+
 3º Trimestre: Nota Final = 27.0
-
-Média Final = (24.5×1 + 21.0×2 + 27.0×3) ÷ 6
-Média Final = (24.5 + 42.0 + 81.0) ÷ 6
-Média Final = 147.5 ÷ 6
-Média Final = 24.58
-
-Status: APROVADO ✅ (24.58 ≥ 6.0)
+→ Média Final: (24.5×1 + 21.0×2 + 27.0×3) ÷ 6 = 24.08
+→ Status: APROVADO ✅ (≥ 6.0)
 ```
 
-## 🔐 Credenciais de Acesso
+## 🎯 Fluxo de Uso do Sistema
 
-### Usuário Administrador Padrão
-- **Email**: admin@escola.com
-- **Senha**: admin123
+### 1. Configuração Inicial
+1. Criar disciplinas padronizadas (via script)
+2. Cadastrar turmas por ano e período
+3. Cadastrar professores com áreas e componentes
+4. Sistema cria automaticamente DisciplinaTurma
+
+### 2. Gestão de Alunos
+1. Cadastrar alunos vinculando-os a turmas
+2. Aluno automaticamente terá acesso a todas as disciplinas da turma
+
+### 3. Lançamento de Notas
+1. Acessar página Notas
+2. Selecionar Turma → Aluno → Disciplina
+3. Escolher trimestre (1º, 2º ou 3º)
+4. Lançar notas do Momento 1 (3 avaliações)
+5. Sistema calcula automaticamente Média M1
+6. Lançar nota do Momento 2 (EAC) se necessário
+7. Sistema define Nota Final do Trimestre (maior entre M1 e EAC)
+8. Sistema calcula e exibe Média Parcial progressivamente
+9. Após T3, sistema exibe Média Final e status APROVADO/REPROVADO
+
+### 4. Acompanhamento
+- Visualizar média parcial a cada trimestre
+- Identificar alunos em risco (notas vermelhas/amarelas)
+- Monitorar progressão de aprendizagem
+
+## 🚀 Melhorias Recentes
+
+### Interface Modernizada
+- ✅ Botões compactos com padding otimizado
+- ✅ Modal sem barra de rolagem (max-height 88vh)
+- ✅ Tema cinza moderno com ótimo contraste
+- ✅ Grid responsivo para turmas
+- ✅ Badges estilizados para títulos
+
+### Funcionalidades Avançadas
+- ✅ Média Parcial Progressiva (T1, T1+T2, T1+T2+T3)
+- ✅ Cálculos automáticos em tempo real
+- ✅ Sistema professor-centric com DisciplinaTurma
+- ✅ Ordenação automática de turmas
+- ✅ Código de cores para status visual
 
 ## 📚 Documentação Adicional
 
-- [Sistema de Notas Completo](./SISTEMA-DE-NOTAS.md)
-- [Backend README](./backend/README.md)
-- [Frontend README](./frontend/README.md)
+Consulte os READMEs específicos para mais detalhes:
+- **[Backend README](./backend/README.md)** - Arquitetura, API, banco de dados
+- **[Frontend README](./frontend/README.md)** - Componentes, estilos, estrutura
 
-## 🤝 Contribuindo
+## 👨‍💻 Desenvolvimento
+
+### Tecnologias e Versões
+- Node.js 18+
+- PostgreSQL 18
+- Prisma 5.22.0
+- React 18.2.0
+- TypeScript 5.3.3
+- Vite 5.4.21
+
+### Padrões de Código
+- TypeScript strict mode
+- ESLint configurado
+- Prettier para formatação
+- Commits semânticos
+
+## 📄 Licença
+
+Este projeto é proprietário e destinado ao uso educacional.
+
+---
+
+**Sistema de Gestão Escolar** - Desenvolvido com ❤️ em TypeScript
+Versão 2.0 - 2025
 
 Contribuições são bem-vindas! Sinta-se à vontade para abrir issues e pull requests.
 

@@ -89,12 +89,20 @@ alunosRouter.put('/:id', async (req, res) => {
 // DELETE aluno
 alunosRouter.delete('/:id', async (req, res) => {
   try {
-    await prisma.aluno.delete({
-      where: { id: req.params.id }
-    });
+    const alunoId = req.params.id;
+    
+    // Deletar registros relacionados primeiro
+    await prisma.$transaction([
+      prisma.nota.deleteMany({ where: { alunoId } }),
+      prisma.notaFinal.deleteMany({ where: { alunoId } }),
+      prisma.frequencia.deleteMany({ where: { alunoId } }),
+      prisma.matricula.deleteMany({ where: { alunoId } }),
+      prisma.aluno.delete({ where: { id: alunoId } })
+    ]);
     
     res.status(204).send();
   } catch (error) {
+    console.error('Erro ao deletar aluno:', error);
     res.status(500).json({ error: 'Erro ao deletar aluno' });
   }
 });

@@ -37,8 +37,20 @@
 
 .selection-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .selection-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .selection-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .selection-btn {
@@ -126,7 +138,7 @@
 
 .notas-info h2 {
   margin: 0 0 8px 0;
-  color: var(--text-primary);
+  color: #334155;
   font-size: 1.5rem;
 }
 
@@ -193,7 +205,7 @@
 
 .momento-section h4 {
   margin: 0 0 16px 0;
-  color: var(--text-primary);
+  color: #334155;
   font-size: 1rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -281,20 +293,50 @@
 /* Modal específico para notas */
 .modal-notas {
   max-width: 700px;
+  max-height: 88vh;
+}
+
+.modal-notas .modal-header {
+  padding: 12px 18px !important;
+}
+
+.modal-notas .modal-header h2 {
+  font-size: 1.1rem !important;
+}
+
+.modal-notas .modal-body {
+  padding: 16px !important;
+}
+
+.modal-notas .form-group {
+  margin-bottom: 12px !important;
+}
+
+.modal-notas .form-group label {
+  margin-bottom: 4px !important;
+  font-size: 0.75rem !important;
+}
+
+.modal-notas .form-group input,
+.modal-notas .form-group select,
+.modal-notas .form-group textarea {
+  padding: 6px 8px !important;
+  font-size: 0.875rem !important;
 }
 
 .momento-form {
-  margin-bottom: 24px;
-  padding: 20px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
   background: var(--background-color);
-  border-radius: 8px;
-  border-left: 4px solid var(--primary-color);
+  border-radius: 6px;
+  border-left: 3px solid var(--primary-color);
 }
 
 .momento-form h3 {
-  margin: 0 0 16px 0;
-  color: var(--text-primary);
-  font-size: 1.1rem;
+  margin: 0 0 8px 0;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .nota-readonly {

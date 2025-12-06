@@ -22,15 +22,16 @@
 }
 
 .modal {
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  width: 90%;
-  max-width: 600px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  width: 95%;
+  max-width: 1200px;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   animation: slideUp 0.3s ease-out;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid #475569;
 }
 
 @keyframes slideUp {
@@ -48,13 +49,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  padding: 14px 18px;
+  border-bottom: 2px solid #1e293b;
+  background: linear-gradient(135deg, #475569 0%, #334155 100%);
+  border-radius: 10px 10px 0 0;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   color: white;
   font-weight: 600;
 }
@@ -80,6 +83,8 @@
 
 .modal-body {
   padding: 24px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .form-group {
@@ -88,36 +93,37 @@
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
-  color: white;
-  font-weight: 600;
-  font-size: 0.9rem;
+  margin-bottom: 5px;
+  color: #1e40af;
+  font-weight: 700;
+  font-size: 0.85rem;
 }
 
 .modal .form-group input,
 .modal .form-group select,
 .modal .form-group textarea {
   width: 100%;
-  padding: 10px 12px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  font-size: 1rem;
+  padding: 7px 10px;
+  border: 2px solid #64748b;
+  border-radius: 6px;
+  font-size: 0.9rem;
   font-weight: 600;
-  background-color: white !important;
-  color: #0c1e4d !important;
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
   transition: all 0.2s;
-  -webkit-text-fill-color: #0c1e4d !important;
+  -webkit-text-fill-color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .modal .form-group input:focus,
 .modal .form-group select:focus,
 .modal .form-group textarea:focus {
   outline: none;
-  border-color: white;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
-  background-color: white !important;
-  color: #0c1e4d !important;
-  -webkit-text-fill-color: #0c1e4d !important;
+  border-color: #475569;
+  box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
 }
 
 .form-group textarea {
@@ -169,9 +175,9 @@
 
 .btn-cancel {
   padding: 10px 20px;
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  border: 2px solid #fca5a5;
+  background-color: #fee2e2;
+  color: #dc2626;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
@@ -180,14 +186,14 @@
 }
 
 .btn-cancel:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  border-color: white;
+  background-color: #fecaca;
+  border-color: #ef4444;
   transform: translateY(-2px);
 }
 
 .btn-submit {
   padding: 10px 24px;
-  border: 2px solid white;
+  border: 2px solid #10b981;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border-radius: 8px;

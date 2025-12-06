@@ -49,9 +49,13 @@ model Professor {
   cpf             String
   email           String
   telefone        String
-  especialidade   String
+  especialidade   String?
+  area            String?           // "Anos Iniciais", "Anos Finais", ou "Ambos"
+  componentes     String?           // JSON string com array de componentes que ministra
+  turmasVinculadas String?          // JSON string com array de IDs das turmas vinculadas
   disciplinas     Disciplina[]
-  turmas          Turma[]
+  turmas          Turma[]           @relation("TurmaProfessorResponsavel")
+  disciplinaTurmas DisciplinaTurma[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
@@ -62,11 +66,13 @@ model Turma {
   id              String            @id @default(uuid())
   nome            String
   ano             Int
+  anoLetivo       Int               @default(2025) // 2024, 2025, 2026...
   periodo         String            // Manhã, Tarde, Noite
   professorId     String?
-  professor       Professor?        @relation(fields: [professorId], references: [id])
+  professor       Professor?        @relation("TurmaProfessorResponsavel", fields: [professorId], references: [id])
   alunos          Aluno[]
   disciplinas     Disciplina[]
+  disciplinaTurmas DisciplinaTurma[]
   matriculas      Matricula[]
   frequencias     Frequencia[]
   createdAt       DateTime          @default(now())
@@ -83,10 +89,26 @@ model Disciplina {
   professor       Professor?        @relation(fields: [professorId], references: [id])
   turmas          Turma[]
   notas           Nota[]
+  disciplinaTurmas DisciplinaTurma[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
   @@map("disciplinas")
+}
+
+model DisciplinaTurma {
+  id              String            @id @default(uuid())
+  disciplinaId    String
+  disciplina      Disciplina        @relation(fields: [disciplinaId], references: [id], onDelete: Cascade)
+  turmaId         String
+  turma           Turma             @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+  professorId     String?
+  professor       Professor?        @relation(fields: [professorId], references: [id])
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([disciplinaId, turmaId])
+  @@map("disciplinas_turmas")
 }
 
 model Matricula {
@@ -153,6 +175,33 @@ model Frequencia {
   updatedAt       DateTime          @updatedAt
 
   @@map("frequencias")
+}
+
+model EquipeDiretiva {
+  id              String            @id @default(uuid())
+  nome            String
+  cpf             String
+  email           String
+  telefone        String?
+  cargo           String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("equipe_diretiva")
+}
+
+model Funcionario {
+  id              String            @id @default(uuid())
+  nome            String
+  cpf             String
+  email           String
+  telefone        String?
+  cargo           String
+  setor           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("funcionarios")
 }
 
 model Configuracao {

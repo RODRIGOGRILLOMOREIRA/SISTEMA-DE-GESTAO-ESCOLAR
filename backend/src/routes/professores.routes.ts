@@ -9,7 +9,10 @@ const professorSchema = z.object({
   cpf: z.string().min(11).max(14),
   email: z.string().email(),
   telefone: z.string(),
-  especialidade: z.string(),
+  especialidade: z.string().optional(),
+  area: z.enum(['Anos Iniciais', 'Anos Finais', 'Ambos']),
+  componentes: z.string().optional(),
+  turmasVinculadas: z.string().optional(),
 });
 
 // GET todos os professores
@@ -50,12 +53,43 @@ professoresRouter.post('/', async (req, res) => {
     const professor = await prisma.professor.create({
       data
     });
+
+    // Se componentes e turmas foram fornecidos, criar DisciplinaTurma
+    if (data.componentes && data.turmasVinculadas) {
+      const componentes = JSON.parse(data.componentes) as string[];
+      const turmasIds = JSON.parse(data.turmasVinculadas) as string[];
+
+      // Buscar IDs das disciplinas pelos nomes
+      const disciplinas = await prisma.disciplina.findMany({
+        where: { nome: { in: componentes } }
+      });
+
+      // Criar DisciplinaTurma para cada combinação disciplina x turma
+      const disciplinaTurmasData = [];
+      for (const disciplina of disciplinas) {
+        for (const turmaId of turmasIds) {
+          disciplinaTurmasData.push({
+            disciplinaId: disciplina.id,
+            turmaId: turmaId,
+            professorId: professor.id
+          });
+        }
+      }
+
+      if (disciplinaTurmasData.length > 0) {
+        await prisma.disciplinaTurma.createMany({
+          data: disciplinaTurmasData,
+          skipDuplicates: true
+        });
+      }
+    }
     
     res.status(201).json(professor);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
+    console.error('Erro ao criar professor:', error);
     res.status(500).json({ error: 'Erro ao criar professor' });
   }
 });
@@ -64,14 +98,51 @@ professoresRouter.post('/', async (req, res) => {
 professoresRouter.put('/:id', async (req, res) => {
   try {
     const data = professorSchema.partial().parse(req.body);
+    const professorId = req.params.id;
     
     const professor = await prisma.professor.update({
-      where: { id: req.params.id },
+      where: { id: professorId },
       data
     });
+
+    // Se componentes e turmas foram fornecidos, recriar DisciplinaTurma
+    if (data.componentes && data.turmasVinculadas) {
+      // Remover DisciplinaTurma antigas deste professor
+      await prisma.disciplinaTurma.deleteMany({
+        where: { professorId }
+      });
+
+      const componentes = JSON.parse(data.componentes) as string[];
+      const turmasIds = JSON.parse(data.turmasVinculadas) as string[];
+
+      // Buscar IDs das disciplinas pelos nomes
+      const disciplinas = await prisma.disciplina.findMany({
+        where: { nome: { in: componentes } }
+      });
+
+      // Criar novas DisciplinaTurma
+      const disciplinaTurmasData = [];
+      for (const disciplina of disciplinas) {
+        for (const turmaId of turmasIds) {
+          disciplinaTurmasData.push({
+            disciplinaId: disciplina.id,
+            turmaId: turmaId,
+            professorId: professorId
+          });
+        }
+      }
+
+      if (disciplinaTurmasData.length > 0) {
+        await prisma.disciplinaTurma.createMany({
+          data: disciplinaTurmasData,
+          skipDuplicates: true
+        });
+      }
+    }
     
     res.json(professor);
   } catch (error) {
+    console.error('Erro ao atualizar professor:', error);
     res.status(500).json({ error: 'Erro ao atualizar professor' });
   }
 });

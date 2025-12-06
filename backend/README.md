@@ -1,61 +1,88 @@
 # 🔧 Backend - Sistema de Gestão Escolar
 
-API RESTful completa para gerenciamento escolar, desenvolvida com Node.js, TypeScript e Prisma ORM.
+API RESTful completa e robusta para gerenciamento escolar, desenvolvida com Node.js, TypeScript, Express e Prisma ORM, com sistema de notas avançado e média parcial progressiva.
 
 ## 📋 Índice
 
 - [Tecnologias](#tecnologias)
-- [Arquitetura](#arquitetura)
 - [Funcionalidades](#funcionalidades)
-- [Configuração](#configuração)
-- [Rotas da API](#rotas-da-api)
+- [Arquitetura](#arquitetura)
 - [Modelo de Dados](#modelo-de-dados)
-- [Autenticação](#autenticação)
-- [Validação](#validação)
-- [Upload de Arquivos](#upload-de-arquivos)
+- [Rotas da API](#rotas-da-api)
+- [Cálculos Automáticos](#cálculos-automáticos)
+- [Instalação](#instalação)
+- [Scripts](#scripts)
 
 ## 🛠️ Tecnologias
 
 ### Core
-- **Node.js** 18+ - Runtime JavaScript
-- **TypeScript** 5.3.3 - Superset tipado do JavaScript
-- **Express** 4.18.2 - Framework web minimalista
+- **Node.js** 18+ - Runtime JavaScript server-side
+- **TypeScript** 5.3.3+ - JavaScript com tipagem estática
+- **Express** 4.18+ - Framework web minimalista e flexível
 
 ### Banco de Dados
-- **PostgreSQL** 18 - Banco de dados relacional
-- **Prisma ORM** 5.7.1 - ORM moderno e type-safe
-- **Prisma Client** - Cliente de banco gerado automaticamente
+- **PostgreSQL** 18 - Banco de dados relacional avançado
+- **Prisma ORM** 5.22.0 - ORM moderno, type-safe e produtivo
+- **Prisma Client** - Cliente auto-gerado com tipos TypeScript
+- **Prisma Migrate** - Sistema de migrações versionado
 
-### Autenticação e Segurança
-- **jsonwebtoken** 9.0.2 - Geração e verificação de JWT
-- **bcryptjs** 2.4.3 - Hash de senhas
-- **cors** 2.8.5 - Controle de CORS
+### Dependências
+- **@prisma/client** 5.22.0 - Cliente Prisma
+- **cors** - Middleware para CORS
+- **tsx** - Executor TypeScript para Node.js
 
-### Validação e Upload
-- **Zod** 3.22.4 - Validação de schemas TypeScript-first
-- **Multer** 1.4.5-lts.1 - Middleware para upload de arquivos
-
-### Ferramentas de Desenvolvimento
-- **tsx** 4.7.0 - TypeScript executor para Node.js
-- **@types/node**, **@types/express**, **@types/cors** - Tipos TypeScript
+### Desenvolvimento
+- **Prisma Studio** - Interface visual para banco de dados
+- **TypeScript Compiler** - Compilador TypeScript
+- **Node types** - Tipos TypeScript para Node.js
 
 ## 🎯 Funcionalidades Principais
 
-### Sistema de Notas Avançado
-- ✅ **Cálculo Automático da Média M1** (soma de 3 avaliações)
-- ✅ **Nota Final do Trimestre** (maior entre M1 e EAC)
-- ✅ **Média Final Anual** com fórmula ponderada: `(T1×1 + T2×2 + T3×3) ÷ 6`
-- ✅ **Status de Aprovação Automático** (≥ 6.0)
-- ✅ **Salvamento Atômico** (upsert para evitar duplicação)
-- ✅ **Atualização em Tempo Real** de todas as médias
+### Sistema de Notas Avançado com Cálculos Automáticos
+
+#### Cálculo de Média M1
+```typescript
+// Momento 1: soma de 3 avaliações
+mediaM1 = avaliacao01 + avaliacao02 + avaliacao03
+```
+
+#### Nota Final do Trimestre
+```typescript
+// Maior valor entre Média M1 e Avaliação EAC
+notaFinal = Math.max(mediaM1, avaliacaoEAC || 0)
+```
+
+#### Média Final Anual (Ponderada)
+```typescript
+// Fórmula: (T1×1 + T2×2 + T3×3) ÷ 6
+mediaFinal = (notaT1 * 1 + notaT2 * 2 + notaT3 * 3) / 6
+```
+
+#### Status de Aprovação
+```typescript
+aprovado = mediaFinal >= 6.0
+```
+
+### Sistema Professor-Centric
+- ✅ **Cadastro com área**: Anos Iniciais, Anos Finais ou Ambos
+- ✅ **Componentes curriculares**: Seleção de disciplinas via JSON
+- ✅ **Turmas vinculadas**: Array de IDs de turmas como JSON
+- ✅ **Criação automática**: DisciplinaTurma criado ao salvar professor
+- ✅ **Junction table**: Previne duplicatas com @@unique
+
+### Disciplinas Padronizadas
+- ✅ **10 componentes**: ARTES, CIÊNCIAS, EDUCAÇÃO FÍSICA, ENSINO RELIGIOSO, GEOGRAFIA, HISTÓRIA, INGLÊS, MATEMÁTICA, PORTUGUÊS, PROJETO DE VIDA
+- ✅ **Script de padronização**: `prisma/padronizar-disciplinas.ts`
+- ✅ **Carga horária**: Configurável por disciplina
+- ✅ **Acentuação correta**: UTF-8 garantido
 
 ### API RESTful Completa
-- ✅ CRUD completo para todas as entidades
-- ✅ Validação de dados com Zod
-- ✅ Autenticação JWT
-- ✅ Upload de imagens (logo da escola)
-- ✅ CORS configurado
-- ✅ Logging de queries (debug mode)
+- ✅ **CRUD completo**: Alunos, Professores, Turmas, Disciplinas, DisciplinaTurma, Notas
+- ✅ **Upsert inteligente**: Evita duplicação de notas
+- ✅ **Deleção em cascata**: Remove notas ao deletar aluno
+- ✅ **Atualização automática**: Recalcula médias a cada alteração
+- ✅ **Queries otimizadas**: Uso de includes e selects do Prisma
+- ✅ **CORS habilitado**: Aceita requisições do frontend
 
 ## 🏗️ Arquitetura
 
@@ -64,213 +91,238 @@ API RESTful completa para gerenciamento escolar, desenvolvida com Node.js, TypeS
 ```
 backend/
 ├── prisma/
-│   ├── migrations/              # Migrações do banco de dados
-│   ├── schema.prisma           # Schema do Prisma (modelos + notas_finais)
-│   └── seed.ts                 # Seed inicial (admin + config)
-│   ├── seed.ts                 # Dados iniciais (seed)
-│   └── reset.ts                # Script de reset do banco
+│   ├── migrations/                      # Histórico de migrações do banco
+│   ├── schema.prisma                    # Schema do Prisma (8 modelos)
+│   └── padronizar-disciplinas.ts        # Script para criar 10 disciplinas
+│
 ├── src/
 │   ├── lib/
-│   │   └── prisma.ts           # Instância do Prisma Client
+│   │   └── prisma.ts                    # Singleton do Prisma Client
+│   │
 │   ├── routes/
-│   │   ├── alunos.routes.ts    # CRUD de alunos
-│   │   ├── professores.routes.ts
-│   │   ├── turmas.routes.ts
-│   │   ├── disciplinas.routes.ts
-│   │   ├── matriculas.routes.ts
-│   │   ├── notas.routes.ts
-│   │   ├── frequencia.routes.ts
-│   │   ├── auth.routes.ts      # Autenticação
-│   │   └── configuracoes.routes.ts
-│   └── server.ts               # Configuração do Express
-├── uploads/                    # Arquivos enviados (logos)
-├── .env                        # Variáveis de ambiente
-├── package.json
-├── tsconfig.json
-└── README.md
+│   │   ├── alunos.ts                    # GET, POST, PUT, DELETE /api/alunos
+│   │   ├── disciplinas.ts               # CRUD de disciplinas
+│   │   ├── disciplinas-turma.ts         # CRUD de DisciplinaTurma
+│   │   ├── notas.ts                     # Lançamento de notas com cálculos
+│   │   ├── professores.ts               # Sistema professor-centric
+│   │   └── turmas.ts                    # CRUD de turmas
+│   │
+│   └── server.ts                        # Configuração Express + CORS (porta 3333)
+│
+├── .env                                 # DATABASE_URL, PORT
+├── package.json                         # Dependências e scripts
+├── tsconfig.json                        # Configuração TypeScript
+└── README.md                            # Este arquivo
 ```
 
 ### Padrões de Código
 
-- **Separation of Concerns**: Rotas separadas por entidade
-- **Type Safety**: TypeScript em todo o código
-- **Error Handling**: Try-catch em todas as rotas
-- **RESTful API**: Seguindo convenções REST
-- **Single Responsibility**: Cada arquivo tem uma responsabilidade clara
+- **RESTful Design**: Rotas seguem convenções REST (GET, POST, PUT, DELETE)
+- **Type Safety**: TypeScript strict mode em todo o código
+- **Error Handling**: Try-catch em todas as rotas com status HTTP apropriados
+- **Separation of Concerns**: Cada rota em arquivo separado
+- **Prisma Best Practices**: Uso de includes, selects e transações quando necessário
+- **Single Responsibility**: Cada endpoint tem uma responsabilidade clara
 
-## ✨ Funcionalidades
+## 📊 Modelo de Dados (Prisma Schema)
 
-### 1. Autenticação e Autorização
+### Modelos Principais
 
-#### Login
-- Validação de credenciais
-- Hash de senha com bcrypt
-- Geração de token JWT (7 dias de validade)
-- Retorno de dados do usuário (sem senha)
-
-#### Registro de Usuário
-- Validação de email único
-- Hash automático de senha
-- Tipo padrão: USUARIO
-- Auto-login após registro
-
-#### Redefinição de Senha
-- **Método tradicional**: Com token de reset via email
-- **Método direto**: Sem token, apenas email e nova senha
-- Validação de senha (mínimo 6 caracteres)
-
-#### Verificação de Token
-- Middleware de autenticação
-- Validação de JWT
-- Retorno de dados do usuário autenticado
-
-### 2. Gestão de Alunos
-
-**Campos:**
-- Dados pessoais (nome, CPF, data de nascimento)
-- Contatos (email, telefone)
-- Endereço completo
-- Status (ativo/inativo)
-- Timestamps (criação/atualização)
-
-**Operações:**
-- ✅ Listar todos os alunos
-- ✅ Buscar aluno por ID
-- ✅ Criar novo aluno
-- ✅ Atualizar dados do aluno
-- ✅ Deletar aluno
-
-**Validações:**
-- CPF único
-- Email único
-- Formato de data
-- Campos obrigatórios
-
-### 3. Gestão de Professores
-
-**Campos:**
-- Dados pessoais (nome, CPF, data de nascimento)
-- Especialização/área
-- Contatos (email, telefone)
-- Endereço completo
-- Status (ativo/inativo)
-
-**Operações:**
-- ✅ CRUD completo
-- ✅ Validação de CPF e email únicos
-- ✅ Relacionamento com disciplinas
-
-### 4. Gestão de Turmas
-
-**Campos:**
-- Nome da turma
-- Série/ano
-- Turno (manhã/tarde/noite)
-- Ano letivo
-- Status (ativa/inativa)
-
-**Operações:**
-- ✅ CRUD completo
-- ✅ Listagem de matrículas por turma
-- ✅ Controle de capacidade
-
-### 5. Gestão de Disciplinas
-
-**Campos:**
-- Nome da disciplina
-- Código
-- Carga horária
-- Descrição
-- Professor responsável (FK)
-
-**Operações:**
-- ✅ CRUD completo
-- ✅ Relacionamento com professor
-- ✅ Código único
-
-### 6. Matrículas
-
-**Campos:**
-- Aluno (FK)
-- Turma (FK)
-- Data de matrícula
-- Status (ativa/cancelada/concluída)
-
-**Operações:**
-- ✅ Criar matrícula
-- ✅ Listar matrículas
-- ✅ Cancelar matrícula
-- ✅ Validação de duplicidade
-
-### 7. Notas
-
-**Campos:**
-- Matrícula (FK)
-- Disciplina (FK)
-- Notas (AV1, AV2, AV3)
-- Média calculada
-- Status (aprovado/reprovado/recuperação)
-
-**Operações:**
-- ✅ Lançamento de notas
-- ✅ Cálculo automático de média
-- ✅ Definição automática de status
-- ✅ Busca por aluno/disciplina
-
-**Regras:**
-- Média = (AV1 + AV2 + AV3) / 3
-- Aprovado: média >= 7.0
-- Recuperação: média >= 5.0 e < 7.0
-- Reprovado: média < 5.0
-
-### 8. Frequência
-
-**Campos:**
-- Matrícula (FK)
-- Disciplina (FK)
-- Data da aula
-- Status (presente/ausente/justificado)
-- Observações
-
-**Operações:**
-- ✅ Registro de presença
-- ✅ Listagem por aluno/turma/data
-- ✅ Relatórios de frequência
-
-### 9. Configurações
-
-**Campos:**
-- Nome da escola
-- Rede escolar
-- Endereço completo
-- Logo (upload de imagem)
-
-**Operações:**
-- ✅ Buscar configurações
-- ✅ Atualizar configurações
-- ✅ Upload de logo
-- ✅ Singleton pattern (apenas 1 registro)
-
-## 🔧 Configuração
-
-### Variáveis de Ambiente (.env)
-
-```env
-# Database
-DATABASE_URL="postgresql://postgres:admin123@localhost:5432/gestao_escolar?schema=public"
-
-# Server
-PORT=3333
-NODE_ENV=development
-
-# CORS
-FRONTEND_URL=http://localhost:5173
-
-# Authentication
-JWT_SECRET="seu_secret_super_seguro_aqui_mude_em_producao_12345"
+#### Professor
+```prisma
+model Professor {
+  id                String             @id @default(uuid())
+  nome              String
+  cpf               String             @unique
+  email             String             @unique
+  telefone          String?
+  area              String?            // "Anos Iniciais", "Anos Finais", "Ambos"
+  componentes       String?            // JSON: ["MATEMÁTICA", "PORTUGUÊS", ...]
+  turmasVinculadas  String?            // JSON: ["uuid1", "uuid2", ...]
+  disciplinasTurma  DisciplinaTurma[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
 ```
 
-### Scripts NPM
+#### Turma
+```prisma
+model Turma {
+  id               String             @id @default(uuid())
+  ano              Int                // 1-9
+  nome             String             // A, B, C, etc.
+  periodo          Periodo            // enum: MANHA, TARDE, NOITE, INTEGRAL
+  anoLetivo        Int                @default(2025)
+  alunos           Aluno[]
+  disciplinas      DisciplinaTurma[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+```
+
+#### Disciplina (10 Padronizadas)
+```prisma
+model Disciplina {
+  id               String             @id @default(uuid())
+  nome             String             @unique
+  cargaHoraria     Int
+  turmas           DisciplinaTurma[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+```
+
+**10 disciplinas criadas via script:**
+- ARTES
+- CIÊNCIAS
+- EDUCAÇÃO FÍSICA
+- ENSINO RELIGIOSO
+- GEOGRAFIA
+- HISTÓRIA
+- INGLÊS
+- MATEMÁTICA
+- PORTUGUÊS
+- PROJETO DE VIDA
+
+#### DisciplinaTurma (Junction Table)
+```prisma
+model DisciplinaTurma {
+  id            String      @id @default(uuid())
+  disciplinaId  String
+  turmaId       String
+  professorId   String?
+  disciplina    Disciplina  @relation(fields: [disciplinaId], references: [id])
+  turma         Turma       @relation(fields: [turmaId], references: [id])
+  professor     Professor?  @relation(fields: [professorId], references: [id])
+  notas         Nota[]
+  notasFinais   NotaFinal[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  @@unique([disciplinaId, turmaId])  // Previne duplicatas
+}
+```
+
+#### Aluno
+```prisma
+model Aluno {
+  id              String      @id @default(uuid())
+  nome            String
+  cpf             String      @unique
+  dataNascimento  DateTime
+  responsavel     String
+  turmaId         String
+  turma           Turma       @relation(fields: [turmaId], references: [id])
+  notas           Nota[]
+  notasFinais     NotaFinal[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+```
+
+#### Nota (Por Trimestre)
+```prisma
+model Nota {
+  id                String          @id @default(uuid())
+  alunoId           String
+  disciplinaTurmaId String
+  trimestre         Int             // 1, 2 ou 3
+  avaliacao01       Decimal?        @db.Decimal(5, 2)
+  avaliacao02       Decimal?        @db.Decimal(5, 2)
+  avaliacao03       Decimal?        @db.Decimal(5, 2)
+  mediaM1           Decimal?        @db.Decimal(5, 2)  // Calculada: soma das 3
+  avaliacaoEAC      Decimal?        @db.Decimal(5, 2)
+  notaFinal         Decimal?        @db.Decimal(5, 2)  // max(mediaM1, EAC)
+  aluno             Aluno           @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  disciplinaTurma   DisciplinaTurma @relation(fields: [disciplinaTurmaId], references: [id])
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  @@unique([alunoId, disciplinaTurmaId, trimestre])
+}
+```
+
+#### NotaFinal (Anual)
+```prisma
+model NotaFinal {
+  id                String          @id @default(uuid())
+  alunoId           String
+  disciplinaTurmaId String
+  notaT1            Decimal?        @db.Decimal(5, 2)
+  notaT2            Decimal?        @db.Decimal(5, 2)
+  notaT3            Decimal?        @db.Decimal(5, 2)
+  mediaFinal        Decimal?        @db.Decimal(5, 2)  // (T1×1 + T2×2 + T3×3) ÷ 6
+  aprovado          Boolean?
+  aluno             Aluno           @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  disciplinaTurma   DisciplinaTurma @relation(fields: [disciplinaTurmaId], references: [id])
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  @@unique([alunoId, disciplinaTurmaId])
+}
+```
+
+## 🔧 Instalação e Configuração
+
+### Pré-requisitos
+- Node.js 18+
+- PostgreSQL 18+ rodando
+- npm ou yarn
+
+### Instalação
+
+1. Entre na pasta do backend:
+```powershell
+cd backend
+```
+
+2. Instale as dependências:
+```powershell
+npm install
+```
+
+3. Configure o banco de dados PostgreSQL:
+```powershell
+# Entre no PostgreSQL
+psql -U postgres
+
+# Crie o banco de dados
+CREATE DATABASE gestao_escolar;
+
+# Saia
+\q
+```
+
+4. Configure as variáveis de ambiente:
+```env
+# .env
+DATABASE_URL="postgresql://postgres:sua_senha@localhost:5432/gestao_escolar?schema=public"
+PORT=3333
+```
+
+5. Execute as migrações:
+```powershell
+npx prisma migrate dev
+```
+
+6. Gere o Prisma Client:
+```powershell
+npx prisma generate
+```
+
+7. Crie as 10 disciplinas padronizadas:
+```powershell
+npx tsx prisma/padronizar-disciplinas.ts
+```
+
+8. Inicie o servidor:
+```powershell
+npm run dev
+```
+
+✅ Backend rodando em **http://localhost:3333**
+
+### Scripts Disponíveis
 
 ```bash
 # Desenvolvimento
@@ -312,156 +364,384 @@ http://localhost:3333/api
 | POST | `/auth/reset-password-direct` | Reset direto | `{ email, novaSenha }` | Não |
 | GET | `/auth/me` | Dados do usuário logado | - | Sim |
 
-### Alunos (`/alunos`)
+### Alunos (`/api/alunos`)
 
-| Método | Rota | Descrição | Autenticação |
-|--------|------|-----------|--------------|
-| GET | `/alunos` | Lista todos os alunos | Sim |
-| GET | `/alunos/:id` | Busca aluno por ID | Sim |
-| POST | `/alunos` | Cria novo aluno | Sim |
-| PUT | `/alunos/:id` | Atualiza aluno | Sim |
-| DELETE | `/alunos/:id` | Deleta aluno | Sim |
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/api/alunos` | Lista todos os alunos com turmas |
+| GET | `/api/alunos/:id` | Busca aluno por ID |
+| POST | `/api/alunos` | Cria novo aluno (nome, cpf, dataNascimento, responsavel, turmaId) |
+| PUT | `/api/alunos/:id` | Atualiza dados do aluno |
+| DELETE | `/api/alunos/:id` | Deleta aluno (cascata: remove notas automaticamente) |
 
-### Professores (`/professores`)
+### Professores (`/api/professores`)
 
-| Método | Rota | Descrição | Autenticação |
-|--------|------|-----------|--------------|
-| GET | `/professores` | Lista todos | Sim |
-| GET | `/professores/:id` | Busca por ID | Sim |
-| POST | `/professores` | Cria novo | Sim |
-| PUT | `/professores/:id` | Atualiza | Sim |
-| DELETE | `/professores/:id` | Deleta | Sim |
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/api/professores` | Lista todos os professores |
+| GET | `/api/professores/:id` | Busca professor por ID |
+| POST | `/api/professores` | Cria professor (sistema professor-centric) |
+| PUT | `/api/professores/:id` | Atualiza professor |
+| DELETE | `/api/professores/:id` | Deleta professor |
 
-### Turmas (`/turmas`)
-
-| Método | Rota | Descrição | Autenticação |
-|--------|------|-----------|--------------|
-| GET | `/turmas` | Lista todas | Sim |
-| GET | `/turmas/:id` | Busca por ID | Sim |
-| POST | `/turmas` | Cria nova | Sim |
-| PUT | `/turmas/:id` | Atualiza | Sim |
-| DELETE | `/turmas/:id` | Deleta | Sim |
-
-### Disciplinas (`/disciplinas`)
-
-| Método | Rota | Descrição | Autenticação |
-|--------|------|-----------|--------------|
-| GET | `/disciplinas` | Lista todas | Sim |
-| GET | `/disciplinas/:id` | Busca por ID | Sim |
-| POST | `/disciplinas` | Cria nova | Sim |
-| PUT | `/disciplinas/:id` | Atualiza | Sim |
-| DELETE | `/disciplinas/:id` | Deleta | Sim |
-
-### Matrículas (`/matriculas`)
-
-| Método | Rota | Descrição | Autenticação |
-|--------|------|-----------|--------------|
-| GET | `/matriculas` | Lista todas | Sim |
-| GET | `/matriculas/:id` | Busca por ID | Sim |
-| POST | `/matriculas` | Cria matrícula | Sim |
-| PUT | `/matriculas/:id` | Atualiza status | Sim |
-| DELETE | `/matriculas/:id` | Cancela matrícula | Sim |
-
-### Notas (`/notas`)
-
-| Método | Rota | Descrição | Autenticação |
-|--------|------|-----------|--------------|
-| GET | `/notas` | Lista todas as notas | Sim |
-| GET | `/notas/aluno/:alunoId/disciplina/:disciplinaId` | Busca notas completas (3 trimestres + nota final) | Sim |
-| GET | `/notas/final/aluno/:alunoId` | Busca todas as médias finais de um aluno | Sim |
-| POST | `/notas/salvar` | Lança/atualiza notas (upsert com cálculos automáticos) | Sim |
-| DELETE | `/notas/:id` | Deleta nota e recalcula média final | Sim |
-
-#### Sistema de Notas - Cálculos Automáticos
-
-**Endpoint: POST `/notas/salvar`**
-
-Payload:
+**Body POST/PUT Professores:**
 ```json
 {
-  "alunoId": "uuid",
-  "disciplinaId": "uuid",
-  "trimestre": 1,  // 1, 2 ou 3
+  "nome": "João Silva",
+  "cpf": "12345678900",
+  "email": "joao@escola.com",
+  "telefone": "11999999999",
+  "area": "Anos Iniciais",  // ou "Anos Finais" ou "Ambos"
+  "componentes": ["MATEMÁTICA", "PORTUGUÊS"],  // Array de disciplinas
+  "turmasVinculadas": ["uuid1", "uuid2"]  // Array de IDs de turmas
+}
+```
+
+**Lógica Especial:**
+- Ao criar/atualizar professor, o backend cria automaticamente registros em `DisciplinaTurma`
+- Cria uma linha para cada combinação (componente × turma)
+- Exemplo: 2 componentes × 3 turmas = 6 registros DisciplinaTurma
+
+### Turmas (`/api/turmas`)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/api/turmas` | Lista todas as turmas |
+| GET | `/api/turmas/:id` | Busca turma por ID |
+| POST | `/api/turmas` | Cria turma (ano, nome, periodo, anoLetivo) |
+| PUT | `/api/turmas/:id` | Atualiza turma |
+| DELETE | `/api/turmas/:id` | Deleta turma |
+
+**Body POST/PUT:**
+```json
+{
+  "ano": 6,  // 1-9
+  "nome": "A",  // A, B, C, etc.
+  "periodo": "MANHA",  // MANHA, TARDE, NOITE, INTEGRAL
+  "anoLetivo": 2025
+}
+```
+
+### Disciplinas (`/api/disciplinas`)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/api/disciplinas` | Lista todas as disciplinas (10 padronizadas) |
+| GET | `/api/disciplinas/:id` | Busca disciplina por ID |
+| POST | `/api/disciplinas` | Cria disciplina (nome, cargaHoraria) |
+| PUT | `/api/disciplinas/:id` | Atualiza disciplina |
+| DELETE | `/api/disciplinas/:id` | Deleta disciplina |
+
+**10 disciplinas padrão:**
+- ARTES, CIÊNCIAS, EDUCAÇÃO FÍSICA, ENSINO RELIGIOSO, GEOGRAFIA, HISTÓRIA, INGLÊS, MATEMÁTICA, PORTUGUÊS, PROJETO DE VIDA
+
+### DisciplinaTurma (`/api/disciplinas-turma`)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/api/disciplinas-turma` | Lista todas as vinculações |
+| GET | `/api/disciplinas-turma/turma/:turmaId` | Lista disciplinas de uma turma específica |
+| POST | `/api/disciplinas-turma` | Cria vinculação manual (disciplinaId, turmaId, professorId?) |
+| DELETE | `/api/disciplinas-turma/:id` | Remove vinculação |
+
+**Observação:** Normalmente criado automaticamente ao cadastrar professor.
+
+### Notas (`/api/notas`)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/api/notas` | Lista todas as notas |
+| GET | `/api/notas/aluno/:alunoId/disciplinaTurma/:disciplinaTurmaId` | Busca notas completas (3 trimestres + nota final) de um aluno em uma disciplina |
+| GET | `/api/notas/final/aluno/:alunoId` | Busca todas as médias finais de um aluno |
+| POST | `/api/notas` | Cria nota com cálculos automáticos |
+| PUT | `/api/notas/:id` | Atualiza nota (recalcula tudo) |
+| DELETE | `/api/notas/:id` | Deleta nota e recalcula média final |
+
+## 🧮 Cálculos Automáticos de Notas
+
+### Endpoint: PUT `/api/notas/:id`
+
+**Body:**
+```json
+{
   "avaliacao01": 8.0,
   "avaliacao02": 7.5,
   "avaliacao03": 9.0,
-  "avaliacaoEAC": 7.0,
-  "observacao": "Bom desempenho"
+  "avaliacaoEAC": 7.0
 }
 ```
 
-**Cálculos Executados Automaticamente:**
+**Cálculos Executados no Backend:**
 
-1. **Média M1** (Momento 1)
-   ```javascript
-   mediaM1 = avaliacao01 + avaliacao02 + avaliacao03
-   ```
+#### 1. Média M1 (Momento 1)
+```typescript
+const mediaM1 = (avaliacao01 || 0) + (avaliacao02 || 0) + (avaliacao03 || 0);
+```
 
-2. **Nota Final do Trimestre**
-   ```javascript
-   notaFinalTrimestre = Math.max(mediaM1, avaliacaoEAC)
-   ```
+#### 2. Nota Final do Trimestre
+```typescript
+const notaFinal = Math.max(mediaM1, avaliacaoEAC || 0);
+```
 
-3. **Média Final Anual** (após ter os 3 trimestres)
-   ```javascript
-   mediaFinal = (T1 × 1 + T2 × 2 + T3 × 3) / 6
-   ```
+#### 3. Atualização de NotaFinal
+Após salvar a nota do trimestre, o backend:
+- Busca/cria registro em `NotaFinal`
+- Atualiza campo `notaT1`, `notaT2` ou `notaT3` conforme o trimestre
+- Recalcula `mediaFinal` e `aprovado`
 
-4. **Status de Aprovação**
-   ```javascript
-   aprovado = mediaFinal >= 6.0
-   ```
+#### 4. Média Final Anual
+```typescript
+const { notaT1, notaT2, notaT3 } = notaFinal;
 
-Resposta:
+if (notaT1 && notaT2 && notaT3) {
+  // Todos os trimestres lançados
+  const mediaFinal = (notaT1 * 1 + notaT2 * 2 + notaT3 * 3) / 6;
+  const aprovado = mediaFinal >= 6.0;
+  
+  await prisma.notaFinal.update({
+    where: { id: notaFinalId },
+    data: { mediaFinal, aprovado }
+  });
+}
+```
+
+#### 5. Fórmulas de Média Parcial (Frontend)
+O backend fornece os dados, o frontend calcula a média parcial progressiva:
+
+```typescript
+// Apenas T1
+if (notaT1 && !notaT2 && !notaT3) {
+  mediaParcial = notaT1;
+  texto = "Média Parcial do Ano (T1)";
+}
+
+// T1 + T2
+if (notaT1 && notaT2 && !notaT3) {
+  mediaParcial = (notaT1 * 1 + notaT2 * 2) / 3;
+  texto = "Média Parcial do Ano (T1+T2)";
+}
+
+// T1 + T2 + T3
+if (notaT1 && notaT2 && notaT3) {
+  mediaParcial = (notaT1 * 1 + notaT2 * 2 + notaT3 * 3) / 6;
+  texto = "Média Parcial do Ano";
+}
+```
+
+**Resposta:**
 ```json
 {
-  "nota": {
-    "id": "uuid",
-    "alunoId": "uuid",
-    "disciplinaId": "uuid",
-    "trimestre": 1,
-    "avaliacao01": 8.0,
-    "avaliacao02": 7.5,
-    "avaliacao03": 9.0,
-    "mediaM1": 24.5,
-    "avaliacaoEAC": 7.0,
-    "notaFinalTrimestre": 24.5,
-    "observacao": "Bom desempenho"
-  },
-  "notaFinal": {
-    "alunoId": "uuid",
-    "disciplinaId": "uuid",
-    "trimestre1": 24.5,
-    "trimestre2": null,
-    "trimestre3": null,
-    "mediaFinal": null,
-    "aprovado": false
-  }
+  "id": "uuid",
+  "alunoId": "uuid",
+  "disciplinaTurmaId": "uuid",
+  "trimestre": 1,
+  "avaliacao01": 8.0,
+  "avaliacao02": 7.5,
+  "avaliacao03": 9.0,
+  "mediaM1": 24.5,
+  "avaliacaoEAC": 7.0,
+  "notaFinal": 24.5,
+  "updatedAt": "2025-12-06T..."
 }
-```
-
-**Tabelas Utilizadas:**
-- `notas`: Armazena notas de cada trimestre
-- `notas_finais`: Armazena média final anual (atualizada automaticamente)
-
-### Frequência (`/frequencia`)
 
 | Método | Rota | Descrição | Autenticação |
 |--------|------|-----------|--------------|
 | GET | `/frequencia` | Lista registros | Sim |
-| GET | `/frequencia/:id` | Busca por ID | Sim |
-| POST | `/frequencia` | Registra presença | Sim |
-| PUT | `/frequencia/:id` | Atualiza status | Sim |
-| DELETE | `/frequencia/:id` | Deleta registro | Sim |
+## 🎯 Fluxo Completo - Sistema de Notas
 
-### Configurações (`/configuracoes`)
+### Cenário: Professor lança notas do 1º Trimestre
 
-| Método | Rota | Descrição | Autenticação |
-|--------|------|-----------|--------------|
-| GET | `/configuracoes` | Busca configurações | Não |
-| PUT | `/configuracoes` | Atualiza configurações | Sim |
+1. **Frontend solicita:**
+   ```
+   PUT /api/notas/:notaId
+   Body: {
+     avaliacao01: 8.0,
+     avaliacao02: 7.5,
+     avaliacao03: 9.0,
+     avaliacaoEAC: 7.0
+   }
+   ```
 
-## 📊 Modelo de Dados
+2. **Backend calcula automaticamente:**
+   ```typescript
+   mediaM1 = 8.0 + 7.5 + 9.0 = 24.5
+   notaFinal = Math.max(24.5, 7.0) = 24.5
+   ```
+
+3. **Backend atualiza Nota:**
+   ```sql
+   UPDATE Nota SET
+     avaliacao01 = 8.0,
+     avaliacao02 = 7.5,
+     avaliacao03 = 9.0,
+     mediaM1 = 24.5,
+     avaliacaoEAC = 7.0,
+     notaFinal = 24.5
+   WHERE id = :notaId
+   ```
+
+4. **Backend busca/cria NotaFinal:**
+   ```typescript
+   const notaFinal = await prisma.notaFinal.upsert({
+     where: {
+       alunoId_disciplinaTurmaId: {
+         alunoId: nota.alunoId,
+         disciplinaTurmaId: nota.disciplinaTurmaId
+       }
+     },
+     update: { notaT1: 24.5 },
+     create: {
+       alunoId: nota.alunoId,
+       disciplinaTurmaId: nota.disciplinaTurmaId,
+       notaT1: 24.5
+     }
+   });
+   ```
+
+5. **Backend verifica trimestres completos:**
+   ```typescript
+   // Se apenas T1: não calcula média final ainda
+   // Se T1+T2: não calcula média final ainda
+   // Se T1+T2+T3: calcula média final e aprovação
+   
+   if (notaT1 && notaT2 && notaT3) {
+     const mediaFinal = (notaT1 * 1 + notaT2 * 2 + notaT3 * 3) / 6;
+     const aprovado = mediaFinal >= 6.0;
+     
+     await prisma.notaFinal.update({
+       where: { id: notaFinalId },
+       data: { mediaFinal, aprovado }
+     });
+   }
+   ```
+
+6. **Frontend recebe resposta e:**
+   - Atualiza card do trimestre
+   - Recalcula média parcial progressiva
+   - Atualiza badge de status
+
+## 📚 Scripts Úteis
+
+### Padronizar Disciplinas
+```powershell
+# Cria as 10 disciplinas padrão
+cd backend
+npx tsx prisma/padronizar-disciplinas.ts
+```
+
+**Script:** `prisma/padronizar-disciplinas.ts`
+```typescript
+const disciplinas = [
+  { nome: 'ARTES', cargaHoraria: 80 },
+  { nome: 'CIÊNCIAS', cargaHoraria: 120 },
+  { nome: 'EDUCAÇÃO FÍSICA', cargaHoraria: 80 },
+  { nome: 'ENSINO RELIGIOSO', cargaHoraria: 40 },
+  { nome: 'GEOGRAFIA', cargaHoraria: 80 },
+  { nome: 'HISTÓRIA', cargaHoraria: 80 },
+  { nome: 'INGLÊS', cargaHoraria: 80 },
+  { nome: 'MATEMÁTICA', cargaHoraria: 160 },
+  { nome: 'PORTUGUÊS', cargaHoraria: 160 },
+  { nome: 'PROJETO DE VIDA', cargaHoraria: 40 }
+];
+```
+
+### Visualizar Banco de Dados
+```powershell
+npx prisma studio
+```
+Abre interface visual em http://localhost:5555
+
+### Resetar Migrações
+```powershell
+npx prisma migrate reset
+```
+⚠️ **ATENÇÃO:** Deleta todos os dados!
+
+### Gerar Client após mudanças no Schema
+```powershell
+npx prisma generate
+```
+
+### Sincronizar Schema sem Migração
+```powershell
+npx prisma db push
+```
+
+## 🔐 Tratamento de Erros
+
+### Padrão de Resposta
+
+**Sucesso:**
+```json
+{
+  "id": "uuid",
+  "nome": "...",
+  // ... outros campos
+}
+```
+
+**Erro:**
+```json
+{
+  "error": "Mensagem de erro descritiva"
+}
+```
+
+### Códigos HTTP
+
+| Código | Significado | Quando usar |
+|--------|-------------|-------------|
+| 200 | OK | Requisição bem-sucedida |
+| 201 | Created | Recurso criado |
+| 400 | Bad Request | Dados inválidos |
+| 401 | Unauthorized | Não autenticado |
+| 404 | Not Found | Recurso não encontrado |
+| 500 | Internal Server Error | Erro do servidor |
+
+## 🚀 Melhorias Recentes
+
+### Sistema Professor-Centric
+- ✅ Cadastro com área e componentes via JSON
+- ✅ Vinculação a múltiplas turmas
+- ✅ Criação automática de DisciplinaTurma
+
+### Disciplinas Padronizadas
+- ✅ 10 componentes curriculares com acentuação correta
+- ✅ Script de criação automatizada
+- ✅ Carga horária por disciplina
+
+### Sistema de Notas
+- ✅ Cálculos automáticos (M1, notaFinal, mediaFinal, aprovado)
+- ✅ Upsert para evitar duplicatas
+- ✅ Deleção em cascata
+- ✅ Atualização automática de médias
+
+### Arquitetura
+- ✅ Rotas organizadas por entidade
+- ✅ TypeScript strict mode
+- ✅ Prisma ORM 5.22.0
+- ✅ CORS configurado
+
+## 📚 Documentação Adicional
+
+Consulte também:
+- **[README Principal](../README.md)** - Visão geral do sistema
+- **[Frontend README](../frontend/README.md)** - Interface React
+
+## 🎯 Próximos Passos
+
+Para desenvolvedores que desejam contribuir:
+1. Entenda o schema do Prisma em `prisma/schema.prisma`
+2. Estude o fluxo de notas em `src/routes/notas.ts`
+3. Mantenha padrões REST nas rotas
+4. Use TypeScript strict mode
+5. Teste com Prisma Studio
+
+---
+
+**Backend do Sistema de Gestão Escolar** - Versão 2.0 - 2025
+
+Porta: **3333** | Banco: **PostgreSQL 18** | ORM: **Prisma 5.22.0**
 
 ### Schema Prisma
 

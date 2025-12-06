@@ -8,6 +8,8 @@ import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import UserManagement from './pages/UserManagement'
 import Dashboard from './pages/Dashboard'
+import EquipeDiretivaPage from './pages/EquipeDiretiva'
+import FuncionariosPage from './pages/Funcionarios'
 import Alunos from './pages/Alunos'
 import Professores from './pages/Professores'
 import Turmas from './pages/Turmas'
@@ -36,6 +38,8 @@ function App() {
             }>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
+              <Route path="equipe-diretiva" element={<EquipeDiretivaPage />} />
+              <Route path="funcionarios" element={<FuncionariosPage />} />
               <Route path="alunos" element={<Alunos />} />
               <Route path="professores" element={<Professores />} />
               <Route path="turmas" element={<Turmas />} />

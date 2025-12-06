@@ -10,7 +10,9 @@ import {
   UserCheck,
   Settings,
   LogOut,
-  User
+  User,
+  Crown,
+  Briefcase
 } from 'lucide-react'
 import { configuracoesAPI, Configuracao } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
@@ -47,11 +49,13 @@ const Layout = () => {
   }
 
   const menuItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/disciplinas', icon: BookOpen, label: 'Disciplinas' },
+    { path: '/dashboard', icon: LayoutDashboard, label: config?.nomeEscola ? `SGE - ${config.nomeEscola}` : 'SGE' },
+    { path: '/equipe-diretiva', icon: Crown, label: 'Equipe Diretiva' },
+    { path: '/funcionarios', icon: Briefcase, label: 'Funcionários' },
     { path: '/professores', icon: GraduationCap, label: 'Professores' },
     { path: '/turmas', icon: School, label: 'Turmas' },
     { path: '/alunos', icon: Users, label: 'Alunos' },
+    { path: '/disciplinas', icon: BookOpen, label: 'Disciplinas' },
     { path: '/notas', icon: ClipboardCheck, label: 'Notas' },
     { path: '/frequencia', icon: UserCheck, label: 'Frequência' },
     { path: '/configuracoes', icon: Settings, label: 'Configurações' },

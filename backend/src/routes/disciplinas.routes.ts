@@ -8,6 +8,7 @@ const disciplinaSchema = z.object({
   nome: z.string(),
   cargaHoraria: z.number().int().positive(),
   professorId: z.string().nullable().optional(),
+  turmaIds: z.array(z.string()).optional(),
 });
 
 // GET todas as disciplinas
@@ -43,10 +44,16 @@ disciplinasRouter.get('/:id', async (req, res) => {
 // POST criar disciplina
 disciplinasRouter.post('/', async (req, res) => {
   try {
-    const data = disciplinaSchema.parse(req.body);
+    const { turmaIds, ...data } = disciplinaSchema.parse(req.body);
     
     const disciplina = await prisma.disciplina.create({
-      data
+      data: {
+        ...data,
+        turmas: turmaIds && turmaIds.length > 0 ? {
+          connect: turmaIds.map(id => ({ id }))
+        } : undefined
+      },
+      include: { professor: true, turmas: true }
     });
     
     res.status(201).json(disciplina);
@@ -61,11 +68,17 @@ disciplinasRouter.post('/', async (req, res) => {
 // PUT atualizar disciplina
 disciplinasRouter.put('/:id', async (req, res) => {
   try {
-    const data = disciplinaSchema.partial().parse(req.body);
+    const { turmaIds, ...data } = disciplinaSchema.partial().parse(req.body);
     
     const disciplina = await prisma.disciplina.update({
       where: { id: req.params.id },
-      data
+      data: {
+        ...data,
+        turmas: turmaIds !== undefined ? {
+          set: turmaIds.map(id => ({ id }))
+        } : undefined
+      },
+      include: { professor: true, turmas: true }
     });
     
     res.json(disciplina);

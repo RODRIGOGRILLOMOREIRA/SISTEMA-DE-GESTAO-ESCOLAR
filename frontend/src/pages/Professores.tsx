@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, Edit, X, Save } from 'lucide-react'
-import { professoresAPI, Professor } from '../lib/api'
+import { professoresAPI, turmasAPI, disciplinasAPI, Professor, Turma, Disciplina } from '../lib/api'
 import './CommonPages.css'
 import '../components/Modal.css'
 
@@ -9,11 +9,15 @@ interface ProfessorForm {
   cpf: string
   email: string
   telefone: string
-  especialidade: string
+  area: string
+  componentes: string[]
+  turmasVinculadas: string[]
 }
 
 const Professores = () => {
   const [professores, setProfessores] = useState<Professor[]>([])
+  const [turmas, setTurmas] = useState<Turma[]>([])
+  const [disciplinas, setDisciplinas] = useState<Disciplina[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -22,11 +26,15 @@ const Professores = () => {
     cpf: '',
     email: '',
     telefone: '',
-    especialidade: ''
+    area: '',
+    componentes: [],
+    turmasVinculadas: []
   })
 
   useEffect(() => {
     loadProfessores()
+    loadTurmas()
+    loadDisciplinas()
   }, [])
 
   const loadProfessores = async () => {
@@ -40,6 +48,26 @@ const Professores = () => {
     }
   }
 
+  const loadTurmas = async () => {
+    try {
+      const response = await turmasAPI.getAll()
+      const turmasOrdenadas = response.data.sort((a, b) => a.ano - b.ano)
+      setTurmas(turmasOrdenadas)
+    } catch (error) {
+      console.error('Erro ao carregar turmas:', error)
+    }
+  }
+
+  const loadDisciplinas = async () => {
+    try {
+      const response = await disciplinasAPI.getAll()
+      const disciplinasOrdenadas = response.data.sort((a, b) => a.nome.localeCompare(b.nome))
+      setDisciplinas(disciplinasOrdenadas)
+    } catch (error) {
+      console.error('Erro ao carregar disciplinas:', error)
+    }
+  }
+
   const openModal = (professor?: Professor) => {
     if (professor) {
       setEditingId(professor.id)
@@ -48,7 +76,9 @@ const Professores = () => {
         cpf: professor.cpf,
         email: professor.email,
         telefone: professor.telefone,
-        especialidade: professor.especialidade
+        area: professor.area || '',
+        componentes: professor.componentes ? JSON.parse(professor.componentes) : [],
+        turmasVinculadas: professor.turmasVinculadas ? JSON.parse(professor.turmasVinculadas) : []
       })
     } else {
       setEditingId(null)
@@ -57,7 +87,9 @@ const Professores = () => {
         cpf: '',
         email: '',
         telefone: '',
-        especialidade: ''
+        area: '',
+        componentes: [],
+        turmasVinculadas: []
       })
     }
     setShowModal(true)
@@ -71,17 +103,25 @@ const Professores = () => {
       cpf: '',
       email: '',
       telefone: '',
-      especialidade: ''
+      area: '',
+      componentes: [],
+      turmasVinculadas: []
     })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      const dataToSend = {
+        ...formData,
+        componentes: JSON.stringify(formData.componentes),
+        turmasVinculadas: JSON.stringify(formData.turmasVinculadas)
+      }
+      
       if (editingId) {
-        await professoresAPI.update(editingId, formData)
+        await professoresAPI.update(editingId, dataToSend)
       } else {
-        await professoresAPI.create(formData)
+        await professoresAPI.create(dataToSend)
       }
       
       loadProfessores()
@@ -123,7 +163,7 @@ const Professores = () => {
               <th>CPF</th>
               <th>Email</th>
               <th>Telefone</th>
-              <th>Especialidade</th>
+              <th>Área de Atuação</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -134,7 +174,7 @@ const Professores = () => {
                 <td>{professor.cpf}</td>
                 <td>{professor.email}</td>
                 <td>{professor.telefone}</td>
-                <td>{professor.especialidade}</td>
+                <td>{professor.area || '-'}</td>
                 <td>
                   <div className="action-buttons">
                     <button 
@@ -219,14 +259,160 @@ const Professores = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Especialidade *</label>
-                  <input
-                    type="text"
-                    value={formData.especialidade}
-                    onChange={(e) => setFormData({ ...formData, especialidade: e.target.value })}
-                    placeholder="Ex: Matemática, Português, Ciências..."
+                  <label>Área de Atuação *</label>
+                  <select
+                    value={formData.area}
+                    onChange={(e) => setFormData({ ...formData, area: e.target.value })}
                     required
-                  />
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="Anos Iniciais">Anos Iniciais (1º ao 5º ano)</option>
+                    <option value="Anos Finais">Anos Finais (6º ao 9º ano)</option>
+                    <option value="Ambos">Ambos</option>
+                  </select>
+                </div>
+
+                <div className="form-row" style={{ gap: '24px', alignItems: 'flex-start' }}>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label>Componentes Curriculares *</label>
+                    <div style={{ 
+                      border: '1px solid rgba(255, 255, 255, 0.3)', 
+                      borderRadius: '8px', 
+                      padding: '12px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      minHeight: '200px',
+                      maxHeight: '200px',
+                      overflowY: 'auto'
+                    }}>
+                    {disciplinas.length === 0 ? (
+                      <p style={{ margin: '0', color: 'rgba(255, 255, 255, 0.6)', textAlign: 'center', padding: '20px' }}>
+                        Nenhuma disciplina cadastrada
+                      </p>
+                    ) : (
+                      disciplinas.map((disciplina) => (
+                        <label 
+                          key={disciplina.id} 
+                          style={{ 
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '10px 12px',
+                            cursor: 'pointer',
+                            borderRadius: '6px',
+                            transition: 'all 0.2s',
+                            color: 'white',
+                            fontSize: '14px',
+                            marginBottom: '4px'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.componentes.includes(disciplina.nome)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData({ 
+                                  ...formData, 
+                                  componentes: [...formData.componentes, disciplina.nome] 
+                                })
+                              } else {
+                                setFormData({ 
+                                  ...formData, 
+                                  componentes: formData.componentes.filter(c => c !== disciplina.nome) 
+                                })
+                              }
+                            }}
+                            style={{ 
+                              marginRight: '12px',
+                              cursor: 'pointer',
+                              width: '16px',
+                              height: '16px'
+                            }}
+                          />
+                          <span>{disciplina.nome}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                  </div>
+
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label>Turmas Vinculadas *</label>
+                    <div style={{ 
+                      border: '1px solid rgba(255, 255, 255, 0.3)', 
+                      borderRadius: '8px', 
+                      padding: '12px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      minHeight: '200px',
+                      maxHeight: '200px',
+                      overflowY: 'auto'
+                    }}>
+                    {turmas.length === 0 ? (
+                      <p style={{ margin: '0', color: 'rgba(255, 255, 255, 0.6)', textAlign: 'center', padding: '20px' }}>
+                        Nenhuma turma cadastrada
+                      </p>
+                    ) : (
+                      turmas
+                        .filter(turma => {
+                          if (!formData.area || formData.area === 'Ambos') return true
+                          if (formData.area === 'Anos Iniciais') return turma.ano >= 1 && turma.ano <= 5
+                          if (formData.area === 'Anos Finais') return turma.ano >= 6 && turma.ano <= 9
+                          return true
+                        })
+                        .map((turma) => (
+                          <label 
+                            key={turma.id} 
+                            style={{ 
+                              display: 'flex',
+                              alignItems: 'center',
+                              padding: '10px 12px',
+                              cursor: 'pointer',
+                              borderRadius: '6px',
+                              transition: 'all 0.2s',
+                              color: 'white',
+                              fontSize: '14px',
+                              marginBottom: '4px'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent'
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.turmasVinculadas.includes(turma.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFormData({ 
+                                    ...formData, 
+                                    turmasVinculadas: [...formData.turmasVinculadas, turma.id] 
+                                  })
+                                } else {
+                                  setFormData({ 
+                                    ...formData, 
+                                    turmasVinculadas: formData.turmasVinculadas.filter(t => t !== turma.id) 
+                                  })
+                                }
+                              }}
+                              style={{ 
+                                marginRight: '12px',
+                                cursor: 'pointer',
+                                width: '16px',
+                                height: '16px'
+                              }}
+                            />
+                            <span>{turma.nome} - {turma.ano}º ano - {turma.periodo} ({turma.anoLetivo})</span>
+                          </label>
+                        ))
+                    )}
+                  </div>
+                  </div>
                 </div>
               </div>
 

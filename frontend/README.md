@@ -1,68 +1,92 @@
 # 🎨 Frontend - Sistema de Gestão Escolar
 
-Interface moderna e responsiva para gerenciamento escolar, desenvolvida com React, TypeScript e Vite.
+Interface moderna, responsiva e otimizada para gerenciamento escolar, desenvolvida com React 18, TypeScript e Vite, com sistema de notas com média parcial progressiva.
 
 ## 📋 Índice
 
 - [Tecnologias](#tecnologias)
-- [Arquitetura](#arquitetura)
 - [Funcionalidades](#funcionalidades)
-- [Configuração](#configuração)
+- [Arquitetura](#arquitetura)
+- [Páginas Principais](#páginas-principais)
 - [Componentes](#componentes)
-- [Páginas](#páginas)
-- [Context API](#context-api)
-- [Temas](#temas)
-- [Roteamento](#roteamento)
+- [Estilização](#estilização)
+- [API Integration](#api-integration)
+- [Instalação](#instalação)
 
 ## 🛠️ Tecnologias
 
 ### Core
-- **React** 18.2.0 - Biblioteca para interfaces
-- **TypeScript** 5.3.3 - JavaScript tipado
-- **Vite** 5.0.8 - Build tool ultrarrápido
+- **React** 18.2.0 - Biblioteca para interfaces de usuário
+- **TypeScript** 5.3.3 - JavaScript com tipagem estática
+- **Vite** 5.4.21 - Build tool de alta performance
 
-### Roteamento e Estado
-- **React Router DOM** 6.20.1 - Roteamento SPA
-- **Context API** - Gerenciamento de estado global
+### Roteamento
+- **React Router DOM** 6.20.1 - Roteamento SPA completo
+- Navegação programática com hooks (`useNavigate`)
+- Rotas protegidas por autenticação
 
-### HTTP e API
-- **Axios** 1.6.2 - Cliente HTTP
-- **Interceptors** - Logging e autenticação automática
+### HTTP Client
+- **Axios** 1.6.2 - Cliente HTTP configurado
+- Interceptors para logs e tratamento de erros
+- Base URL configurável via variável de ambiente
 
-### UI e Estilo
-- **Lucide React** 0.294.0 - Biblioteca de ícones
-- **CSS Modules** - Estilos isolados
-- **CSS Variables** - Temas dinâmicos
+### UI e Ícones
+- **Lucide React** 0.294.0 - +1000 ícones modernos
+- Ícones usados: Home, Users, BookOpen, FileText, Calendar, Settings, LogOut, Save, X, Edit, Trash2, Plus, ArrowLeft, CheckCircle, XCircle, GraduationCap, School
 
-### Ferramentas de Desenvolvimento
-- **ESLint** - Linter JavaScript/TypeScript
-- **@vitejs/plugin-react** - Plugin React para Vite
+### Desenvolvimento
+- **ESLint** - Linter para qualidade de código
+- **@vitejs/plugin-react** - Plugin React com Fast Refresh
 
 ## 🎯 Funcionalidades Principais
 
-### Sistema de Notas Avançado
-- ✅ **Seleção Intuitiva**: Turma → Aluno → Disciplina (botões modernos)
-- ✅ **4 Cards Visuais**: 3 trimestres + 1 nota final do ano
-- ✅ **Código de Cores**: Verde (≥7.0), Amarela (5.0-6.9), Vermelha (<5.0)
+### 📊 Sistema de Notas com Média Parcial Progressiva (DESTAQUE!)
+- ✅ **Navegação em 3 níveis**: Turma → Aluno → Disciplina
+- ✅ **4 Cards Visuais**: 3 trimestres + Média Final do Ano
+- ✅ **Média Parcial Progressiva**:
+  - Apenas T1: Exibe "Média Parcial do Ano (T1)" = T1
+  - T1+T2: Exibe "Média Parcial do Ano (T1+T2)" = (T1×1 + T2×2) ÷ 3
+  - T1+T2+T3: Exibe "Média Parcial do Ano" = (T1×1 + T2×2 + T3×3) ÷ 6
+- ✅ **Badge Destacado**: Média parcial em azul com borda entre T3 e Média Final
+- ✅ **Código de Cores Automático**:
+  - Verde: ≥ 7.0 (ótimo desempenho)
+  - Amarelo: 5.0 - 6.9 (atenção)
+  - Vermelho: < 5.0 (recuperação necessária)
 - ✅ **Cálculos em Tempo Real**: Todas as médias calculadas automaticamente
-- ✅ **Status Visual**: APROVADO (verde) ou REPROVADO (vermelho)
-- ✅ **Modal de Edição**: Interface intuitiva para lançamento de notas
-- ✅ **Salvamento Automático**: Persistência no banco de dados
+- ✅ **Status Visual**: APROVADO (verde ✓) ou REPROVADO (vermelho ✗)
+- ✅ **Modal Compacto**: 88vh sem barra de rolagem, tema cinza moderno
 
-### Interface Moderna
-- ✅ **Tema Claro/Escuro**: Alternância suave com CSS Variables
-- ✅ **Sidebar Dinâmica**: Atualização automática de logo e nome
-- ✅ **Modals Responsivos**: Edição/criação em popup
-- ✅ **Animações Suaves**: Transições e hover effects
-- ✅ **Design Responsivo**: Mobile-first approach
-- ✅ **Ícones Modernos**: Lucide React icons
+### 🎨 Interface Modernizada
+- ✅ **Modal Redesenhado**:
+  - Fundo: Degradê cinza (#e2e8f0 → #cbd5e1 → #94a3b8)
+  - Header: Cinza escuro (#475569 → #334155) com título branco
+  - Labels: Azul forte (#1e40af) para campos, cinza (#334155) para seções
+  - Botões: Cancelar vermelho claro (#fee2e2), Salvar verde
+  - Campos: Fundo claro (#f8fafc) com borda cinza (#64748b)
+- ✅ **Botões Compactos**: Padding 8px×14px, fonte 0.875rem, ícones 16px
+- ✅ **Grid Responsivo**: Auto-fit minmax(120px, 1fr) para turmas
+- ✅ **Badges Estilizados**: Títulos com fundo cinza claro e borda
 
-### Gestão Completa
-- ✅ **CRUD Completo**: Todas as entidades (Alunos, Professores, Turmas, Disciplinas)
-- ✅ **Autenticação**: Login, logout, recuperação de senha
-- ✅ **Configurações**: Upload de logo, personalização do sistema
-- ✅ **Dashboard**: Visão geral com estatísticas
-- ✅ **Frequência**: Registro de presença
+### 👨‍🏫 Gestão Professor-Centric
+- ✅ **Cadastro Avançado**:
+  - Seleção de área (Anos Iniciais/Anos Finais/Ambos)
+  - Checkboxes para 10 componentes curriculares
+  - Vinculação a múltiplas turmas simultaneamente
+- ✅ **Criação Automática**: DisciplinaTurma criado ao salvar
+- ✅ **Modal Grande**: 1200px com layout em duas colunas
+- ✅ **Autocomplete**: Busca de professores ao vincular disciplinas
+
+### 📚 Navegação por Categorias (Disciplinas)
+- ✅ **3 Níveis de Navegação**: Categoria (Anos Iniciais/Finais) → Turma → Disciplinas
+- ✅ **Ordenação Inteligente**: Turmas ordenadas por ano e nome (6ª, 7ª, 8ª, 9ª)
+- ✅ **Botões Modernos**: Voltar e Nova Disciplina com estilos compactos
+- ✅ **Badge de Título**: Nome da turma destacado com estilo cinza
+
+### 🏫 Gestão Completa de Entidades
+- ✅ **Alunos**: CRUD com CPF, responsável, data de nascimento, turma
+- ✅ **Turmas**: Cadastro com ano, nome, período, anoLetivo (2025)
+- ✅ **Disciplinas**: 10 padronizadas (ARTES, CIÊNCIAS, EDUCAÇÃO FÍSICA, etc.)
+- ✅ **Deleção em Cascata**: Remove notas automaticamente ao deletar aluno
 
 ## 🏗️ Arquitetura
 
@@ -70,158 +94,142 @@ Interface moderna e responsiva para gerenciamento escolar, desenvolvida com Reac
 
 ```
 frontend/
-├── public/                     # Arquivos públicos estáticos
+├── public/                          # Arquivos públicos estáticos
 ├── src/
 │   ├── components/
-│   │   ├── Layout.tsx          # Layout principal com sidebar e eventos
-│   │   ├── Layout.css
-│   │   ├── PrivateRoute.tsx    # HOC para proteção de rotas
-│   │   └── ...
-│   ├── contexts/
-│   │   ├── ThemeContext.tsx    # Contexto de tema (claro/escuro)
-│   │   └── AuthContext.tsx     # Contexto de autenticação
-│   ├── lib/
-│   │   └── api.ts              # Cliente Axios + tipos
+│   │   ├── Modal.tsx                # Modal reutilizável com tema cinza
+│   │   ├── Modal.css                # Estilos globais do modal (degradê cinza)
+│   │   └── DisciplinasAutocomplete.tsx  # Autocomplete para busca de professores
+│   │
 │   ├── pages/
-│   │   ├── Login.tsx           # Página de login
-│   │   ├── Register.tsx        # Cadastro de usuário
-│   │   ├── UserManagement.tsx  # Gerenciamento de usuários
-│   │   ├── Dashboard.tsx       # Dashboard principal
-│   │   ├── Alunos.tsx          # CRUD de alunos
-│   │   ├── Professores.tsx     # CRUD de professores
-│   │   ├── Turmas.tsx          # CRUD de turmas
-│   │   ├── Disciplinas.tsx     # CRUD de disciplinas
-│   │   ├── Notas.tsx           # Lançamento de notas
-│   │   ├── Frequencia.tsx      # Registro de frequência
-│   │   ├── Configuracoes.tsx   # Configurações da escola
-│   │   └── Auth.css            # Estilos de autenticação
-│   ├── App.tsx                 # Componente raiz
-│   ├── App.css                 # Estilos globais
-│   ├── main.tsx                # Entry point
-│   └── vite-env.d.ts           # Tipos do Vite
-├── index.html
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── README.md
+│   │   ├── Alunos.tsx               # CRUD de alunos
+│   │   ├── Professores.tsx          # CRUD professor-centric (área + componentes)
+│   │   ├── Turmas.tsx               # CRUD de turmas
+│   │   ├── Disciplinas.tsx          # Navegação por categorias (Anos Iniciais/Finais)
+│   │   ├── Notas.tsx                # Sistema de notas com média parcial progressiva
+│   │   ├── Notas.css                # Estilos específicos (modal compacto 88vh)
+│   │   └── CommonPages.css          # Estilos compartilhados entre páginas
+│   │
+│   ├── services/
+│   │   └── api.ts                   # Cliente Axios + endpoints da API
+│   │
+│   ├── App.tsx                      # Componente raiz com rotas
+│   ├── App.css                      # Estilos globais e CSS variables
+│   └── main.tsx                     # Entry point (ReactDOM.render)
+│
+├── package.json                     # Dependências e scripts
+├── tsconfig.json                    # Configuração TypeScript
+├── vite.config.ts                   # Configuração Vite
+├── index.html                       # HTML base
+└── README.md                        # Este arquivo
 ```
 
 ### Padrões de Código
 
-- **Component-Based**: Componentes reutilizáveis
-- **Type Safety**: TypeScript em todo o código
-- **Hooks**: useState, useEffect, useContext, useNavigate
-- **Separation of Concerns**: Lógica separada da apresentação
-- **Responsive Design**: Mobile-first approach
+- **Component-Based**: Componentes reutilizáveis e modulares
+- **Type Safety**: TypeScript strict mode em todo o código
+- **React Hooks**: useState, useEffect, useNavigate, custom hooks
+- **Separation of Concerns**: Lógica de negócio separada da UI
+- **Responsive Design**: Mobile-first approach com grid e flexbox
+- **CSS Modular**: Arquivos CSS específicos por página/componente
 
-## ✨ Funcionalidades
+## 📄 Páginas Principais
 
-### 1. Autenticação
+### 1. Alunos.tsx
 
-#### Página de Login
-- Formulário com email e senha
-- Validação em tempo real
-- Mensagens de erro amigáveis
-- Logo dinâmica da escola
-- Tema claro/escuro integrado
-- Link para gerenciamento de usuários
-
-#### Gerenciamento de Usuários
-- **Aba "Novo Usuário"**:
-  - Cadastro com nome, email e senha
-  - Validação de senha (mínimo 6 caracteres)
-  - Confirmação de senha
-  - Auto-login após cadastro
-
-- **Aba "Redefinir Senha"**:
-  - Reset direto sem token
-  - Apenas email e nova senha
-  - Confirmação de senha
-  - Redirecionamento automático
-
-#### Proteção de Rotas
-- Verificação de autenticação
-- Redirecionamento para login
-- Token armazenado no localStorage
-- Header Authorization automático
-
-### 2. Dashboard
-
-**Visão Geral:**
-- Cards com estatísticas principais
-- Totais de alunos, professores, turmas
-- Gráficos de notas e frequência
-- Atalhos rápidos
-- Notificações e alertas
-
-### 3. Gestão de Alunos
+**Funcionalidade**: CRUD completo de alunos
 
 **Interface:**
-- Tabela com listagem completa
-- Busca e filtros
-- Ordenação por colunas
-- Paginação
+- Header com título e botão "Novo Aluno"
+- Tabela responsiva com colunas: Nome, CPF, Data Nascimento, Responsável, Turma, Ações
+- Ações: Editar (ícone Edit) e Excluir (ícone Trash2)
 
-**Formulário:**
-- Dados pessoais
-- Informações de contato
-- Endereço completo
-- Status ativo/inativo
+**Modal de Cadastro/Edição:**
+- Campos: Nome, CPF, Data de Nascimento, Responsável
+- Dropdown de Turmas (carregado dinamicamente)
+- Validações: todos os campos obrigatórios
+- Botões: Cancelar e Salvar
 
-**Ações:**
-- ➕ Adicionar novo aluno
-- ✏️ Editar dados
-- 🗑️ Excluir aluno
-- 👁️ Visualizar detalhes
+**Lógica:**
+- `useState` para alunos, turmas, modal, form
+- `useEffect` para carregar dados na montagem
+- `handleDelete` com confirmação
+- Deleção em cascata (remove notas automaticamente)
 
-### 4. Gestão de Professores
+### 2. Professores.tsx (Sistema Professor-Centric)
 
-**Campos:**
-- Dados pessoais
-- CPF e especialização
-- Contatos (email, telefone)
-- Endereço completo
-- Status ativo/inativo
+**Funcionalidade**: Cadastro avançado de professores com vinculação automática
 
-**Recursos:**
-- CRUD completo
-- Validação de CPF único
-- Listagem de disciplinas vinculadas
+**Interface:**
+- Header com botão "Novo Professor"
+- Tabela com Nome, CPF, Email, Telefone, Área, Ações
 
-### 5. Gestão de Turmas
+**Modal Grande (1200px):**
+- Layout em duas colunas
+- **Coluna 1**: Nome, CPF, Email, Telefone
+- **Área de Atuação**: Radio buttons (Anos Iniciais/Anos Finais/Ambos)
+- **Componentes Curriculares**: 10 checkboxes
+  - ARTES, CIÊNCIAS, EDUCAÇÃO FÍSICA, ENSINO RELIGIOSO
+  - GEOGRAFIA, HISTÓRIA, INGLÊS, MATEMÁTICA, PORTUGUÊS, PROJETO DE VIDA
+- **Turmas Vinculadas**: Multi-select com todas as turmas
 
-**Campos:**
-- Nome da turma
-- Série/ano
-- Turno (manhã/tarde/noite)
-- Ano letivo
-- Status (ativa/inativa)
+**Lógica:**
+- Salva componentes e turmas como JSON no banco
+- Cria automaticamente DisciplinaTurma para cada combinação (componente × turma)
+- Filtra turmas por área selecionada
 
-**Recursos:**
-- Visualização de alunos matriculados
-- Controle de capacidade
-- Filtros por série e turno
+### 3. Turmas.tsx
 
-### 6. Gestão de Disciplinas
+**Funcionalidade**: Gerenciamento de turmas
 
-**Campos:**
-- Nome da disciplina
-- Código único
-- Carga horária
-- Professor responsável
-- Descrição
+**Interface:**
+- Tabela com Ano, Nome, Período, Ano Letivo, Ações
+- Modal com campos:
+  - Ano (1-9)
+  - Nome (A, B, C, etc.)
+  - Período (enum: Manhã, Tarde, Noite, Integral)
+  - Ano Letivo (padrão: 2025)
 
-**Recursos:**
-- Seleção de professor via dropdown
-- Validação de código único
-- Cálculo automático de carga horária total
+**Lógica:**
+- Ordenação por ano
+- Validação de ano (1-9)
 
-### 7. Lançamento de Notas Avançado
+### 4. Disciplinas.tsx (Navegação por Categorias)
+
+**Funcionalidade**: Navegação em 3 níveis + gerenciamento de disciplinas
+
+**Interface Nível 1 - Categorias:**
+- 2 botões: "Anos Iniciais (1º ao 5º ano)" e "Anos Finais (6º ao 9º ano)"
+
+**Interface Nível 2 - Turmas:**
+- Header com:
+  - Botão "Voltar" compacto (8px×14px padding, 0.875rem fonte)
+  - Badge estilizado com nome da categoria
+  - Botão "Nova Disciplina" (azul, compacto)
+- Grid de turmas:
+  - `gridTemplateColumns: repeat(auto-fit, minmax(120px, 1fr))`
+  - Gap 12px
+  - Botões com padding 12px×16px, fonte 0.875rem
+  - Ordenação: por ano, depois por nome (6ª, 7ª, 8ª, 9ª)
+
+**Interface Nível 3 - Disciplinas:**
+- Listagem de disciplinas da turma
+- Tabela com Disciplina, Carga Horária, Professor, Ações
+- Modal com:
+  - Dropdown de disciplinas (10 padronizadas)
+  - Campo de carga horária
+  - Autocomplete de professores (componente DisciplinasAutocomplete)
+
+**Lógica:**
+- `loadTurmas()` com sorting: `.sort((a, b) => { if (a.ano !== b.ano) return a.ano - b.ano; return a.nome.localeCompare(b.nome); })`
+- Criação de DisciplinaTurma ao vincular
+
+### 5. Notas.tsx (Sistema Avançado com Média Parcial Progressiva)
 
 **Interface de Seleção (3 etapas):**
-1. **Seleção de Turma** - Botões visuais com nome, ano e período
+1. **Seleção de Turma** - Grid de botões com ano e nome
 2. **Seleção de Aluno** - Lista filtrada pela turma escolhida
-3. **Seleção de Disciplina** - Cards com carga horária e professor
+3. **Seleção de Disciplina** - Cards com nome e professor
 
 **Cards de Visualização:**
 
@@ -230,51 +238,53 @@ frontend/
   - Avaliação 01 (0.0 - 10.0)
   - Avaliação 02 (0.0 - 10.0)
   - Avaliação 03 (0.0 - 10.0)
-  - Média M1 (soma automática)
+  - Média M1 (soma das 3)
 - Momento 2:
   - Avaliação EAC (0.0 - 10.0)
-- Nota Final do Trimestre (maior entre M1 e EAC)
-- Botão de edição em cada card
+- Nota Final do Trimestre (max(M1, EAC))
+- Botão "Editar Notas" em cada card
 
-📊 **Card de Nota Final do Ano:**
+📊 **Média Parcial Progressiva (DESTAQUE!):**
+- Badge azul com borda exibido entre T3 e Média Final
+- Função `calcularMediaParcialAno()`:
+  ```typescript
+  if (apenas T1) return { valor: t1, texto: 'Média Parcial do Ano (T1)' };
+  if (T1 e T2) return { valor: (t1*1 + t2*2)/3, texto: 'Média Parcial do Ano (T1+T2)' };
+  if (T1, T2 e T3) return { valor: (t1*1 + t2*2 + t3*3)/6, texto: 'Média Parcial do Ano' };
+  ```
+
+📊 **Card de Média Final do Ano:**
 - Exibe notas finais dos 3 trimestres
-- Média Final calculada: `(T1×1 + T2×2 + T3×3) ÷ 6`
 - Status visual:
-  - 🟢 **APROVADO** (≥ 6.0) - Botão verde com ícone check
-  - 🔴 **REPROVADO** (< 6.0) - Botão vermelho com ícone X
-  - ⚪ **PENDENTE** - Aguardando lançamento de notas
+  - 🟢 **APROVADO** (≥ 6.0) - Badge verde com CheckCircle
+  - 🔴 **REPROVADO** (< 6.0) - Badge vermelho com XCircle
+  - ⚪ **Aguardando** - Badge cinza
 
-**Modal de Edição:**
-- Formulário intuitivo com campos numéricos
-- Validação em tempo real (0.0 - 10.0)
-- Cálculo automático da Média M1
-- Campo de observações
-- Botão "Salvar Notas" com feedback de salvamento
+**Modal de Edição (Compacto - 88vh):**
+- max-height: 88vh (sem barra de rolagem)
+- Tema cinza: background `linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%)`
+- Header cinza escuro: `linear-gradient(135deg, #475569 0%, #334155 100%)`
+- Padding reduzido:
+  - Header: 12px×18px, h2 1.1rem
+  - Body: 16px
+  - Form-group: 12px margin-bottom, label 0.75rem
+  - Inputs: 6px×8px padding, 0.875rem font
+- **Momento 1, 2, 3**: h3 com cor #334155, fonte 0.9rem, padding 10px×12px
+- **Labels dos campos**: inline `style={{ color: '#334155' }}` (cinza escuro)
+- Botões:
+  - Cancelar: background #fee2e2, color #dc2626, border #fca5a5
+  - Salvar: verde (#10b981)
 
-**Código de Cores:**
-- 🟢 Verde: Nota ≥ 7.0
-- 🟡 Amarela: Nota entre 5.0 e 6.9
-- 🔴 Vermelha: Nota < 5.0
+**Código de Cores (Cards):**
+- 🟢 Verde: ≥ 7.0
+- 🟡 Amarelo: 5.0 - 6.9
+- 🔴 Vermelho: < 5.0
 
-**Recursos:**
-- Salvamento automático no banco de dados
-- Atualização em tempo real de todas as médias
-- Persistência de dados para relatórios
-- Cálculos executados no backend
-- Interface responsiva (desktop, tablet, mobile)
-- Animações suaves e feedback visual
-
-### 8. Controle de Frequência
-
-**Interface:**
-- Calendário para seleção de data
-- Lista de alunos da turma
-- Marcação rápida (presente/ausente/justificado)
-- Campo de observações
-
-**Recursos:**
-- Salvamento em lote
-- Relatórios de frequência
+**Lógica:**
+- `calcularMediaParcialAno()`: retorna objeto com valor e texto dinâmico
+- Salvamento via `PUT /api/notas/:id`
+- Atualização automática de M1, nota final, média anual
+- Feedback visual com toasts/alerts
 - Filtros por período
 - Exportação de dados
 
@@ -288,41 +298,165 @@ frontend/
 - Endereço completo
 - Contatos (telefone, email)
 
-**Personalização:**
-- Upload de logo
-- Preview em tempo real
-- Tema claro/escuro
-- Salvamento automático no localStorage
+## 🧩 Componentes Principais
 
-**Recursos:**
-- Upload de imagem (drag & drop)
-- Validação de tipo de arquivo
-- Limite de tamanho (10MB)
-- Sincronização em todas as páginas
+### Modal.tsx
 
-## 🔧 Configuração
+**Localização:** `src/components/Modal.tsx`
 
-### Variáveis de Ambiente
-
-Crie um arquivo `.env` na raiz do frontend:
-
-```env
-VITE_API_URL=http://localhost:3333/api
+**Props:**
+```typescript
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  size?: 'small' | 'medium' | 'large';
+}
 ```
 
-### Scripts NPM
+**Funcionalidades:**
+- Modal reutilizável em todo o sistema
+- Backdrop clicável para fechar
+- Botão X no canto superior direito
+- Suporte a 3 tamanhos (small: 500px, medium: 700px, large: 1200px)
+- Tema cinza moderno
+
+**Estilos (Modal.css):**
+- Background: `linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%)`
+- Border: 2px solid #475569
+- Header: `linear-gradient(135deg, #475569 0%, #334155 100%)` com texto branco
+- Labels: cor #1e40af (azul forte)
+- Inputs: background #f8fafc, border #64748b
+- Botão Cancelar: background #fee2e2, color #dc2626
+- Botão Salvar: background verde (#10b981)
+
+### DisciplinasAutocomplete.tsx
+
+**Localização:** `src/components/DisciplinasAutocomplete.tsx`
+
+**Funcionalidade:**
+- Autocomplete para busca de professores
+- Filtragem em tempo real por nome
+- Dropdown com sugestões
+- Seleção via clique
+
+**Props:**
+```typescript
+interface Props {
+  professores: Professor[];
+  value: string;
+  onChange: (id: string) => void;
+}
+```
+
+## 🎨 Estilização
+
+### Modal.css (Estilos Globais do Modal)
+
+**Características:**
+- Fundo degradê cinza moderno (#e2e8f0 → #cbd5e1 → #94a3b8)
+- Header cinza escuro (#475569 → #334155)
+- Labels azuis (#1e40af) com peso 700
+- Campos com fundo claro (#f8fafc) e borda cinza (#64748b)
+- Botão Cancelar vermelho claro (#fee2e2)
+- Botão Salvar verde com gradiente
+
+### Notas.css (Modal Compacto)
+
+**Otimizações específicas:**
+```css
+.modal-notas {
+  max-height: 88vh;  /* Sem barra de rolagem */
+}
+
+.modal-notas .modal-header {
+  padding: 12px 18px;
+  h2 { font-size: 1.1rem; }
+}
+
+.modal-notas .modal-body {
+  padding: 16px;
+}
+
+.modal-notas .form-group {
+  margin-bottom: 12px;
+  label { margin-bottom: 4px; font-size: 0.75rem; }
+}
+
+.modal-notas input {
+  padding: 6px 8px;
+  font-size: 0.875rem;
+}
+
+.momento-form {
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  h3 { color: #334155; font-size: 0.9rem; margin: 0 0 8px 0; }
+}
+```
+
+### CommonPages.css (Estilos Compartilhados)
+
+**Elementos:**
+- Headers de páginas
+- Botões de ação
+- Tabelas responsivas
+- Cards de navegação
+- Grid layouts
+
+## 🔧 Configuração e Instalação
+
+### Pré-requisitos
+- Node.js 18+
+- npm ou yarn
+- Backend rodando em http://localhost:3333
+
+### Instalação
+
+1. Entre na pasta do frontend:
+```powershell
+cd frontend
+```
+
+2. Instale as dependências:
+```powershell
+npm install
+```
+
+3. (Opcional) Configure variáveis de ambiente:
+```env
+# .env
+VITE_API_URL=http://localhost:3333
+```
+
+4. Inicie o servidor de desenvolvimento:
+```powershell
+npm run dev
+```
+
+✅ Acesse: **http://localhost:5173**
+
+### Scripts Disponíveis
 
 ```bash
-# Desenvolvimento
 npm run dev              # Inicia Vite dev server (porta 5173)
-
-# Build
-npm run build            # Build de produção
-npm run preview          # Preview do build
-
-# Linting
-npm run lint             # Executa ESLint
+npm run build            # Build de produção (pasta dist/)
+npm run preview          # Preview do build de produção
+npm run lint             # Executa ESLint (se configurado)
 ```
+
+### Build de Produção
+
+```powershell
+npm run build
+```
+
+Gera pasta `dist/` otimizada para produção com:
+- Code splitting
+- Tree shaking
+- Minificação
+- Source maps
 
 ## 🧩 Componentes
 
@@ -363,268 +497,168 @@ npm run lint             # Executa ESLint
 
 ## 📄 Páginas
 
-### Login (`/login`)
-- Formulário de autenticação
-- Logo da escola
-- Link para gerenciamento de usuários
-- Tema integrado
+## 🌐 API Integration
 
-### Gerenciamento de Usuários (`/user-management`)
-- Tabs para cadastro e reset
-- Formulários validados
-- Mensagens de sucesso/erro
-- Sem necessidade de autenticação
+### Cliente Axios
 
-### Dashboard (`/dashboard`)
-- Visão geral do sistema
-- Cards com estatísticas
-- Gráficos e relatórios
-- Atalhos rápidos
-
-### CRUD Pages
-- **Alunos** (`/alunos`)
-- **Professores** (`/professores`)
-- **Turmas** (`/turmas`)
-- **Disciplinas** (`/disciplinas`)
-- **Notas** (`/notas`)
-- **Frequência** (`/frequencia`)
-
-Todas seguem o padrão:
-1. Listagem com tabela
-2. Botão de adicionar
-3. Modal/formulário de criação
-4. Ações de editar/excluir
-5. Validação de dados
-6. Feedback visual
-
-### Configurações (`/configuracoes`)
-- Dados da escola
-- Upload de logo
-- Tema claro/escuro
-- Sincronização global
-
-## 🔄 Context API
-
-### ThemeContext
-
-**Localização:** `src/contexts/ThemeContext.tsx`
-
-**Estado:**
-```typescript
-interface ThemeContextType {
-  theme: 'light' | 'dark';
-  toggleTheme: () => void;
-}
-```
-
-**Funcionalidades:**
-- Alterna entre tema claro e escuro
-- Salva preferência no localStorage
-- Aplica CSS variables dinamicamente
-- Sincroniza em todas as páginas
-
-**Uso:**
-```tsx
-const { theme, toggleTheme } = useTheme();
-```
-
-### AuthContext
-
-**Localização:** `src/contexts/AuthContext.tsx`
-
-**Estado:**
-```typescript
-interface AuthContextType {
-  user: Usuario | null;
-  token: string | null;
-  login: (token: string, user: Usuario) => void;
-  logout: () => void;
-  isAuthenticated: boolean;
-}
-```
-
-**Funcionalidades:**
-- Gerencia estado de autenticação
-- Armazena token e usuário
-- Carrega dados do localStorage
-- Fornece métodos de login/logout
-
-**Uso:**
-```tsx
-const { user, isAuthenticated, logout } = useAuth();
-```
-
-## 🎨 Temas
-
-### Variáveis CSS
-
-**Tema Claro:**
-```css
-:root {
-  --background-color: #f5f7fa;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --card-bg: #ffffff;
-  --border-color: #e2e8f0;
-  --primary-color: #3b82f6;
-  --primary-hover: #2563eb;
-  --sidebar-bg: #1e293b;
-  --success-color: #10b981;
-  --danger-color: #ef4444;
-}
-```
-
-**Tema Escuro:**
-```css
-[data-theme="dark"] {
-  --background-color: #0f172a;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --card-bg: #1e293b;
-  --border-color: #334155;
-  --primary-color: #60a5fa;
-  --primary-hover: #3b82f6;
-  --sidebar-bg: #0f172a;
-  --success-color: #34d399;
-  --danger-color: #f87171;
-}
-```
-
-### Alternância de Tema
-
-```tsx
-const toggleTheme = () => {
-  const newTheme = theme === 'light' ? 'dark' : 'light';
-  setTheme(newTheme);
-  document.documentElement.setAttribute('data-theme', newTheme);
-  localStorage.setItem('theme', newTheme);
-};
-```
-
-## 🛣️ Roteamento
-
-### Estrutura de Rotas
-
-```tsx
-<Routes>
-  {/* Rotas Públicas */}
-  <Route path="/login" element={<Login />} />
-  <Route path="/user-management" element={<UserManagement />} />
-
-  {/* Rotas Privadas */}
-  <Route path="/" element={
-    <PrivateRoute>
-      <Layout />
-    </PrivateRoute>
-  }>
-    <Route index element={<Navigate to="/dashboard" />} />
-    <Route path="dashboard" element={<Dashboard />} />
-    <Route path="alunos" element={<Alunos />} />
-    <Route path="professores" element={<Professores />} />
-    <Route path="turmas" element={<Turmas />} />
-    <Route path="disciplinas" element={<Disciplinas />} />
-    <Route path="notas" element={<Notas />} />
-    <Route path="frequencia" element={<Frequencia />} />
-    <Route path="configuracoes" element={<Configuracoes />} />
-  </Route>
-</Routes>
-```
-
-## 🌐 Cliente API
-
-### Configuração
-
-**Localização:** `src/lib/api.ts`
+**Localização:** `src/services/api.ts`
 
 ```typescript
+import axios from 'axios';
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3333/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3333',
 });
 
-// Interceptor para adicionar token
+// Interceptor para logs (opcional)
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  console.log(`${config.method?.toUpperCase()} ${config.url}`);
   return config;
 });
 ```
 
-### APIs Disponíveis
+### APIs Exportadas
 
 ```typescript
-// Autenticação
-export const authAPI = {
-  login: (data: LoginData) => api.post('/auth/login', data),
-  register: (data: RegisterData) => api.post('/auth/register', data),
-  resetPasswordDirect: (data) => api.post('/auth/reset-password-direct', data),
-  me: () => api.get('/auth/me'),
-};
-
 // Alunos
 export const alunosAPI = {
-  getAll: () => api.get('/alunos'),
-  getById: (id: string) => api.get(`/alunos/${id}`),
-  create: (data: AlunoInput) => api.post('/alunos', data),
-  update: (id: string, data: Partial<AlunoInput>) => api.put(`/alunos/${id}`, data),
-  delete: (id: string) => api.delete(`/alunos/${id}`),
+  getAll: () => api.get('/api/alunos'),
+  getById: (id: string) => api.get(`/api/alunos/${id}`),
+  create: (data) => api.post('/api/alunos', data),
+  update: (id: string, data) => api.put(`/api/alunos/${id}`, data),
+  delete: (id: string) => api.delete(`/api/alunos/${id}`),
 };
 
-// ... outras APIs
-```
+// Professores
+export const professoresAPI = {
+  getAll: () => api.get('/api/professores'),
+  getById: (id: string) => api.get(`/api/professores/${id}`),
+  create: (data) => api.post('/api/professores', data),
+  update: (id: string, data) => api.put(`/api/professores/${id}`, data),
+  delete: (id: string) => api.delete(`/api/professores/${id}`),
+};
 
-## 📱 Responsividade
+// Turmas
+export const turmasAPI = {
+  getAll: () => api.get('/api/turmas'),
+  getById: (id: string) => api.get(`/api/turmas/${id}`),
+  create: (data) => api.post('/api/turmas', data),
+  update: (id: string, data) => api.put(`/api/turmas/${id}`, data),
+  delete: (id: string) => api.delete(`/api/turmas/${id}`),
+};
 
-### Breakpoints
+// Disciplinas
+export const disciplinasAPI = {
+  getAll: () => api.get('/api/disciplinas'),
+  getById: (id: string) => api.get(`/api/disciplinas/${id}`),
+  create: (data) => api.post('/api/disciplinas', data),
+  update: (id: string, data) => api.put(`/api/disciplinas/${id}`, data),
+  delete: (id: string) => api.delete(`/api/disciplinas/${id}`),
+};
 
-```css
-/* Mobile */
-@media (max-width: 768px) {
-  .sidebar { width: 70px; }
-  .menu-item span { display: none; }
-  .user-details { display: none; }
-}
+// DisciplinaTurma
+export const disciplinasTurmaAPI = {
+  getAll: () => api.get('/api/disciplinas-turma'),
+  getByTurma: (turmaId: string) => api.get(`/api/disciplinas-turma/turma/${turmaId}`),
+  create: (data) => api.post('/api/disciplinas-turma', data),
+  delete: (id: string) => api.delete(`/api/disciplinas-turma/${id}`),
+};
 
-/* Tablet */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .sidebar { width: 220px; }
-}
-
-/* Desktop */
-@media (min-width: 1025px) {
-  .sidebar { width: 280px; }
-}
-```
-
-## 🎭 Animações
-
-### Animações CSS
-
-```css
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-@keyframes float {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-50px, 50px); }
-}
+// Notas
+export const notasAPI = {
+  getByAluno: (alunoId: string) => api.get(`/api/notas/aluno/${alunoId}`),
+  getByAlunoAndDisciplina: (alunoId: string, disciplinaTurmaId: string) =>
+    api.get(`/api/notas/aluno/${alunoId}/disciplinaTurma/${disciplinaTurmaId}`),
+  create: (data) => api.post('/api/notas', data),
+  update: (id: string, data) => api.put(`/api/notas/${id}`, data),
+  delete: (id: string) => api.delete(`/api/notas/${id}`),
+};
 ```
 
 ## 📊 Sistema de Notas - Fluxo Completo
+
+### 1. Seleção
+```
+Usuário seleciona:
+  └─> Turma
+      └─> Aluno
+          └─> Disciplina
+```
+
+### 2. Carregamento de Notas
+```typescript
+// GET /api/notas/aluno/:alunoId/disciplinaTurma/:disciplinaTurmaId
+const response = await notasAPI.getByAlunoAndDisciplina(alunoId, disciplinaTurmaId);
+// Retorna: { notas: Nota[], notaFinal: NotaFinal }
+```
+
+### 3. Exibição
+- 3 cards de trimestres
+- 1 badge de média parcial progressiva
+- 1 card de média final
+
+### 4. Edição
+- Modal compacto 88vh sem scroll
+- Campos para Momento 1 (3 avaliações)
+- Campo para Momento 2 (EAC)
+- Cálculo automático de M1
+
+### 5. Salvamento
+```typescript
+// PUT /api/notas/:id
+await notasAPI.update(notaId, {
+  avaliacao01, avaliacao02, avaliacao03,
+  avaliacaoEAC
+});
+// Backend calcula: mediaM1, notaFinal, mediaFinal, aprovado
+```
+
+### 6. Atualização UI
+- Recarrega notas
+- Atualiza média parcial progressiva
+- Atualiza status APROVADO/REPROVADO
+- Aplica código de cores
+
+## 🚀 Melhorias Recentes
+
+### Interface
+- ✅ Botões compactos (8px×14px padding, 0.875rem fonte)
+- ✅ Grid responsivo para turmas (auto-fit minmax(120px, 1fr))
+- ✅ Badge estilizado para títulos de turma
+- ✅ Ordenação alfabética de turmas (6ª, 7ª, 8ª, 9ª)
+
+### Modal
+- ✅ Redesign completo com tema cinza (#e2e8f0 degradê)
+- ✅ Compactação para 88vh (sem scroll)
+- ✅ Header cinza escuro (#475569 → #334155)
+- ✅ Labels: azul (#1e40af) para campos, cinza (#334155) para seções
+- ✅ Botão Cancelar vermelho claro (#fee2e2)
+
+### Funcionalidades
+- ✅ Média Parcial Progressiva (T1, T1+T2, T1+T2+T3)
+- ✅ Badge destacado em azul para média parcial
+- ✅ Sistema professor-centric com checkboxes de componentes
+- ✅ Navegação por categorias (Anos Iniciais/Finais)
+- ✅ Autocomplete para busca de professores
+
+## 📚 Documentação Adicional
+
+Consulte também:
+- **[README Principal](../README.md)** - Visão geral completa do sistema
+- **[Backend README](../backend/README.md)** - Arquitetura do backend
+
+## 🎯 Próximos Passos
+
+Para desenvolvedores que desejam contribuir ou estender o sistema:
+1. Familiarize-se com a estrutura de pastas
+2. Entenda o fluxo de Notas.tsx (página mais complexa)
+3. Siga os padrões de Modal.css para novos modais
+4. Mantenha a tipagem TypeScript rigorosa
+5. Teste responsividade em mobile/tablet/desktop
+
+---
+
+**Frontend do Sistema de Gestão Escolar** - Versão 2.0 - 2025
 
 ### 1. Fluxo de Seleção
 
