@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 export const frequenciasRouter = Router();
 
@@ -15,8 +16,8 @@ const frequenciaSchema = z.object({
 // GET todas as frequências
 frequenciasRouter.get('/', async (req, res) => {
   try {
-    const frequencias = await prisma.frequencia.findMany({
-      include: { aluno: true, turma: true }
+    const frequencias = await prisma.frequencias.findMany({
+      include: { alunos: true, turmas: true }
     });
     res.json(frequencias);
   } catch (error) {
@@ -27,9 +28,9 @@ frequenciasRouter.get('/', async (req, res) => {
 // GET frequências de um aluno
 frequenciasRouter.get('/aluno/:alunoId', async (req, res) => {
   try {
-    const frequencias = await prisma.frequencia.findMany({
+    const frequencias = await prisma.frequencias.findMany({
       where: { alunoId: req.params.alunoId },
-      include: { turma: true },
+      include: { turmas: true },
       orderBy: { data: 'desc' }
     });
     res.json(frequencias);
@@ -43,10 +44,15 @@ frequenciasRouter.post('/', async (req, res) => {
   try {
     const data = frequenciaSchema.parse(req.body);
     
-    const frequencia = await prisma.frequencia.create({
+    const frequencia = await prisma.frequencias.create({
       data: {
-        ...data,
+        id: crypto.randomUUID(),
+        turmaId: data.turmaId,
+        alunoId: data.alunoId,
+        presente: data.presente,
         data: new Date(data.data),
+        updatedAt: new Date(),
+        ...(data.observacao && { observacao: data.observacao }),
       }
     });
     
@@ -64,7 +70,7 @@ frequenciasRouter.put('/:id', async (req, res) => {
   try {
     const data = frequenciaSchema.partial().parse(req.body);
     
-    const frequencia = await prisma.frequencia.update({
+    const frequencia = await prisma.frequencias.update({
       where: { id: req.params.id },
       data: data.data ? {
         ...data,
@@ -81,7 +87,7 @@ frequenciasRouter.put('/:id', async (req, res) => {
 // DELETE frequência
 frequenciasRouter.delete('/:id', async (req, res) => {
   try {
-    await prisma.frequencia.delete({
+    await prisma.frequencias.delete({
       where: { id: req.params.id }
     });
     
@@ -90,3 +96,5 @@ frequenciasRouter.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Erro ao deletar frequência' });
   }
 });
+
+

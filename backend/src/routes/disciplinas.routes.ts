@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 export const disciplinasRouter = Router();
 
@@ -14,8 +15,8 @@ const disciplinaSchema = z.object({
 // GET todas as disciplinas
 disciplinasRouter.get('/', async (req, res) => {
   try {
-    const disciplinas = await prisma.disciplina.findMany({
-      include: { professor: true, turmas: true }
+    const disciplinas = await prisma.disciplinas.findMany({
+      include: { professores: true, turmas: true }
     });
     res.json(disciplinas);
   } catch (error) {
@@ -26,9 +27,9 @@ disciplinasRouter.get('/', async (req, res) => {
 // GET disciplina por ID
 disciplinasRouter.get('/:id', async (req, res) => {
   try {
-    const disciplina = await prisma.disciplina.findUnique({
+    const disciplina = await prisma.disciplinas.findUnique({
       where: { id: req.params.id },
-      include: { professor: true, turmas: true, notas: true }
+      include: { professores: true, turmas: true, notas: true }
     });
     
     if (!disciplina) {
@@ -46,14 +47,18 @@ disciplinasRouter.post('/', async (req, res) => {
   try {
     const { turmaIds, ...data } = disciplinaSchema.parse(req.body);
     
-    const disciplina = await prisma.disciplina.create({
+    const disciplina = await prisma.disciplinas.create({
       data: {
-        ...data,
+        id: crypto.randomUUID(),
+        nome: data.nome,
+        cargaHoraria: data.cargaHoraria,
+        updatedAt: new Date(),
+        ...(data.professorId && { professorId: data.professorId }),
         turmas: turmaIds && turmaIds.length > 0 ? {
           connect: turmaIds.map(id => ({ id }))
         } : undefined
       },
-      include: { professor: true, turmas: true }
+      include: { professores: true, turmas: true }
     });
     
     res.status(201).json(disciplina);
@@ -70,7 +75,7 @@ disciplinasRouter.put('/:id', async (req, res) => {
   try {
     const { turmaIds, ...data } = disciplinaSchema.partial().parse(req.body);
     
-    const disciplina = await prisma.disciplina.update({
+    const disciplina = await prisma.disciplinas.update({
       where: { id: req.params.id },
       data: {
         ...data,
@@ -78,7 +83,7 @@ disciplinasRouter.put('/:id', async (req, res) => {
           set: turmaIds.map(id => ({ id }))
         } : undefined
       },
-      include: { professor: true, turmas: true }
+      include: { professores: true, turmas: true }
     });
     
     res.json(disciplina);
@@ -90,7 +95,7 @@ disciplinasRouter.put('/:id', async (req, res) => {
 // DELETE disciplina
 disciplinasRouter.delete('/:id', async (req, res) => {
   try {
-    await prisma.disciplina.delete({
+    await prisma.disciplinas.delete({
       where: { id: req.params.id }
     });
     
@@ -99,3 +104,5 @@ disciplinasRouter.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Erro ao deletar disciplina' });
   }
 });
+
+

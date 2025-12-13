@@ -1,0 +1,25 @@
+.ano-selector {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.ano-selector h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  min-width: 150px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .ano-selector {
+    gap: 16px;
+  }
+
+  .ano-selector h1 {
+    font-size: 1.5rem;
+    min-width: 100px;
+  }
+}

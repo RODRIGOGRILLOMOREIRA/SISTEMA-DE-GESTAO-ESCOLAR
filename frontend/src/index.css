@@ -4,10 +4,39 @@
   box-sizing: border-box;
 }
 
+/* Default Variables */
+:root {
+  --bg-primary: #cbd5e1;
+  --bg-secondary: #e2e8f0;
+  --card-bg: #ffffff;
+  --input-bg: #ffffff;
+  --background-color: #e2e8f0;
+  
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-light: #dbeafe;
+  
+  --secondary-bg: #f1f5f9;
+  
+  --success-color: #10b981;
+  --success-hover: #059669;
+  
+  --border-color: #94a3b8;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  
+  --sidebar-bg: #1e293b;
+  --sidebar-text: #cbd5e1;
+  --sidebar-hover: #334155;
+  --sidebar-active: #3b82f6;
+}
+
 /* Light Theme (Default) */
 :root[data-theme="light"] {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
+  --bg-primary: #cbd5e1;
+  --bg-secondary: #e2e8f0;
   --card-bg: #ffffff;
   --input-bg: #ffffff;
   
@@ -23,7 +52,7 @@
   --success-color: #10b981;
   --success-hover: #059669;
   
-  --border-color: #e2e8f0;
+  --border-color: #94a3b8;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   
   --sidebar-bg: #1e293b;

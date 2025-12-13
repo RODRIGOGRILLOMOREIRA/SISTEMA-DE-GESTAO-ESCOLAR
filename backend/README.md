@@ -38,6 +38,90 @@ API RESTful completa e robusta para gerenciamento escolar, desenvolvida com Node
 
 ## 🎯 Funcionalidades Principais
 
+### ✅ Sistema de Ano Letivo (Novo)
+
+**Isolamento Total de Notas por Ano**
+
+Todas as notas são amarradas a um `anoLetivo` específico, garantindo que:
+- Notas de 2024 não se misturam com 2025
+- Cada ano tem seu próprio conjunto de registros
+- Relatórios e dashboards filtram automaticamente por ano
+- Consultas sempre incluem `anoLetivo` como parâmetro
+
+**Implementação no Prisma:**
+```prisma
+model notas {
+  id            String       @id @default(uuid())
+  valor         Float
+  trimestre     Int          // 1, 2 ou 3
+  anoLetivo     Int          @default(2025)
+  observacoes   String?
+  
+  @@unique([alunoId, disciplinaId, trimestre, anoLetivo])
+  @@index([alunoId, disciplinaId, anoLetivo])
+}
+
+model notas_finais {
+  id            String       @id @default(uuid())
+  mediaFinal    Float
+  anoLetivo     Int          @default(2025)
+  status        String
+  
+  @@unique([alunoId, disciplinaId, anoLetivo])
+  @@index([alunoId, anoLetivo])
+}
+```
+
+**Rotas com Ano Letivo:**
+
+1. **Buscar notas por aluno e disciplina:**
+   ```http
+   GET /api/notas/aluno/:alunoId/disciplina/:disciplinaId?anoLetivo=2025
+   ```
+
+2. **Salvar nota com ano:**
+   ```http
+   POST /api/notas/salvar
+   Body: {
+     alunoId, disciplinaId, trimestre, valor,
+     anoLetivo: 2025
+   }
+   ```
+
+3. **Buscar notas por turma:**
+   ```http
+   GET /api/notas/turma/:turmaId?anoLetivo=2025
+   ```
+
+**Lógica de Cálculo com Ano:**
+```typescript
+async function atualizarNotaFinal(
+  alunoId: string,
+  disciplinaId: string,
+  anoLetivo: number
+) {
+  // Busca apenas notas do ano letivo específico
+  const notas = await prisma.notas.findMany({
+    where: { alunoId, disciplinaId, anoLetivo }
+  })
+  
+  // Calcula média final
+  const soma = notas.reduce((acc, nota) => acc + nota.valor, 0)
+  const mediaFinal = soma / 3
+  
+  // Salva com ano letivo
+  await prisma.notas_finais.upsert({
+    where: {
+      alunoId_disciplinaId_anoLetivo: {
+        alunoId, disciplinaId, anoLetivo
+      }
+    },
+    update: { mediaFinal },
+    create: { alunoId, disciplinaId, anoLetivo, mediaFinal }
+  })
+}
+```
+
 ### Sistema de Notas Avançado com Cálculos Automáticos
 
 #### Cálculo de Média M1

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 export const notasRouter = Router();
 
@@ -8,6 +9,7 @@ const notaSchema = z.object({
   alunoId: z.string(),
   disciplinaId: z.string(),
   trimestre: z.number().int().min(1).max(3),
+  anoLetivo: z.number().int().optional().default(new Date().getFullYear()),
   avaliacao01: z.number().min(0).max(10).nullable().optional(),
   avaliacao02: z.number().min(0).max(10).nullable().optional(),
   avaliacao03: z.number().min(0).max(10).nullable().optional(),
@@ -34,8 +36,8 @@ function calcularNotaFinalTrimestre(mediaM1: number | null, avaliacaoEAC: number
 }
 
 // Função para calcular a média final anual
-function calcularMediaFinal(t1: number | null, t2: number | null, t3: number | null): number | null {
-  if (t1 !== null && t2 !== null && t3 !== null) {
+function calcularMediaFinal(t1: number | null | undefined, t2: number | null | undefined, t3: number | null | undefined): number | null {
+  if (t1 !== null && t1 !== undefined && t2 !== null && t2 !== undefined && t3 !== null && t3 !== undefined) {
     // Fórmula: (T1*1 + T2*2 + T3*3) / 6
     const mediaFinal = (t1 * 1 + t2 * 2 + t3 * 3) / 6;
     return parseFloat(mediaFinal.toFixed(2));
@@ -44,12 +46,13 @@ function calcularMediaFinal(t1: number | null, t2: number | null, t3: number | n
 }
 
 // Função para atualizar a nota final do aluno na disciplina
-async function atualizarNotaFinal(alunoId: string, disciplinaId: string) {
-  // Buscar todas as notas dos 3 trimestres
-  const notas = await prisma.nota.findMany({
+async function atualizarNotaFinal(alunoId: string, disciplinaId: string, anoLetivo: number = new Date().getFullYear()) {
+  // Buscar todas as notas dos 3 trimestres para o ano letivo específico
+  const notas = await prisma.notas.findMany({
     where: {
       alunoId,
-      disciplinaId
+      disciplinaId,
+      anoLetivo
     },
     orderBy: { trimestre: 'asc' }
   });
@@ -66,11 +69,12 @@ async function atualizarNotaFinal(alunoId: string, disciplinaId: string) {
   const aprovado = mediaFinal !== null && mediaFinal >= 6.0;
 
   // Upsert na tabela NotaFinal
-  await prisma.notaFinal.upsert({
+  await prisma.notas_finais.upsert({
     where: {
-      alunoId_disciplinaId: {
+      alunoId_disciplinaId_anoLetivo: {
         alunoId,
-        disciplinaId
+        disciplinaId,
+        anoLetivo
       }
     },
     update: {
@@ -82,14 +86,17 @@ async function atualizarNotaFinal(alunoId: string, disciplinaId: string) {
       updatedAt: new Date()
     },
     create: {
+      id: crypto.randomUUID(),
       alunoId,
       disciplinaId,
+      anoLetivo,
       trimestre1: t1,
       trimestre2: t2,
       trimestre3: t3,
       mediaFinal,
-      aprovado
-    }
+      aprovado,
+      updatedAt: new Date(),
+    },
   });
 
   return { trimestre1: t1, trimestre2: t2, trimestre3: t3, mediaFinal, aprovado };
@@ -99,15 +106,24 @@ async function atualizarNotaFinal(alunoId: string, disciplinaId: string) {
 notasRouter.get('/aluno/:alunoId/disciplina/:disciplinaId', async (req, res) => {
   try {
     const { alunoId, disciplinaId } = req.params;
+    const anoLetivo = req.query.anoLetivo ? parseInt(req.query.anoLetivo as string) : new Date().getFullYear();
 
-    const notas = await prisma.nota.findMany({
-      where: { alunoId, disciplinaId },
+    const notas = await prisma.notas.findMany({
+      where: { 
+        alunoId, 
+        disciplinaId,
+        anoLetivo 
+      },
       orderBy: { trimestre: 'asc' }
     });
 
-    const notaFinal = await prisma.notaFinal.findUnique({
+    const notaFinal = await prisma.notas_finais.findUnique({
       where: {
-        alunoId_disciplinaId: { alunoId, disciplinaId }
+        alunoId_disciplinaId_anoLetivo: { 
+          alunoId, 
+          disciplinaId,
+          anoLetivo 
+        }
       }
     });
 
@@ -121,7 +137,7 @@ notasRouter.get('/aluno/:alunoId/disciplina/:disciplinaId', async (req, res) => 
 // GET nota final de um aluno
 notasRouter.get('/final/aluno/:alunoId', async (req, res) => {
   try {
-    const notasFinais = await prisma.notaFinal.findMany({
+    const notasFinais = await prisma.notas_finais.findMany({
       where: { alunoId: req.params.alunoId }
     });
     res.json(notasFinais);
@@ -134,6 +150,7 @@ notasRouter.get('/final/aluno/:alunoId', async (req, res) => {
 notasRouter.post('/salvar', async (req, res) => {
   try {
     const data = notaSchema.parse(req.body);
+    const anoLetivo = data.anoLetivo || new Date().getFullYear();
     
     // Calcular média M1
     const mediaM1 = calcularMediaM1(
@@ -149,12 +166,13 @@ notasRouter.post('/salvar', async (req, res) => {
     );
 
     // Upsert na tabela Nota
-    const nota = await prisma.nota.upsert({
+    const nota = await prisma.notas.upsert({
       where: {
-        alunoId_disciplinaId_trimestre: {
+        alunoId_disciplinaId_trimestre_anoLetivo: {
           alunoId: data.alunoId,
           disciplinaId: data.disciplinaId,
-          trimestre: data.trimestre
+          trimestre: data.trimestre,
+          anoLetivo
         }
       },
       update: {
@@ -168,25 +186,26 @@ notasRouter.post('/salvar', async (req, res) => {
         updatedAt: new Date()
       },
       create: {
+        id: crypto.randomUUID(),
         alunoId: data.alunoId,
         disciplinaId: data.disciplinaId,
         trimestre: data.trimestre,
+        anoLetivo,
         avaliacao01: data.avaliacao01 ?? null,
         avaliacao02: data.avaliacao02 ?? null,
         avaliacao03: data.avaliacao03 ?? null,
         mediaM1,
         avaliacaoEAC: data.avaliacaoEAC ?? null,
         notaFinalTrimestre,
-        observacao: data.observacao ?? null
+        observacao: data.observacao ?? null,
+        updatedAt: new Date(),
       },
-      include: {
-        aluno: true,
-        disciplina: true
+      include: { alunos: true, disciplinas: true
       }
     });
 
     // Atualizar nota final anual
-    const notaFinal = await atualizarNotaFinal(data.alunoId, data.disciplinaId);
+    const notaFinal = await atualizarNotaFinal(data.alunoId, data.disciplinaId, anoLetivo);
 
     res.json({ nota, notaFinal });
   } catch (error) {
@@ -201,8 +220,8 @@ notasRouter.post('/salvar', async (req, res) => {
 // GET todas as notas
 notasRouter.get('/', async (req, res) => {
   try {
-    const notas = await prisma.nota.findMany({
-      include: { aluno: true, disciplina: true },
+    const notas = await prisma.notas.findMany({
+      include: { alunos: true, disciplinas: true },
       orderBy: [
         { alunoId: 'asc' },
         { disciplinaId: 'asc' },
@@ -215,10 +234,100 @@ notasRouter.get('/', async (req, res) => {
   }
 });
 
+// GET /api/notas/turma/:turmaId - Buscar notas de uma turma
+notasRouter.get('/turma/:turmaId', async (req, res) => {
+  try {
+    const { turmaId } = req.params;
+    const anoLetivo = req.query.anoLetivo ? parseInt(req.query.anoLetivo as string) : new Date().getFullYear();
+
+    // Buscar alunos da turma
+    const alunos = await prisma.alunos.findMany({
+      where: { turmaId }
+    });
+
+    if (alunos.length === 0) {
+      return res.json([]);
+    }
+
+    const alunoIds = alunos.map(a => a.id);
+
+    // Buscar todas as notas dos alunos da turma para o ano letivo específico
+    const notas = await prisma.notas.findMany({
+      where: {
+        alunoId: {
+          in: alunoIds
+        },
+        anoLetivo
+      },
+      include: {
+        alunos: true,
+        disciplinas: true
+      },
+      orderBy: [
+        { alunoId: 'asc' },
+        { disciplinaId: 'asc' },
+        { trimestre: 'asc' }
+      ]
+    });
+
+    // Transformar para incluir o período no formato esperado pelo frontend
+    const notasFormatadas = notas.map(nota => ({
+      ...nota,
+      periodo: nota.trimestre === 1 ? 'trim1' : nota.trimestre === 2 ? 'trim2' : nota.trimestre === 3 ? 'trim3' : 'final',
+      valor: nota.notaFinalTrimestre || 0
+    }));
+
+    // Adicionar notas finais do ano letivo específico
+    const notasFinaisDB = await prisma.notas_finais.findMany({
+      where: {
+        alunoId: {
+          in: alunoIds
+        },
+        anoLetivo
+      }
+    });
+
+    const notasFinaisFormatadas = notasFinaisDB.map(nf => {
+      const aluno = alunos.find(a => a.id === nf.alunoId);
+      return {
+        id: nf.id,
+        alunoId: nf.alunoId,
+        disciplinaId: nf.disciplinaId,
+        periodo: 'final',
+        valor: nf.mediaFinal || 0,
+        alunos: aluno
+      };
+    });
+
+    const todasNotas = [...notasFormatadas, ...notasFinaisFormatadas];
+
+    console.log('📊 GET /notas/turma/:turmaId', {
+      turmaId,
+      anoLetivo,
+      alunosNaTurma: alunos.length,
+      notasEncontradas: notas.length,
+      notasFinais: notasFinaisDB.length,
+      totalNotas: todasNotas.length,
+      amostra: todasNotas.length > 0 ? {
+        alunoId: todasNotas[0].alunoId,
+        alunoNome: todasNotas[0].alunos?.nome,
+        disciplinaId: todasNotas[0].disciplinaId,
+        periodo: todasNotas[0].periodo,
+        valor: todasNotas[0].valor
+      } : null
+    });
+
+    res.json(todasNotas);
+  } catch (error) {
+    console.error('Erro ao buscar notas da turma:', error);
+    res.status(500).json({ error: 'Erro ao buscar notas da turma' });
+  }
+});
+
 // DELETE nota
 notasRouter.delete('/:id', async (req, res) => {
   try {
-    const nota = await prisma.nota.findUnique({
+    const nota = await prisma.notas.findUnique({
       where: { id: req.params.id }
     });
 
@@ -226,7 +335,7 @@ notasRouter.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Nota não encontrada' });
     }
 
-    await prisma.nota.delete({
+    await prisma.notas.delete({
       where: { id: req.params.id }
     });
 
@@ -238,3 +347,5 @@ notasRouter.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Erro ao deletar nota' });
   }
 });
+
+

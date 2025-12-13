@@ -12,6 +12,9 @@ import { frequenciasRouter } from './routes/frequencias.routes';
 import { configuracoesRouter } from './routes/configuracoes.routes';
 import { equipeDiretivaRouter } from './routes/equipeDiretiva.routes';
 import { funcionariosRouter } from './routes/funcionarios.routes';
+import { calendarioRouter } from './routes/calendario.routes';
+import { gradeHorariaRouter } from './routes/grade-horaria.routes';
+import { frequenciaRouter } from './routes/frequencia.routes';
 
 dotenv.config();
 
@@ -42,6 +45,9 @@ app.use('/api/frequencias', frequenciasRouter);
 app.use('/api/configuracoes', configuracoesRouter);
 app.use('/api/equipe-diretiva', equipeDiretivaRouter);
 app.use('/api/funcionarios', funcionariosRouter);
+app.use('/api/calendario', calendarioRouter);
+app.use('/api/grade-horaria', gradeHorariaRouter);
+app.use('/api/registro-frequencia', frequenciaRouter);
 
 // Start server
 app.listen(PORT, () => {

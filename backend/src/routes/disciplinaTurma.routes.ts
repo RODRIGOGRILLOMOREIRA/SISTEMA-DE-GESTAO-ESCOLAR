@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 export const disciplinaTurmaRouter = Router();
 
@@ -19,12 +20,9 @@ disciplinaTurmaRouter.get('/', async (req, res) => {
     if (turmaId) where.turmaId = turmaId as string;
     if (disciplinaId) where.disciplinaId = disciplinaId as string;
     
-    const associacoes = await prisma.disciplinaTurma.findMany({
+    const associacoes = await prisma.disciplinas_turmas.findMany({
       where,
-      include: { 
-        disciplina: true, 
-        turma: true, 
-        professor: true 
+      include: { disciplinas: true, turmas: true, professores: true 
       }
     });
     
@@ -37,12 +35,9 @@ disciplinaTurmaRouter.get('/', async (req, res) => {
 // GET associação por ID
 disciplinaTurmaRouter.get('/:id', async (req, res) => {
   try {
-    const associacao = await prisma.disciplinaTurma.findUnique({
+    const associacao = await prisma.disciplinas_turmas.findUnique({
       where: { id: req.params.id },
-      include: { 
-        disciplina: true, 
-        turma: true, 
-        professor: true 
+      include: { disciplinas: true, turmas: true, professores: true 
       }
     });
     
@@ -62,7 +57,7 @@ disciplinaTurmaRouter.post('/', async (req, res) => {
     const data = disciplinaTurmaSchema.parse(req.body);
     
     // Verificar se já existe
-    const existente = await prisma.disciplinaTurma.findUnique({
+    const existente = await prisma.disciplinas_turmas.findUnique({
       where: {
         disciplinaId_turmaId: {
           disciplinaId: data.disciplinaId,
@@ -74,23 +69,23 @@ disciplinaTurmaRouter.post('/', async (req, res) => {
     let associacao;
     if (existente) {
       // Atualizar
-      associacao = await prisma.disciplinaTurma.update({
+      associacao = await prisma.disciplinas_turmas.update({
         where: { id: existente.id },
         data: { professorId: data.professorId },
-        include: { 
-          disciplina: true, 
-          turma: true, 
-          professor: true 
+        include: { disciplinas: true, turmas: true, professores: true 
         }
       });
     } else {
       // Criar novo
-      associacao = await prisma.disciplinaTurma.create({
-        data,
-        include: { 
-          disciplina: true, 
-          turma: true, 
-          professor: true 
+      associacao = await prisma.disciplinas_turmas.create({
+        data: {
+          id: crypto.randomUUID(),
+          turmaId: data.turmaId,
+          disciplinaId: data.disciplinaId,
+          updatedAt: new Date(),
+          ...(data.professorId && { professorId: data.professorId }),
+        },
+        include: { disciplinas: true, turmas: true, professores: true 
         }
       });
     }
@@ -112,13 +107,10 @@ disciplinaTurmaRouter.put('/:id', async (req, res) => {
       professorId: z.string().nullable().optional()
     }).parse(req.body);
     
-    const associacao = await prisma.disciplinaTurma.update({
+    const associacao = await prisma.disciplinas_turmas.update({
       where: { id: req.params.id },
       data: { professorId },
-      include: { 
-        disciplina: true, 
-        turma: true, 
-        professor: true 
+      include: { disciplinas: true, turmas: true, professores: true 
       }
     });
     
@@ -132,7 +124,7 @@ disciplinaTurmaRouter.put('/:id', async (req, res) => {
 // DELETE associação
 disciplinaTurmaRouter.delete('/:id', async (req, res) => {
   try {
-    await prisma.disciplinaTurma.delete({
+    await prisma.disciplinas_turmas.delete({
       where: { id: req.params.id }
     });
     
@@ -141,3 +133,5 @@ disciplinaTurmaRouter.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Erro ao deletar associação' });
   }
 });
+
+

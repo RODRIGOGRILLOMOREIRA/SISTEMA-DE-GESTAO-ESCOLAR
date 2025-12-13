@@ -117,6 +117,7 @@ export interface Frequencia {
 export const alunosAPI = {
   getAll: () => api.get<Aluno[]>('/alunos'),
   getById: (id: string) => api.get<Aluno>(`/alunos/${id}`),
+  getByTurma: (turmaId: string) => api.get<Aluno[]>(`/alunos/turma/${turmaId}`),
   create: (data: Omit<Aluno, 'id'>) => api.post<Aluno>('/alunos', data),
   update: (id: string, data: Partial<Aluno>) => api.put<Aluno>(`/alunos/${id}`, data),
   delete: (id: string) => api.delete(`/alunos/${id}`),
@@ -160,6 +161,8 @@ export const disciplinaTurmaAPI = {
 export const notasAPI = {
   getAll: () => api.get<Nota[]>('/notas'),
   getByAluno: (alunoId: string) => api.get<Nota[]>(`/notas/aluno/${alunoId}`),
+  getByTurma: (turmaId: string, anoLetivo?: number) => 
+    api.get<Nota[]>(`/notas/turma/${turmaId}`, { params: { anoLetivo } }),
   create: (data: Omit<Nota, 'id'>) => api.post<Nota>('/notas', data),
   update: (id: string, data: Partial<Nota>) => api.put<Nota>(`/notas/${id}`, data),
   delete: (id: string) => api.delete(`/notas/${id}`),
@@ -269,4 +272,12 @@ export const funcionariosAPI = {
   update: (id: string, data: Partial<Funcionario>) => 
     api.put<Funcionario>(`/funcionarios/${id}`, data),
   delete: (id: string) => api.delete(`/funcionarios/${id}`),
+};
+
+// Registro de Frequência
+export const registroFrequenciaAPI = {
+  getByTurmaAndPeriodo: (turmaId: string, dataInicio: string, dataFim: string) =>
+    api.get(`/registro-frequencia/turma/${turmaId}`, {
+      params: { dataInicio, dataFim }
+    }),
 };

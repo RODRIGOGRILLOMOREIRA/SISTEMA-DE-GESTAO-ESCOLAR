@@ -1,0 +1,466 @@
+import { useEffect, useState } from 'react'
+import { Plus, Edit, Save, X } from 'lucide-react'
+import axios from 'axios'
+import './GradeHoraria.css'
+import '../pages/CommonPages.css'
+
+interface Professor {
+  id: string
+  nome: string
+}
+
+interface Disciplina {
+  id: string
+  nome: string
+  professorId?: string
+  professor?: Professor
+}
+
+interface Turma {
+  id: string
+  nome: string
+  ano: number
+  periodo: string
+  disciplinas?: Array<{
+    id: string
+    nome: string
+    professorId?: string
+    professor?: Professor
+  }>
+}
+
+interface HorarioAula {
+  id?: string
+  diaSemana: 'SEGUNDA' | 'TERCA' | 'QUARTA' | 'QUINTA' | 'SEXTA' | 'SABADO'
+  periodo: 'MANHA' | 'TARDE'
+  ordem: number
+  horaInicio: string
+  horaFim: string
+  disciplinaId: string
+  professorId: string
+  disciplinas?: Disciplina
+  professores?: Professor
+}
+
+interface GradeHoraria {
+  id: string
+  turmaId: string
+  horarios_aula: HorarioAula[]
+}
+
+type Periodo = 'MANHA' | 'TARDE' | null
+type NivelEnsino = 'INICIAIS' | 'FINAIS' | null
+
+const diasSemana = ['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO']
+const diasLabel = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+
+const horariosPadrao = {
+  MANHA: [
+    { ordem: 1, horaInicio: '07:30', horaFim: '08:15' },
+    { ordem: 2, horaInicio: '08:15', horaFim: '09:00' },
+    { ordem: 3, horaInicio: '09:00', horaFim: '09:45' },
+    { ordem: 4, horaInicio: '09:45', horaFim: '10:00', isRecreiro: true },
+    { ordem: 5, horaInicio: '10:00', horaFim: '10:45' },
+    { ordem: 6, horaInicio: '10:45', horaFim: '11:30' },
+  ],
+  TARDE: [
+    { ordem: 1, horaInicio: '13:00', horaFim: '13:45' },
+    { ordem: 2, horaInicio: '13:45', horaFim: '14:30' },
+    { ordem: 3, horaInicio: '14:30', horaFim: '15:15' },
+    { ordem: 4, horaInicio: '15:15', horaFim: '15:30', isRecreiro: true },
+    { ordem: 5, horaInicio: '15:30', horaFim: '16:15' },
+    { ordem: 6, horaInicio: '16:15', horaFim: '17:00' },
+  ]
+}
+
+const GradeHoraria = () => {
+  const [turmas, setTurmas] = useState<Turma[]>([])
+  const [nivelEnsino, setNivelEnsino] = useState<NivelEnsino>(null)
+  const [turmaId, setTurmaId] = useState<string>('')
+  const [periodoAtivo, setPeriodoAtivo] = useState<Periodo>(null)
+  const [gradeHoraria, setGradeHoraria] = useState<GradeHoraria | null>(null)
+  const [showModal, setShowModal] = useState(false)
+  const [selectedCell, setSelectedCell] = useState<{ dia: string; ordem: number } | null>(null)
+  const [selectedDisciplina, setSelectedDisciplina] = useState<string>('')
+  const [loading, setLoading] = useState(false)
+
+  const API_URL = 'http://localhost:3333/api'
+
+  useEffect(() => {
+    loadTurmas()
+  }, [])
+
+  useEffect(() => {
+    if (turmaId) {
+      loadGradeHoraria()
+    }
+  }, [turmaId])
+
+  const loadTurmas = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/turmas`)
+      setTurmas(response.data)
+    } catch (error) {
+      console.error('Erro ao carregar turmas:', error)
+    }
+  }
+
+  const loadGradeHoraria = async () => {
+    try {
+      setLoading(true)
+      const response = await axios.get(`${API_URL}/grade-horaria/turma/${turmaId}`)
+      console.log('Grade horária recebida:', response.data)
+      console.log('Horários aula:', response.data.horarios_aula)
+      setGradeHoraria(response.data)
+    } catch (error) {
+      console.error('Erro ao carregar grade horária:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getHorarioForCell = (dia: string, ordem: number, periodo: Periodo) => {
+    if (!gradeHoraria || !periodo) return null
+    return gradeHoraria.horarios_aula.find(
+      h => h.diaSemana === dia && h.ordem === ordem && h.periodo === periodo
+    )
+  }
+
+  const openModalForCell = (dia: string, ordem: number) => {
+    const horarioPadrao = horariosPadrao[periodoAtivo!].find(h => h.ordem === ordem)
+    if (horarioPadrao?.isRecreiro) {
+      return // Não permite editar recreio
+    }
+    
+    setSelectedCell({ dia, ordem })
+    const horarioExistente = getHorarioForCell(dia, ordem, periodoAtivo)
+    setSelectedDisciplina(horarioExistente?.disciplinaId || '')
+    setShowModal(true)
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setSelectedCell(null)
+    setSelectedDisciplina('')
+  }
+
+  const handleSaveDisciplina = async () => {
+    if (!selectedCell || !selectedDisciplina || !periodoAtivo) return
+
+    try {
+      const turmaSelecionada = turmas.find(t => t.id === turmaId)
+      const disciplina = turmaSelecionada?.disciplinas?.find(d => d.id === selectedDisciplina)
+      
+      if (!disciplina) {
+        alert('Disciplina não encontrada')
+        return
+      }
+
+      const professorId = disciplina.professorId || disciplina.professor?.id
+      
+      if (!professorId) {
+        alert('Esta disciplina não possui professor atribuído. Por favor, atribua um professor à disciplina antes de adicioná-la à grade.')
+        return
+      }
+
+      const horarioPadrao = horariosPadrao[periodoAtivo].find(h => h.ordem === selectedCell.ordem)
+      if (!horarioPadrao || horarioPadrao.isRecreiro) {
+        alert('Não é possível adicionar disciplina neste horário')
+        return
+      }
+
+      const novoHorario: HorarioAula = {
+        diaSemana: selectedCell.dia as any,
+        periodo: periodoAtivo,
+        ordem: selectedCell.ordem,
+        horaInicio: horarioPadrao.horaInicio,
+        horaFim: horarioPadrao.horaFim,
+        disciplinaId: selectedDisciplina,
+        professorId: professorId,
+      }
+
+      // Atualizar grade completa
+      const horariosAtualizados = gradeHoraria?.horarios_aula.filter(
+        h => !(h.diaSemana === selectedCell.dia && h.ordem === selectedCell.ordem && h.periodo === periodoAtivo)
+      ) || []
+
+      horariosAtualizados.push(novoHorario)
+
+      await axios.put(`${API_URL}/grade-horaria/turma/${turmaId}`, {
+        horarios: horariosAtualizados
+      })
+
+      await loadGradeHoraria()
+      closeModal()
+    } catch (error: any) {
+      console.error('Erro ao salvar horário:', error)
+      const errorMessage = error.response?.data?.error || error.message || 'Erro ao salvar horário'
+      alert(`Erro ao salvar: ${errorMessage}`)
+    }
+  }
+
+  const handleRemoveDisciplina = async (dia: string, ordem: number) => {
+    if (!periodoAtivo || !window.confirm('Deseja remover esta disciplina?')) return
+
+    try {
+      const horariosAtualizados = gradeHoraria?.horarios_aula.filter(
+        h => !(h.diaSemana === dia && h.ordem === ordem && h.periodo === periodoAtivo)
+      ) || []
+
+      await axios.put(`${API_URL}/grade-horaria/turma/${turmaId}`, {
+        horarios: horariosAtualizados
+      })
+
+      await loadGradeHoraria()
+    } catch (error) {
+      console.error('Erro ao remover horário:', error)
+    }
+  }
+
+  const turmaSelecionada = turmas.find(t => t.id === turmaId)
+  const turmasFiltradas = turmas
+    .filter(t => {
+      if (!nivelEnsino) return false
+      if (nivelEnsino === 'INICIAIS') return t.ano >= 1 && t.ano <= 5
+      return t.ano >= 6 && t.ano <= 9
+    })
+    .sort((a, b) => a.ano - b.ano || a.nome.localeCompare(b.nome))
+
+  return (
+    <div className="page">
+      {/* Seleção de Nível de Ensino */}
+      {!nivelEnsino && (
+        <div className="selection-section">
+          <div className="nivel-ensino-buttons">
+            <button
+              className="btn-nivel-ensino"
+              onClick={() => setNivelEnsino('INICIAIS')}
+            >
+              Anos Iniciais
+            </button>
+
+            <button
+              className="btn-nivel-ensino"
+              onClick={() => setNivelEnsino('FINAIS')}
+            >
+              Anos Finais
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Seleção de Turma */}
+      {nivelEnsino && !turmaId && (
+        <div className="selection-section">
+          <h2 style={{ 
+            margin: 0, 
+            marginBottom: '20px',
+            fontSize: '1.25rem',
+            fontWeight: '600',
+            color: 'var(--text-primary)'
+          }}>
+            Selecione a Turma - {nivelEnsino === 'INICIAIS' ? 'Anos Iniciais' : 'Anos Finais'}
+          </h2>
+          <div className="selection-grid" style={{ 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
+            gap: '12px' 
+          }}>
+            {turmasFiltradas.map(turma => (
+              <button
+                key={turma.id}
+                className="selection-btn"
+                onClick={() => setTurmaId(turma.id)}
+                style={{ 
+                  padding: '12px 16px',
+                  minHeight: 'auto'
+                }}
+              >
+                <div className="selection-btn-content">
+                  <span className="selection-btn-title" style={{ fontSize: '0.875rem' }}>
+                    {turma.nome}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Grade Horária */}
+      {turmaId && (
+        <div className="grade-container">
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+            <button
+              className="selection-btn"
+              style={{
+                cursor: 'default',
+                padding: '12px 16px',
+                minHeight: 'auto',
+                minWidth: '150px'
+              }}
+            >
+              <div className="selection-btn-content">
+                <span className="selection-btn-title" style={{ fontSize: '0.875rem' }}>
+                  {turmaSelecionada?.ano}º ANO
+                </span>
+              </div>
+            </button>
+          </div>
+
+          <div className="selection-grid" style={{ 
+            gridTemplateColumns: 'repeat(2, 1fr)', 
+            gap: '12px',
+            marginBottom: '20px'
+          }}>
+            <button
+              className={`selection-btn ${periodoAtivo === 'MANHA' ? 'active' : ''}`}
+              onClick={() => setPeriodoAtivo('MANHA')}
+              style={{ 
+                padding: '12px 16px',
+                minHeight: 'auto'
+              }}
+            >
+              <div className="selection-btn-content">
+                <span className="selection-btn-title" style={{ fontSize: '0.875rem' }}>
+                  Turno da Manhã
+                </span>
+              </div>
+            </button>
+            <button
+              className={`selection-btn ${periodoAtivo === 'TARDE' ? 'active' : ''}`}
+              onClick={() => setPeriodoAtivo('TARDE')}
+              style={{ 
+                padding: '12px 16px',
+                minHeight: 'auto'
+              }}
+            >
+              <div className="selection-btn-content">
+                <span className="selection-btn-title" style={{ fontSize: '0.875rem' }}>
+                  Turno da Tarde
+                </span>
+              </div>
+            </button>
+          </div>
+
+          {periodoAtivo && (
+            <>
+              <div className="table-container">
+                <table className="grade-table">
+              <thead>
+                <tr>
+                  <th>Horário</th>
+                  {diasLabel.map((dia, idx) => (
+                    <th key={idx}>{dia}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {horariosPadrao[periodoAtivo].map((horario) => (
+                  <tr key={horario.ordem}>
+                    <td className="horario-cell">
+                      {horario.isRecreiro ? (
+                        <strong>RECREIO</strong>
+                      ) : (
+                        <>{horario.horaInicio} - {horario.horaFim}</>
+                      )}
+                    </td>
+                    {diasSemana.map((dia, idx) => {
+                      if (horario.isRecreiro) {
+                        return (
+                          <td key={idx} className="recreio-cell" colSpan={1}>
+                            Recreio
+                          </td>
+                        )
+                      }
+                      
+                      const horarioAula = getHorarioForCell(dia, horario.ordem, periodoAtivo)
+                      
+                      return (
+                        <td
+                          key={idx}
+                          className={`aula-cell ${horarioAula ? 'has-content' : ''}`}
+                          onClick={() => openModalForCell(dia, horario.ordem)}
+                        >
+                          {horarioAula ? (
+                            <div className="aula-info">
+                              <strong>{horarioAula.disciplinas?.nome || 'Sem disciplina'}</strong>
+                              <small>{horarioAula.professores?.nome || ''}</small>
+                              <button
+                                className="btn-remove"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleRemoveDisciplina(dia, horario.ordem)
+                                }}
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="aula-empty">
+                              <Plus size={20} />
+                              <span>Adicionar</span>
+                            </div>
+                          )}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          </>
+        )}
+        </div>
+      )}
+
+      {/* Modal para seleção de disciplina */}
+      {showModal && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Selecionar Disciplina</h2>
+              <button className="modal-close" onClick={closeModal}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Disciplina:</label>
+                <select
+                  value={selectedDisciplina}
+                  onChange={(e) => setSelectedDisciplina(e.target.value)}
+                  className="form-control"
+                  autoFocus
+                >
+                  <option value="">Selecione uma disciplina</option>
+                  {turmaSelecionada?.disciplinas?.map(disciplina => (
+                    <option key={disciplina.id} value={disciplina.id}>
+                      {disciplina.nome} - Prof. {disciplina.professor?.nome || 'Sem professor'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={closeModal}>
+                Cancelar
+              </button>
+              <button 
+                className="btn-primary" 
+                onClick={handleSaveDisciplina}
+                disabled={!selectedDisciplina}
+              >
+                Adicionar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default GradeHoraria

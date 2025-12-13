@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 export const equipeDiretivaRouter = Router();
 
@@ -15,7 +16,7 @@ const equipeDiretivaSchema = z.object({
 // GET todos os membros da equipe diretiva
 equipeDiretivaRouter.get('/', async (req, res) => {
   try {
-    const equipe = await prisma.equipeDiretiva.findMany({
+    const equipe = await prisma.equipe_diretiva.findMany({
       orderBy: { nome: 'asc' }
     });
     res.json(equipe);
@@ -27,7 +28,7 @@ equipeDiretivaRouter.get('/', async (req, res) => {
 // GET membro da equipe diretiva por ID
 equipeDiretivaRouter.get('/:id', async (req, res) => {
   try {
-    const membro = await prisma.equipeDiretiva.findUnique({
+    const membro = await prisma.equipe_diretiva.findUnique({
       where: { id: req.params.id }
     });
     
@@ -46,8 +47,16 @@ equipeDiretivaRouter.post('/', async (req, res) => {
   try {
     const data = equipeDiretivaSchema.parse(req.body);
     
-    const membro = await prisma.equipeDiretiva.create({
-      data
+    const membro = await prisma.equipe_diretiva.create({
+      data: {
+        id: crypto.randomUUID(),
+        nome: data.nome,
+        cpf: data.cpf,
+        email: data.email,
+        cargo: data.cargo,
+        updatedAt: new Date(),
+        ...(data.telefone && { telefone: data.telefone }),
+      }
     });
     
     res.status(201).json(membro);
@@ -64,7 +73,7 @@ equipeDiretivaRouter.put('/:id', async (req, res) => {
   try {
     const data = equipeDiretivaSchema.partial().parse(req.body);
     
-    const membro = await prisma.equipeDiretiva.update({
+    const membro = await prisma.equipe_diretiva.update({
       where: { id: req.params.id },
       data
     });
@@ -78,7 +87,7 @@ equipeDiretivaRouter.put('/:id', async (req, res) => {
 // DELETE membro da equipe diretiva
 equipeDiretivaRouter.delete('/:id', async (req, res) => {
   try {
-    await prisma.equipeDiretiva.delete({
+    await prisma.equipe_diretiva.delete({
       where: { id: req.params.id }
     });
     
@@ -87,3 +96,5 @@ equipeDiretivaRouter.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Erro ao deletar membro' });
   }
 });
+
+

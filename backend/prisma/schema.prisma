@@ -7,214 +7,305 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Usuario {
-  id              String            @id @default(uuid())
-  nome            String
-  email           String            @unique
-  senha           String
-  tipo            String            @default("USUARIO") // ADMIN, USUARIO
-  ativo           Boolean           @default(true)
-  resetToken      String?
-  resetTokenExpira DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@map("usuarios")
+model alunos {
+  id             String           @id
+  nome           String
+  cpf            String           @unique
+  dataNascimento DateTime
+  email          String           @unique
+  telefone       String?
+  endereco       String?
+  responsavel    String
+  telefoneResp   String
+  turmaId        String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  turmas         turmas?          @relation(fields: [turmaId], references: [id])
+  frequencias    frequencias[]
+  matriculas     matriculas[]
+  notas          notas[]
+  presenca_aluno PresencaAluno[]
 }
 
-model Aluno {
-  id              String            @id @default(uuid())
-  nome            String
-  cpf             String            @unique
-  dataNascimento  DateTime
-  email           String            @unique
-  telefone        String?
-  endereco        String?
-  responsavel     String
-  telefoneResp    String
-  turmaId         String?
-  turma           Turma?            @relation(fields: [turmaId], references: [id])
-  matriculas      Matricula[]
-  notas           Nota[]
-  frequencias     Frequencia[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@map("alunos")
+model calendario_escolar {
+  id                 String               @id
+  ano                Int                  @unique
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  eventos_calendario eventos_calendario[]
 }
 
-model Professor {
-  id              String            @id @default(uuid())
-  nome            String
-  cpf             String
-  email           String
-  telefone        String
-  especialidade   String?
-  area            String?           // "Anos Iniciais", "Anos Finais", ou "Ambos"
-  componentes     String?           // JSON string com array de componentes que ministra
-  turmasVinculadas String?          // JSON string com array de IDs das turmas vinculadas
-  disciplinas     Disciplina[]
-  turmas          Turma[]           @relation("TurmaProfessorResponsavel")
-  disciplinaTurmas DisciplinaTurma[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@map("professores")
+model configuracoes {
+  id          String   @id
+  nomeEscola  String
+  redeEscolar String?
+  endereco    String
+  telefone    String?
+  email       String?
+  logoUrl     String?
+  temaModo    String   @default("light")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
 }
 
-model Turma {
-  id              String            @id @default(uuid())
-  nome            String
-  ano             Int
-  anoLetivo       Int               @default(2025) // 2024, 2025, 2026...
-  periodo         String            // Manhã, Tarde, Noite
-  professorId     String?
-  professor       Professor?        @relation("TurmaProfessorResponsavel", fields: [professorId], references: [id])
-  alunos          Aluno[]
-  disciplinas     Disciplina[]
-  disciplinaTurmas DisciplinaTurma[]
-  matriculas      Matricula[]
-  frequencias     Frequencia[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@map("turmas")
+model disciplinas {
+  id                  String                @id
+  nome                String
+  cargaHoraria        Int
+  professorId         String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  professores         professores?          @relation(fields: [professorId], references: [id])
+  disciplinas_turmas  disciplinas_turmas[]
+  horarios_aula       horarios_aula[]
+  notas               notas[]
+  registro_frequencia registro_frequencia[]
+  turmas              turmas[]              @relation("DisciplinaToTurma")
 }
 
-model Disciplina {
-  id              String            @id @default(uuid())
-  nome            String
-  cargaHoraria    Int
-  professorId     String?
-  professor       Professor?        @relation(fields: [professorId], references: [id])
-  turmas          Turma[]
-  notas           Nota[]
-  disciplinaTurmas DisciplinaTurma[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@map("disciplinas")
-}
-
-model DisciplinaTurma {
-  id              String            @id @default(uuid())
-  disciplinaId    String
-  disciplina      Disciplina        @relation(fields: [disciplinaId], references: [id], onDelete: Cascade)
-  turmaId         String
-  turma           Turma             @relation(fields: [turmaId], references: [id], onDelete: Cascade)
-  professorId     String?
-  professor       Professor?        @relation(fields: [professorId], references: [id])
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+model disciplinas_turmas {
+  id           String       @id
+  disciplinaId String
+  turmaId      String
+  professorId  String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime
+  disciplinas  disciplinas  @relation(fields: [disciplinaId], references: [id], onDelete: Cascade)
+  professores  professores? @relation(fields: [professorId], references: [id])
+  turmas       turmas       @relation(fields: [turmaId], references: [id], onDelete: Cascade)
 
   @@unique([disciplinaId, turmaId])
-  @@map("disciplinas_turmas")
 }
 
-model Matricula {
-  id              String            @id @default(uuid())
-  alunoId         String
-  aluno           Aluno             @relation(fields: [alunoId], references: [id])
-  turmaId         String
-  turma           Turma             @relation(fields: [turmaId], references: [id])
-  dataMatricula   DateTime          @default(now())
-  status          String            @default("ATIVA") // ATIVA, CANCELADA, CONCLUIDA
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@map("matriculas")
+model equipe_diretiva {
+  id        String   @id
+  nome      String
+  cpf       String
+  email     String
+  telefone  String?
+  cargo     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
 }
 
-model Nota {
-  id              String            @id @default(uuid())
-  alunoId         String
-  aluno           Aluno             @relation(fields: [alunoId], references: [id])
-  disciplinaId    String
-  disciplina      Disciplina        @relation(fields: [disciplinaId], references: [id])
-  trimestre       Int               // 1, 2, 3
-  avaliacao01     Float?            // 0.0 a 10.0
-  avaliacao02     Float?            // 0.0 a 10.0
-  avaliacao03     Float?            // 0.0 a 10.0
-  mediaM1         Float?            // Soma das 3 avaliações
-  avaliacaoEAC    Float?            // Momento 2 - EAC
-  notaFinalTrimestre Float?         // Maior nota entre mediaM1 e avaliacaoEAC
-  observacao      String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@unique([alunoId, disciplinaId, trimestre])
-  @@map("notas")
+model eventos_calendario {
+  id                 String             @id
+  calendarioId       String
+  tipo               TipoEvento
+  descricao          String?
+  dataInicio         DateTime
+  dataFim            DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime
+  calendario_escolar calendario_escolar @relation(fields: [calendarioId], references: [id], onDelete: Cascade)
 }
 
-model NotaFinal {
-  id              String            @id @default(uuid())
-  alunoId         String
-  disciplinaId    String
-  trimestre1      Float?            // Nota final do 1º trimestre
-  trimestre2      Float?            // Nota final do 2º trimestre
-  trimestre3      Float?            // Nota final do 3º trimestre
-  mediaFinal      Float?            // (T1*1 + T2*2 + T3*3) / 6
-  aprovado        Boolean           @default(false) // true se mediaFinal >= 6.0
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@unique([alunoId, disciplinaId])
-  @@map("notas_finais")
+model frequencias {
+  id         String   @id
+  alunoId    String
+  turmaId    String
+  data       DateTime
+  presente   Boolean  @default(true)
+  observacao String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  alunos     alunos   @relation(fields: [alunoId], references: [id])
+  turmas     turmas   @relation(fields: [turmaId], references: [id])
 }
 
-model Frequencia {
-  id              String            @id @default(uuid())
-  alunoId         String
-  aluno           Aluno             @relation(fields: [alunoId], references: [id])
-  turmaId         String
-  turma           Turma             @relation(fields: [turmaId], references: [id])
-  data            DateTime
-  presente        Boolean           @default(true)
-  observacao      String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@map("frequencias")
+model funcionarios {
+  id        String   @id
+  nome      String
+  cpf       String
+  email     String
+  telefone  String?
+  cargo     String
+  setor     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
 }
 
-model EquipeDiretiva {
-  id              String            @id @default(uuid())
-  nome            String
-  cpf             String
-  email           String
-  telefone        String?
-  cargo           String
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@map("equipe_diretiva")
+model grade_horaria {
+  id            String          @id
+  turmaId       String          @unique
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime
+  turmas        turmas          @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+  horarios_aula horarios_aula[]
 }
 
-model Funcionario {
-  id              String            @id @default(uuid())
-  nome            String
-  cpf             String
-  email           String
-  telefone        String?
-  cargo           String
-  setor           String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@map("funcionarios")
+model horarios_aula {
+  id                  String                @id
+  gradeId             String
+  diaSemana           DiaSemana
+  periodo             String
+  ordem               Int
+  horaInicio          String
+  horaFim             String
+  disciplinaId        String?
+  professorId         String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  disciplinas         disciplinas?          @relation(fields: [disciplinaId], references: [id])
+  grade_horaria       grade_horaria         @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+  professores         professores?          @relation(fields: [professorId], references: [id])
+  registro_frequencia registro_frequencia[]
 }
 
-model Configuracao {
-  id              String            @id @default(uuid())
-  nomeEscola      String
-  redeEscolar     String?
-  endereco        String
-  telefone        String?
-  email           String?
-  logoUrl         String?
-  temaModo        String            @default("light") // light ou dark
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+model matriculas {
+  id            String   @id
+  alunoId       String
+  turmaId       String
+  dataMatricula DateTime @default(now())
+  status        String   @default("ATIVA")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+  alunos        alunos   @relation(fields: [alunoId], references: [id])
+  turmas        turmas   @relation(fields: [turmaId], references: [id])
+}
 
-  @@map("configuracoes")
+model notas {
+  id                 String      @id
+  alunoId            String
+  disciplinaId       String
+  trimestre          Int
+  anoLetivo          Int         @default(2025)
+  avaliacao01        Float?
+  avaliacao02        Float?
+  avaliacao03        Float?
+  mediaM1            Float?
+  avaliacaoEAC       Float?
+  observacao         String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime
+  notaFinalTrimestre Float?
+  alunos             alunos      @relation(fields: [alunoId], references: [id])
+  disciplinas        disciplinas @relation(fields: [disciplinaId], references: [id])
+
+  @@unique([alunoId, disciplinaId, trimestre, anoLetivo])
+}
+
+model notas_finais {
+  id           String   @id
+  alunoId      String
+  disciplinaId String
+  anoLetivo    Int      @default(2025)
+  mediaFinal   Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+  aprovado     Boolean  @default(false)
+  trimestre1   Float?
+  trimestre2   Float?
+  trimestre3   Float?
+
+  @@unique([alunoId, disciplinaId, anoLetivo])
+}
+
+model PresencaAluno {
+  id                  String              @id @default(uuid())
+  registroId          String
+  alunoId             String
+  presente            Boolean             @default(true)
+  justificativa       String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  aulaIndex           Int                 @default(0)
+  alunos              alunos              @relation(fields: [alunoId], references: [id])
+  registro_frequencia registro_frequencia @relation(fields: [registroId], references: [id], onDelete: Cascade)
+
+  @@unique([registroId, alunoId, aulaIndex])
+  @@map("presenca_aluno")
+}
+
+model professores {
+  id                  String                @id
+  nome                String
+  cpf                 String
+  email               String
+  telefone            String
+  especialidade       String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  area                String?
+  componentes         String?
+  turmasVinculadas    String?
+  disciplinas         disciplinas[]
+  disciplinas_turmas  disciplinas_turmas[]
+  horarios_aula       horarios_aula[]
+  registro_frequencia registro_frequencia[]
+  turmas              turmas[]
+}
+
+model registro_frequencia {
+  id             String           @id
+  turmaId        String
+  disciplinaId   String
+  professorId    String
+  data           DateTime
+  horarioAulaId  String?
+  observacao     String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  periodo        String?
+  presenca_aluno PresencaAluno[]
+  disciplinas    disciplinas      @relation(fields: [disciplinaId], references: [id])
+  horarios_aula  horarios_aula?   @relation(fields: [horarioAulaId], references: [id])
+  professores    professores      @relation(fields: [professorId], references: [id])
+  turmas         turmas           @relation(fields: [turmaId], references: [id])
+}
+
+model turmas {
+  id                  String                @id
+  nome                String
+  ano                 Int
+  periodo             String
+  professorId         String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  anoLetivo           Int                   @default(2025)
+  alunos              alunos[]
+  disciplinas_turmas  disciplinas_turmas[]
+  frequencias         frequencias[]
+  grade_horaria       grade_horaria?
+  matriculas          matriculas[]
+  registro_frequencia registro_frequencia[]
+  professores         professores?          @relation(fields: [professorId], references: [id])
+  disciplinas         disciplinas[]         @relation("DisciplinaToTurma")
+}
+
+model usuarios {
+  id               String    @id
+  nome             String
+  email            String    @unique
+  senha            String
+  tipo             String    @default("USUARIO")
+  ativo            Boolean   @default(true)
+  resetToken       String?
+  resetTokenExpira DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime
+}
+
+enum DiaSemana {
+  SEGUNDA
+  TERCA
+  QUARTA
+  QUINTA
+  SEXTA
+  SABADO
+}
+
+enum TipoEvento {
+  INICIO_ANO_LETIVO
+  FIM_ANO_LETIVO
+  DIA_LETIVO
+  DIA_NAO_LETIVO
+  PARADA_PEDAGOGICA
+  RECESSO
+  SABADO_LETIVO
+  FERIADO
+  INICIO_TRIMESTRE
+  FIM_TRIMESTRE
+  PERIODO_EAC
+  OUTRO
 }

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 export const configuracoesRouter = Router();
 
@@ -17,15 +18,17 @@ const configuracaoSchema = z.object({
 // GET configurações
 configuracoesRouter.get('/', async (req, res) => {
   try {
-    let config = await prisma.configuracao.findFirst();
+    let config = await prisma.configuracoes.findFirst();
     
     // Se não existe, cria uma configuração padrão
     if (!config) {
-      config = await prisma.configuracao.create({
+      config = await prisma.configuracoes.create({
         data: {
+          id: crypto.randomUUID(),
           nomeEscola: 'Escola Municipal',
           endereco: '',
           temaModo: 'light',
+          updatedAt: new Date(),
         }
       });
     }
@@ -43,7 +46,7 @@ configuracoesRouter.put('/', async (req, res) => {
     const data = configuracaoSchema.parse(req.body);
     console.log('Dados validados:', data);
     
-    let config = await prisma.configuracao.findFirst();
+    let config = await prisma.configuracoes.findFirst();
     console.log('Config existente:', config);
     
     // Remover campos undefined antes de salvar
@@ -57,6 +60,7 @@ configuracoesRouter.put('/', async (req, res) => {
     if (!config) {
       // Se não existe, criar com valores padrão
       const createData = {
+        id: crypto.randomUUID(),
         nomeEscola: cleanData.nomeEscola || 'Escola Municipal',
         endereco: cleanData.endereco || '',
         redeEscolar: cleanData.redeEscolar || null,
@@ -64,12 +68,13 @@ configuracoesRouter.put('/', async (req, res) => {
         email: cleanData.email || null,
         logoUrl: cleanData.logoUrl || null,
         temaModo: cleanData.temaModo || 'light',
+        updatedAt: new Date(),
       };
       console.log('Criando nova config:', createData);
-      config = await prisma.configuracao.create({ data: createData });
+      config = await prisma.configuracoes.create({ data: createData });
     } else {
       console.log('Atualizando config com:', cleanData);
-      config = await prisma.configuracao.update({
+      config = await prisma.configuracoes.update({
         where: { id: config.id },
         data: cleanData
       });
@@ -88,3 +93,5 @@ configuracoesRouter.put('/', async (req, res) => {
     });
   }
 });
+
+

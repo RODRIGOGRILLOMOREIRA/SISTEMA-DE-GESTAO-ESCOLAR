@@ -8,6 +8,7 @@ import {
   School, 
   ClipboardCheck,
   UserCheck,
+  FileBarChart,
   Settings,
   LogOut,
   User,
@@ -58,6 +59,7 @@ const Layout = () => {
     { path: '/disciplinas', icon: BookOpen, label: 'Disciplinas' },
     { path: '/notas', icon: ClipboardCheck, label: 'Notas' },
     { path: '/frequencia', icon: UserCheck, label: 'Frequência' },
+    { path: '/relatorios', icon: FileBarChart, label: 'Relatórios' },
     { path: '/configuracoes', icon: Settings, label: 'Configurações' },
   ]
 

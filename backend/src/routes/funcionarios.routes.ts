@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 export const funcionariosRouter = Router();
 
@@ -16,7 +17,7 @@ const funcionarioSchema = z.object({
 // GET todos os funcionários
 funcionariosRouter.get('/', async (req, res) => {
   try {
-    const funcionarios = await prisma.funcionario.findMany({
+    const funcionarios = await prisma.funcionarios.findMany({
       orderBy: { nome: 'asc' }
     });
     res.json(funcionarios);
@@ -28,7 +29,7 @@ funcionariosRouter.get('/', async (req, res) => {
 // GET funcionário por ID
 funcionariosRouter.get('/:id', async (req, res) => {
   try {
-    const funcionario = await prisma.funcionario.findUnique({
+    const funcionario = await prisma.funcionarios.findUnique({
       where: { id: req.params.id }
     });
     
@@ -47,8 +48,17 @@ funcionariosRouter.post('/', async (req, res) => {
   try {
     const data = funcionarioSchema.parse(req.body);
     
-    const funcionario = await prisma.funcionario.create({
-      data
+    const funcionario = await prisma.funcionarios.create({
+      data: {
+        id: crypto.randomUUID(),
+        nome: data.nome,
+        cpf: data.cpf,
+        email: data.email,
+        cargo: data.cargo,
+        updatedAt: new Date(),
+        ...(data.telefone && { telefone: data.telefone }),
+        ...(data.setor && { setor: data.setor }),
+      }
     });
     
     res.status(201).json(funcionario);
@@ -65,7 +75,7 @@ funcionariosRouter.put('/:id', async (req, res) => {
   try {
     const data = funcionarioSchema.partial().parse(req.body);
     
-    const funcionario = await prisma.funcionario.update({
+    const funcionario = await prisma.funcionarios.update({
       where: { id: req.params.id },
       data
     });
@@ -79,7 +89,7 @@ funcionariosRouter.put('/:id', async (req, res) => {
 // DELETE funcionário
 funcionariosRouter.delete('/:id', async (req, res) => {
   try {
-    await prisma.funcionario.delete({
+    await prisma.funcionarios.delete({
       where: { id: req.params.id }
     });
     
@@ -88,3 +98,5 @@ funcionariosRouter.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Erro ao deletar funcionário' });
   }
 });
+
+

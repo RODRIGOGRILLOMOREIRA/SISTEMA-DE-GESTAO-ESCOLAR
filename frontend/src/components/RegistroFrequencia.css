@@ -1,0 +1,545 @@
+/* Importando estilos base */
+@import '../pages/Notas.css';
+
+.frequencia-container {
+  padding: 24px;
+}
+
+.btn-back-freq {
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-back-freq:hover {
+  background: var(--primary-color);
+  color: white;
+  transform: translateX(-4px);
+}
+
+.frequencia-header {
+  margin-bottom: 24px;
+}
+
+.frequencia-header h2 {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  margin-bottom: 24px;
+  font-weight: 700;
+}
+
+/* Info Section - Inspirado em Notas */
+.info-section {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 197, 253, 0.05) 100%);
+  border: 2px solid rgba(59, 130, 246, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+[data-theme="dark"] .info-section {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 197, 253, 0.08) 100%);
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+.info-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.info-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .info-card {
+  background: var(--secondary-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.info-card label {
+  display: block;
+  font-size: 0.813rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.info-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  padding: 8px 0;
+}
+
+.select-control,
+.date-control,
+.number-control {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+[data-theme="dark"] .select-control,
+[data-theme="dark"] .date-control,
+[data-theme="dark"] .number-control {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.select-control:focus,
+.date-control:focus,
+.number-control:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.select-control:hover,
+.date-control:hover,
+.number-control:hover {
+  border-color: var(--primary-color);
+}
+
+.number-control {
+  text-align: center;
+  font-size: 1.2rem;
+}
+
+/* Título do Período */
+.periodo-info {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 197, 253, 0.1) 100%);
+  border-left: 4px solid var(--primary-color);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+.periodo-info h3 {
+  color: var(--primary-color);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+[data-theme="dark"] .periodo-info {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+/* Tabs de Visualização */
+.visualizacao-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 4px;
+}
+
+.tab-btn {
+  padding: 12px 24px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tab-btn:hover {
+  color: var(--primary-color);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.tab-btn.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+/* Tabela de Frequência */
+.frequencia-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.frequencia-table thead tr:first-child th {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #4f86f7 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 16px 12px;
+  text-align: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.frequencia-table thead tr:first-child th:last-child {
+  border-right: none;
+}
+
+.frequencia-table.resumo thead tr:nth-child(2) th {
+  background: linear-gradient(135deg, #4f86f7 0%, #2563eb 100%);
+  color: white;
+  font-weight: 500;
+  font-size: 0.813rem;
+  padding: 12px 8px;
+  text-align: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.frequencia-table.resumo thead tr:nth-child(2) th:last-child {
+  border-right: none;
+}
+
+.frequencia-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.frequencia-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.frequencia-table tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .frequencia-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.frequencia-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.frequencia-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.numero-cell {
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 50px;
+}
+
+.aluno-nome {
+  text-align: left !important;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding-left: 16px !important;
+}
+
+.aulas-cell {
+  width: 120px;
+}
+
+.input-aulas {
+  width: 70px;
+  padding: 8px 12px;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  background: white;
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .input-aulas {
+  background: var(--secondary-bg);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.input-aulas:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.presenca-cell,
+.falta-cell {
+  width: 120px;
+}
+
+.btn-presenca,
+.btn-falta {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  border: 3px solid;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+[data-theme="dark"] .btn-presenca,
+[data-theme="dark"] .btn-falta {
+  background: var(--secondary-bg);
+}
+
+.btn-presenca {
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+.btn-presenca:hover {
+  border-color: #10b981;
+  color: #10b981;
+  transform: scale(1.1);
+}
+
+.btn-presenca.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: #10b981;
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-falta {
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+.btn-falta:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  transform: scale(1.1);
+}
+
+.btn-falta.active {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: #ef4444;
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Botões Mini para Múltiplas Aulas */
+.btn-presenca-mini,
+.btn-falta-mini {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 2px solid;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+[data-theme="dark"] .btn-presenca-mini,
+[data-theme="dark"] .btn-falta-mini {
+  background: var(--secondary-bg);
+}
+
+.btn-presenca-mini {
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+.btn-presenca-mini:hover {
+  border-color: #10b981;
+  color: #10b981;
+  transform: scale(1.05);
+}
+
+.btn-presenca-mini.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: #10b981;
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.btn-falta-mini {
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+.btn-falta-mini:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  transform: scale(1.05);
+}
+
+.btn-falta-mini.active {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: #ef4444;
+  color: white;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+
+/* Células de Resumo */
+.presenca-count,
+.presenca-aulas,
+.falta-count,
+.falta-aulas {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.presenca-count,
+.presenca-aulas {
+  color: #10b981;
+}
+
+.falta-count,
+.falta-aulas {
+  color: #ef4444;
+}
+
+.percentual-cell {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.percentual.ok {
+  color: #10b981;
+}
+
+.percentual.baixo {
+  color: #ef4444;
+}
+
+/* Actions Container */
+.actions-container {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-salvar {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #4f86f7 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-salvar:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4f86f7 0%, #2563eb 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.btn-salvar:disabled {
+  background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .frequencia-table {
+    font-size: 0.9rem;
+  }
+
+  .btn-presenca,
+  .btn-falta {
+    width: 45px;
+    height: 45px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .info-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .info-section {
+    padding: 16px;
+  }
+
+  .info-cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .info-card {
+    padding: 12px;
+  }
+
+  .visualizacao-tabs {
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .tab-btn {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .frequencia-table {
+    font-size: 0.85rem;
+  }
+
+  .btn-presenca,
+  .btn-falta {
+    width: 40px;
+    height: 40px;
+    font-size: 0.95rem;
+  }
+
+  .actions-container {
+    justify-content: center;
+  }
+
+  .btn-salvar {
+    width: 100%;
+    justify-content: center;
+  }
+}

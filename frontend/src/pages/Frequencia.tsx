@@ -1,93 +1,86 @@
-import { useEffect, useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
-import { frequenciasAPI, Frequencia as FrequenciaType } from '../lib/api'
+import { useState } from 'react'
+import { Calendar, Clock, CheckSquare, ArrowLeft } from 'lucide-react'
+import CalendarioEscolar from '../components/CalendarioEscolar'
+import GradeHoraria from '../components/GradeHoraria'
+import RegistroFrequencia from '../components/RegistroFrequencia'
 import './CommonPages.css'
+import './Notas.css'
+
+type ModuloFrequencia = 'calendario' | 'grade' | 'registro' | null
 
 const Frequencia = () => {
-  const [frequencias, setFrequencias] = useState<FrequenciaType[]>([])
-  const [loading, setLoading] = useState(true)
+  const [moduloAtivo, setModuloAtivo] = useState<ModuloFrequencia>(null)
 
-  useEffect(() => {
-    loadFrequencias()
-  }, [])
-
-  const loadFrequencias = async () => {
-    try {
-      const response = await frequenciasAPI.getAll()
-      setFrequencias(response.data)
-    } catch (error) {
-      console.error('Erro ao carregar frequências:', error)
-    } finally {
-      setLoading(false)
-    }
+  const voltarParaModulos = () => {
+    setModuloAtivo(null)
   }
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Deseja realmente excluir este registro?')) {
-      try {
-        await frequenciasAPI.delete(id)
-        loadFrequencias()
-      } catch (error) {
-        console.error('Erro ao deletar frequência:', error)
-      }
-    }
+  // Se nenhum módulo está ativo, mostra os 3 botões de seleção
+  if (!moduloAtivo) {
+    return (
+      <div className="page">
+        <div className="page-header">
+          <h1>Frequência</h1>
+        </div>
+
+        <div className="selection-section">
+          <div className="selection-grid">
+            <button 
+              className="selection-btn"
+              onClick={() => setModuloAtivo('calendario')}
+            >
+              <div className="selection-btn-content">
+                <Calendar size={32} />
+                <span className="selection-btn-title">Calendário Escolar</span>
+              </div>
+            </button>
+
+            <button 
+              className="selection-btn"
+              onClick={() => setModuloAtivo('grade')}
+            >
+              <div className="selection-btn-content">
+                <Clock size={32} />
+                <span className="selection-btn-title">Grade Horária</span>
+              </div>
+            </button>
+
+            <button 
+              className="selection-btn"
+              onClick={() => setModuloAtivo('registro')}
+            >
+              <div className="selection-btn-content">
+                <CheckSquare size={32} />
+                <span className="selection-btn-title">Registro de Frequência</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('pt-BR')
-  }
-
-  if (loading) return <div className="loading">Carregando...</div>
-
+  // Renderizar módulo ativo
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Frequência</h1>
-        <button className="btn-primary">
-          <Plus size={20} />
-          Registrar Frequência
+        <button className="btn-secondary" onClick={voltarParaModulos}>
+          <ArrowLeft size={20} />
+          Voltar
         </button>
+        <h1>
+          {moduloAtivo === 'calendario' && 'Calendário Escolar'}
+          {moduloAtivo === 'grade' && 'Grade Horária'}
+          {moduloAtivo === 'registro' && 'Registro de Frequência'}
+        </h1>
       </div>
 
-      <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Aluno</th>
-              <th>Turma</th>
-              <th>Status</th>
-              <th>Observação</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {frequencias.map((freq) => (
-              <tr key={freq.id}>
-                <td>{formatDate(freq.data)}</td>
-                <td>{freq.aluno?.nome || '-'}</td>
-                <td>{freq.turma?.nome || '-'}</td>
-                <td>
-                  <span className={`status ${freq.presente ? 'presente' : 'ausente'}`}>
-                    {freq.presente ? 'Presente' : 'Ausente'}
-                  </span>
-                </td>
-                <td>{freq.observacao || '-'}</td>
-                <td>
-                  <div className="action-buttons">
-                    <button 
-                      className="btn-icon btn-danger" 
-                      title="Excluir"
-                      onClick={() => handleDelete(freq.id)}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="content-container">
+        {moduloAtivo === 'calendario' && <CalendarioEscolar />}
+
+        {moduloAtivo === 'grade' && <GradeHoraria />}
+
+        {moduloAtivo === 'registro' && <RegistroFrequencia />}
       </div>
     </div>
   )

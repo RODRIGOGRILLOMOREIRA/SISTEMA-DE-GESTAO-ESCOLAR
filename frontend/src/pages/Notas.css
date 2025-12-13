@@ -14,6 +14,31 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
+.nivel-ensino-buttons {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.btn-nivel-ensino {
+  flex: 1;
+  padding: 20px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-nivel-ensino:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
 .selection-header {
   display: flex;
   align-items: center;
@@ -56,7 +81,7 @@
 .selection-btn {
   position: relative;
   padding: 20px;
-  background: linear-gradient(135deg, var(--background-color) 0%, var(--card-bg) 100%);
+  background: var(--card-bg);
   border: 2px solid var(--border-color);
   border-radius: 12px;
   cursor: pointer;
@@ -81,6 +106,7 @@
   border-color: var(--primary-color);
   transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+  background: rgba(59, 130, 246, 0.04);
 }
 
 .selection-btn:hover::before {
@@ -88,7 +114,7 @@
 }
 
 .selection-btn.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  background: rgba(59, 130, 246, 0.08);
   border-color: var(--primary-color);
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
 }
@@ -100,7 +126,13 @@
 .selection-btn-content {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 12px;
+}
+
+.selection-btn-content svg {
+  color: var(--primary-color);
+  flex-shrink: 0;
 }
 
 .selection-btn-title {
@@ -108,16 +140,34 @@
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.4;
+  text-align: center;
 }
 
 .selection-btn.active .selection-btn-title {
   color: var(--primary-color);
+  font-weight: 700;
 }
 
 .selection-btn-subtitle {
   font-size: 0.875rem;
   color: var(--text-secondary);
   line-height: 1.4;
+}
+
+/* Melhor contraste para modo escuro */
+:root[data-theme="dark"] .selection-btn {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+:root[data-theme="dark"] .selection-btn:hover {
+  background: rgba(96, 165, 250, 0.1);
+  border-color: var(--primary-color);
+}
+
+:root[data-theme="dark"] .selection-btn.active {
+  background: rgba(96, 165, 250, 0.15);
+  border-color: var(--primary-color);
 }
 
 .empty-message {
@@ -138,7 +188,7 @@
 
 .notas-info h2 {
   margin: 0 0 8px 0;
-  color: #334155;
+  color: var(--text-primary);
   font-size: 1.5rem;
 }
 
@@ -205,7 +255,7 @@
 
 .momento-section h4 {
   margin: 0 0 16px 0;
-  color: #334155;
+  color: var(--text-secondary);
   font-size: 1rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -222,23 +272,23 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: var(--background-color);
+  background: transparent;
   border-radius: 8px;
   transition: all 0.2s;
 }
 
 .nota-item:hover {
-  background: var(--hover-color);
+  background: rgba(59, 130, 246, 0.05);
 }
 
 .nota-item.media {
-  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  background: rgba(59, 130, 246, 0.1);
   border: 2px solid var(--primary-color);
   font-weight: 600;
 }
 
 [data-theme="dark"] .nota-item.media {
-  background: linear-gradient(135deg, #374151, #4b5563);
+  background: rgba(96, 165, 250, 0.15);
 }
 
 .nota-label {
@@ -334,7 +384,7 @@
 
 .momento-form h3 {
   margin: 0 0 8px 0;
-  color: #334155;
+  color: var(--text-primary);
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -348,43 +398,43 @@
 
 /* Nota Final do Ano */
 .nota-final-ano-card {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: var(--card-bg);
   border: 3px solid var(--primary-color);
 }
 
 [data-theme="dark"] .nota-final-ano-card {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  background: var(--card-bg);
 }
 
 .nota-final-header {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  background: #10b981 !important;
 }
 
 .nota-item.final-trimestre {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  background: rgba(59, 130, 246, 0.12);
   border: 2px solid #3b82f6;
   font-weight: 600;
 }
 
 [data-theme="dark"] .nota-item.final-trimestre {
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  background: rgba(96, 165, 250, 0.2);
 }
 
 .nota-item.media-final {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde047 100%);
+  background: rgba(234, 179, 8, 0.15);
   border: 3px solid #eab308;
   font-weight: 700;
   font-size: 1.1rem;
 }
 
 [data-theme="dark"] .nota-item.media-final {
-  background: linear-gradient(135deg, #713f12 0%, #854d0e 100%);
+  background: rgba(253, 224, 71, 0.2);
   color: #fde047;
 }
 
 .status-section {
   padding: 24px !important;
-  background: var(--background-color);
+  background: transparent;
   text-align: center;
 }
 
@@ -409,29 +459,29 @@
 }
 
 .status-badge.aprovado {
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  background: rgba(16, 185, 129, 0.15);
   color: #065f46;
   border: 3px solid #10b981;
 }
 
 [data-theme="dark"] .status-badge.aprovado {
-  background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+  background: rgba(110, 231, 183, 0.2);
   color: #6ee7b7;
 }
 
 .status-badge.reprovado {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  background: rgba(239, 68, 68, 0.15);
   color: #991b1b;
   border: 3px solid #ef4444;
 }
 
 [data-theme="dark"] .status-badge.reprovado {
-  background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+  background: rgba(252, 165, 165, 0.2);
   color: #fca5a5;
 }
 
 .status-badge.pendente {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  background: rgba(156, 163, 175, 0.1);
   color: #6b7280;
   border: 3px dashed #9ca3af;
   font-size: 1.1rem;
@@ -439,7 +489,7 @@
 }
 
 [data-theme="dark"] .status-badge.pendente {
-  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+  background: rgba(209, 213, 219, 0.15);
   color: #d1d5db;
 }
 
@@ -510,5 +560,108 @@
 
   .selection-btn-subtitle {
     font-size: 0.75rem;
+  }
+}
+
+/* Botões de Seleção de Módulo */
+.selection-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px 32px;
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+  min-height: 280px;
+}
+
+.selection-button:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.2);
+}
+
+.selection-button svg {
+  color: var(--primary-color);
+  transition: transform 0.3s ease;
+}
+
+.selection-button:hover svg {
+  transform: scale(1.1);
+}
+
+.selection-button h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.selection-button p {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+/* Melhor contraste para modo escuro nos botões de módulos */
+:root[data-theme="dark"] .selection-button {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+:root[data-theme="dark"] .selection-button:hover {
+  background: rgba(96, 165, 250, 0.1);
+  border-color: var(--primary-color);
+}
+
+.placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 64px 32px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.placeholder-content svg {
+  color: var(--primary-color);
+  opacity: 0.6;
+}
+
+.placeholder-content h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.placeholder-content p {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  max-width: 480px;
+}
+
+@media (max-width: 768px) {
+  .selection-button {
+    padding: 32px 24px;
+    min-height: 220px;
+  }
+
+  .selection-button h2 {
+    font-size: 1.25rem;
+  }
+
+  .selection-button p {
+    font-size: 0.9rem;
   }
 }

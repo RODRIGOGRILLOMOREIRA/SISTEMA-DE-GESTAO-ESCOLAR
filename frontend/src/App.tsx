@@ -16,6 +16,7 @@ import Turmas from './pages/Turmas'
 import Disciplinas from './pages/Disciplinas'
 import Notas from './pages/Notas'
 import Frequencia from './pages/Frequencia'
+import Relatorios from './pages/Relatorios'
 import Configuracoes from './pages/Configuracoes'
 
 function App() {
@@ -46,6 +47,7 @@ function App() {
               <Route path="disciplinas" element={<Disciplinas />} />
               <Route path="notas" element={<Notas />} />
               <Route path="frequencia" element={<Frequencia />} />
+              <Route path="relatorios" element={<Relatorios />} />
               <Route path="configuracoes" element={<Configuracoes />} />
             </Route>
           </Routes>

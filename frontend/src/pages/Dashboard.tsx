@@ -55,17 +55,22 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
-      <h1>SGE - {nomeEscola}</h1>
+      <div className="dashboard-header">
+        <div className="escola-info">
+          <h2 className="escola-nome">{nomeEscola}</h2>
+          <h1 className="sistema-titulo">SISTEMA DE GESTÃO ESCOLAR</h1>
+        </div>
+      </div>
       <div className="stats-grid">
         {cards.map((card) => {
           const Icon = card.icon
           return (
             <div key={card.title} className="stat-card">
-              <div className="stat-icon" style={{ backgroundColor: `${card.color}20` }}>
-                <Icon size={24} color={card.color} />
-              </div>
-              <div className="stat-info">
-                <h3>{card.title}</h3>
+              <div className="stat-content">
+                <div className="stat-icon">
+                  <Icon size={36} strokeWidth={2} />
+                </div>
+                <h3 className="stat-title">{card.title.toUpperCase()}</h3>
                 <p className="stat-value">{card.value}</p>
               </div>
             </div>

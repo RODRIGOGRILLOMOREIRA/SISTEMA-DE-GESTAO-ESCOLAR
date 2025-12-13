@@ -245,26 +245,19 @@ const Disciplinas = () => {
       {/* Seleção de Categoria */}
       {!categoriaAtiva && (
         <div className="selection-section">
-          <div className="selection-header">
-            <BookOpen size={24} className="selection-icon" />
-            <h2>Selecione a Categoria</h2>
-          </div>
-          <div className="selection-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', maxWidth: '600px' }}>
+          <div className="nivel-ensino-buttons">
             <button
-              className="selection-btn"
+              className="btn-nivel-ensino"
               onClick={() => setCategoriaAtiva('iniciais')}
             >
-              <div className="selection-btn-content">
-                <span className="selection-btn-title">Anos Iniciais</span>
-              </div>
+              Anos Iniciais
             </button>
+
             <button
-              className="selection-btn"
+              className="btn-nivel-ensino"
               onClick={() => setCategoriaAtiva('finais')}
             >
-              <div className="selection-btn-content">
-                <span className="selection-btn-title">Anos Finais</span>
-              </div>
+              Anos Finais
             </button>
           </div>
         </div>
