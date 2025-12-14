@@ -1,6 +1,6 @@
 # 🎨 Frontend - Sistema de Gestão Escolar
 
-Interface moderna e responsiva para gestão escolar desenvolvida com React, TypeScript e Vite. Sistema completo com dashboards analíticos, gráficos interativos e interface intuitiva.
+Interface moderna e responsiva para gestão escolar desenvolvida com React, TypeScript e Vite. Design premium com tema ciano, animações sofisticadas e responsividade completa para todos os dispositivos.
 
 [![React](https://img.shields.io/badge/React-18.2.0-61dafb)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue)](https://www.typescriptlang.org/)
@@ -20,12 +20,103 @@ Interface moderna e responsiva para gestão escolar desenvolvida com React, Type
 - **Axios 1.6.2** - Cliente HTTP
 - **Recharts 2.10.0** - Gráficos e visualizações
 - **Lucide React 0.294.0** - Ícones modernos
-- **CSS3** - Estilização customizada
+- **Google Fonts (Poppins)** - Tipografia premium
+
+### Estilização
+- **CSS3 Avançado** - Gradientes, animações e transições
+- **CSS Variables** - Temas dinâmicos (claro/escuro)
+- **Flexbox & Grid** - Layouts responsivos
+- **Media Queries** - 5 breakpoints (320px, 480px, 640px, 768px, 1024px, 1280px+)
 
 ### DevTools
 - **@types/react** 18.2.43 - Tipos TypeScript
 - **ESLint** - Linter de código
 - **@vitejs/plugin-react** - Plugin React para Vite
+
+---
+
+## 🎨 Sistema de Design
+
+### Paleta de Cores
+
+**Primárias (Tema Ciano):**
+- `#00BCD4` - Ciano principal
+- `#00ACC1` - Ciano médio
+- `#0097A7` - Ciano escuro
+
+**Secundárias (Ações):**
+- `#3b82f6` - Azul principal
+- `#2563eb` - Azul escuro
+
+**Backgrounds:**
+- `#d0d0d0` - Fundo claro (modo light)
+- `#0f172a` - Fundo escuro (modo dark)
+- `#263238` - Dark gray inicial (gradientes)
+- `#37474f` - Dark gray final (gradientes)
+
+### Tipografia (Poppins)
+
+- **Weights**: 400 (Regular), 600 (SemiBold), 700 (Bold), 800 (ExtraBold), 900 (Black)
+- **Headers**: 1.8rem - 2.5rem com weight 700-900
+- **Body**: 0.875rem - 1rem com weight 400-600
+- **Buttons**: 0.9rem - 1rem com weight 600-700
+
+### Efeitos Visuais
+
+**Animações CSS:**
+```css
+/* Gradiente animado */
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Rotating radial */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Shine effect */
+@keyframes shine {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: 100%; }
+}
+
+/* Text glow */
+@keyframes textGlow {
+  0%, 100% { text-shadow: 0 0 10px rgba(0, 188, 212, 0.5); }
+  50% { text-shadow: 0 0 20px rgba(0, 188, 212, 0.8); }
+}
+```
+
+**Pseudo-elementos:**
+- `::before` - Rotating radial gradient backgrounds
+- `::after` - Shine sliding effects
+
+**Bordas e Sombras:**
+- Bordas: 3px solid #00BCD4
+- Border-radius: 16px - 20px
+- Box-shadow: Múltiplas camadas com rgba ciano
+- Text-shadow: Contorno e brilho em textos
+
+### Responsividade
+
+**Breakpoints:**
+- `1280px+` - Desktop Full HD
+- `1024px - 1280px` - Notebook / Tablet landscape
+- `768px - 1024px` - Tablet portrait
+- `640px - 768px` - Mobile large
+- `480px - 640px` - Mobile medium
+- `< 480px` - Mobile small
+
+**Layout Mobile (< 640px):**
+- Sidebar horizontal fixa inferior (70px)
+- Menu em linha com scroll
+- Grid 1 coluna
+- Botões largura total
+- Modais 95-98% da tela
 
 ---
 
@@ -37,17 +128,201 @@ Interface moderna e responsiva para gestão escolar desenvolvida com React, Type
 - Armazenamento de token em localStorage
 - Logout automático em caso de erro
 
-### 2. Dashboard (Redesenhado)
-- **Cabeçalho premium**: Nome da escola + "SISTEMA DE GESTÃO ESCOLAR"
-- **4 Cards em verde ciano**: Design moderno com gradiente
-- **Hover interativo**: Cards invertem para branco com borda ciano
-- **Ícones grandes**: 36px centralizados em círculo
-- **Números destacados**: 3rem centralizados
-- **Títulos em maiúsculas**: Com espaçamento de letras
-- **Animações suaves**: Scale, hover e sombras dinâmicas
-- Integração com configurações (busca nome da escola)
+### 2. Dashboard Premium (Redesenhado Completo)
 
-### 3. Gestão de Alunos
+**Cabeçalho com Gradiente Animado:**
+- Background: linear-gradient(135deg, #00BCD4, #00ACC1, #0097A7)
+- Animação: gradientShift 6s + fadeInDown 0.8s
+- Bordas: 3px solid rgba(255,255,255,0.3)
+- Efeitos: Rotating radial + shine effect
+- Título: "E.E.E.F.CENTENÁRIO SISTEMA DE GESTÃO ESCOLAR"
+- Tipografia: Poppins 900 com text-stroke
+
+**4 Cards Modernos:**
+- Background: linear-gradient(135deg, #263238, #37474f)
+- Bordas: 3px solid #00BCD4 com cantos 16px
+- Ícones: 60px em círculo com gradiente
+- Números: 3rem centralizados
+- Títulos: uppercase com letter-spacing
+- Box-shadow: Múltiplas camadas ciano
+
+**Hover Interativo:**
+- Transição para gradiente ciano animado
+- Scale transform + translateY(-4px)
+- Rotating radial ativado
+- Shine effect deslizante
+- Box-shadow intensificado
+
+### 3. Layout e Navegação
+
+**Sidebar (Layout.css - 449 linhas):**
+
+*Desktop (> 1024px):*
+- Largura: 280px fixa à esquerda
+- Background: #0f172a (dark mode color)
+- Bordas: 3px ciano no lado direito com cantos arredondados
+- Header: Logo + nome da escola + rede com gradiente ciano
+- Menu: Itens com ícones + texto, hover ciano
+- Footer: Info do usuário + botão logout
+
+*Tablet (768px - 1024px):*
+- Largura: 70px compacta
+- Apenas ícones (textos ocultos)
+- Border direita ciano linear
+
+*Mobile (< 640px):*
+- Sidebar horizontal inferior (70px altura)
+- Menu em linha com scroll horizontal
+- Header e footer ocultos
+- Fixed bottom com z-index 1000
+
+**Área de Conteúdo:**
+
+*Modo Claro:*
+- Background: #d0d0d0
+- Bordas: 3px ciano com cantos 20px
+- Margens: 16px com ajustes responsivos
+
+*Modo Escuro:*
+- Background: #0f172a
+- Mesmas bordas e efeitos de brilho
+- Box-shadow com rgba ciano
+
+### 4. Componentes Unificados
+
+**Botões Padronizados (ModernPages.css):**
+
+`.btn-voltar` - Botão Azul de Retorno:
+```css
+background: linear-gradient(135deg, #3b82f6, #2563eb);
+border: 2px solid rgba(255,255,255,0.3);
+border-radius: 10px;
+/* Rotating radial + hover effects */
+/* Sempre à direita, ícone 16px */
+```
+
+`.btn-primary` - Ações Principais:
+```css
+background: linear-gradient(135deg, #3b82f6, #2563eb);
+/* Rotating radial background */
+/* Hover: scale(1.05) + sombras */
+```
+
+`.selection-btn` - Botões de Seleção:
+```css
+background: linear-gradient(135deg, #263238, #37474f);
+border: 3px solid #00BCD4;
+border-radius: 16px;
+padding: 24px;
+/* Hover: gradiente ciano animado */
+/* Active: double animations */
+/* Dark mode: ciano por padrão */
+```
+
+**Headers de Página:**
+```css
+.page-header {
+  background: linear-gradient(135deg, #00BCD4, #00ACC1, #0097A7);
+  background-size: 200% 200%;
+  border-radius: 20px;
+  border: 3px solid rgba(255,255,255,0.3);
+  animation: fadeInDown 0.8s, gradientShift 6s infinite;
+  /* Rotating radial + shine effects */
+}
+```
+
+**Cards de Seleção (Anos Iniciais/Finais, Turmas):**
+- Grid 2 colunas centralizado (max-width 600px)
+- Header com ícone + "Selecione a Categoria"
+- Botões com mesma classe `.selection-btn`
+- Responsivo: 2 cols → 1 col em mobile
+
+### 5. Páginas Modernas (ModernPages.css - 680+ linhas)
+
+**Páginas Unificadas:**
+- Disciplinas
+- Frequência / Registro de Frequência
+- Notas
+- Relatórios
+- Configurações
+
+**Características Comuns:**
+- Header com gradiente ciano animado
+- Contêineres com borda ciano 3px
+- Max-width: 1300px centralizado
+- Formulários com labels escuras e inputs claros
+- Tabelas com scroll horizontal
+- Botões de ação (edit/delete) estilizados
+- Modais responsivos
+
+### 6. Responsividade Completa
+
+**Arquivos CSS com Media Queries:**
+
+1. **Layout.css** (449 linhas + 130 linhas responsivas):
+   - Desktop: Sidebar 280px completa
+   - Tablet: Sidebar 70px compacta
+   - Mobile: Sidebar horizontal 70px inferior
+   - 4 breakpoints: 1024px, 768px, 640px, 480px
+
+2. **Dashboard.css** (352 linhas + 120 linhas responsivas):
+   - Grid adaptativo: 3 cols → 2 cols → 1 col
+   - Cards: 24px padding → 14px → 12px
+   - Ícones: 60px → 48px → 40px → 36px
+   - Títulos: 2.5rem → 1.6rem → 1.1rem → 1rem
+   - 5 breakpoints completos
+
+3. **ModernPages.css** (533 linhas + 150 linhas responsivas):
+   - Headers: 1.8rem → 1.6rem → 1.3rem → 1rem
+   - Padding: 2rem → 1.5rem → 1rem → 0.5rem
+   - Botões: Largura total em mobile
+   - Tabelas: Scroll horizontal
+   - Formulários: Grid 1 coluna em mobile
+
+4. **Notas.css** (739 linhas + 100 linhas responsivas):
+   - Selection grid: 3 cols → 2 cols → 1 col
+   - Botões: 24px padding → 16px → 12px
+   - Títulos: 1rem → 0.9rem → 0.8rem
+   - Nivel-ensino: Coluna em mobile
+
+5. **Modal.css** (253 linhas + 90 linhas responsivas):
+   - Largura: 1200px → 900px → 600px → 95%
+   - Altura: 90vh → 95vh → 98vh
+   - Botões: Empilhados em mobile
+   - Forms: 1 coluna em mobile
+
+**Dispositivos Suportados:**
+
+📱 **Smartphones (320px - 640px):**
+- iPhone SE (375px)
+- iPhone 12/13 (390px)
+- iPhone 14 Pro Max (430px)
+- Galaxy S20 (360px)
+- Pixel 5 (393px)
+
+📱 **Tablets (640px - 1024px):**
+- iPad Mini (768px)
+- iPad Air (820px)
+- iPad Pro (1024px)
+- Surface Pro (912px)
+
+💻 **Notebooks (1024px - 1440px):**
+- 1366x768 (padrão)
+- 1440x900
+- 1536x864
+
+🖥️ **Desktops (1440px+):**
+- Full HD 1920x1080
+- 2K 2560x1440
+- 4K 3840x2160
+
+**Testes Recomendados:**
+1. Chrome DevTools (Ctrl+Shift+M)
+2. Dispositivos reais
+3. Redimensionamento manual da janela
+4. Orientação portrait e landscape
+
+### 7. Gestão de Alunos
 - CRUD completo
 - Validação de CPF
 - Busca e filtros

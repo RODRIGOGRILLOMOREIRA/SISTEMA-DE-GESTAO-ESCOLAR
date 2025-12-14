@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Save, X, Calendar, TrendingUp } from 'lucide-react'
+import { Save, X, Calendar, TrendingUp, ArrowLeft } from 'lucide-react'
 import axios from 'axios'
 import './RegistroFrequencia.css'
 import '../pages/CommonPages.css'
@@ -284,19 +284,29 @@ const RegistroFrequencia = () => {
   if (!nivelEnsino) {
     return (
       <div className="frequencia-container">
-        <div className="nivel-ensino-buttons">
-          <button
-            className="btn-nivel-ensino"
-            onClick={() => setNivelEnsino('INICIAIS')}
-          >
-            Anos Iniciais
-          </button>
-          <button
-            className="btn-nivel-ensino"
-            onClick={() => setNivelEnsino('FINAIS')}
-          >
-            Anos Finais
-          </button>
+        <div className="selection-section">
+          <div className="selection-header">
+            <Calendar size={24} className="selection-icon" />
+            <h2>Selecione a Categoria</h2>
+          </div>
+          <div className="selection-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', maxWidth: '600px', margin: '0 auto' }}>
+            <button
+              className="selection-btn"
+              onClick={() => setNivelEnsino('INICIAIS')}
+            >
+              <div className="selection-btn-content">
+                <span className="selection-btn-title">Anos Iniciais</span>
+              </div>
+            </button>
+            <button
+              className="selection-btn"
+              onClick={() => setNivelEnsino('FINAIS')}
+            >
+              <div className="selection-btn-content">
+                <span className="selection-btn-title">Anos Finais</span>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -306,21 +316,48 @@ const RegistroFrequencia = () => {
   if (!turmaId) {
     return (
       <div className="frequencia-container">
-        <button className="btn-back-freq" onClick={handleVoltar}>
-          Voltar
-        </button>
-
         <div className="selection-section">
-          <div className="selection-grid">
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            marginBottom: '16px',
+            padding: '12px 0',
+            borderBottom: '2px solid #e5e7eb'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Calendar size={24} className="selection-icon" />
+              <h2 style={{ 
+                margin: 0, 
+                fontSize: '1.25rem',
+                fontWeight: '600',
+                color: '#1f2937'
+              }}>
+                Selecione a Turma - {nivelEnsino === 'INICIAIS' ? 'Anos Iniciais' : 'Anos Finais'}
+              </h2>
+            </div>
+            <button className="btn-voltar" onClick={handleVoltar}>
+              <ArrowLeft size={16} />
+              Voltar
+            </button>
+          </div>
+          <div className="selection-grid" style={{ 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
+            gap: '12px' 
+          }}>
             {turmasFiltradas.map(turma => (
               <button
                 key={turma.id}
                 className="selection-btn"
                 onClick={() => setTurmaId(turma.id)}
+                style={{ 
+                  padding: '12px 16px',
+                  minHeight: 'auto'
+                }}
               >
                 <div className="selection-btn-content">
-                  <span className="selection-btn-title">
-                    {turma.ano}º ANO - {turma.nome}
+                  <span className="selection-btn-title" style={{ fontSize: '0.875rem' }}>
+                    {turma.nome}
                   </span>
                 </div>
               </button>
@@ -335,12 +372,8 @@ const RegistroFrequencia = () => {
   if (!periodoAtivo) {
     return (
       <div className="frequencia-container">
-        <button className="btn-back-freq" onClick={handleVoltar}>
-          Voltar
-        </button>
-
-        <div className="grade-header">
-          <button className="selection-btn" style={{ margin: '0 auto' }}>
+        <div className="grade-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <button className="selection-btn" style={{ margin: '0' }}>
             <div className="selection-btn-content">
               <span className="selection-btn-title">
                 {turmaSelecionada?.ano}º ANO
@@ -380,67 +413,69 @@ const RegistroFrequencia = () => {
   // Nível 4: Registro de Frequência
   return (
     <div className="frequencia-container">
-      <button className="btn-back-freq" onClick={handleVoltar}>
-        Voltar
-      </button>
-
-      <div className="frequencia-header">
-        <h2>{turmaSelecionada?.ano}º ANO - {periodoAtivo === 'MANHA' ? 'Manhã' : 'Tarde'}</h2>
+      <div className="frequencia-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+        <div style={{ flex: 1 }}>
+          <h2>{turmaSelecionada?.ano}º ANO - {periodoAtivo === 'MANHA' ? 'Manhã' : 'Tarde'}</h2>
         
-        <div className="info-section">
-          <div className="info-cards">
-            <div className="info-card">
-              <label>Data</label>
-              <input
-                type="date"
-                value={dataSelecionada}
-                onChange={(e) => setDataSelecionada(e.target.value)}
-                className="date-control"
-              />
-            </div>
-
-            <div className="info-card">
-              <label>Disciplina</label>
-              <select
-                value={disciplinaSelecionada}
-                onChange={(e) => setDisciplinaSelecionada(e.target.value)}
-                className="select-control"
-              >
-                <option value="">Selecione a disciplina</option>
-                {disciplinasDoDia.map(disc => (
-                  <option key={disc.id} value={disc.id}>
-                    {disc.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="info-card">
-              <label>Professor</label>
-              <div className="info-value">
-                {disciplinaSelecionada 
-                  ? turmaSelecionada?.disciplinas?.find(d => d.id === disciplinaSelecionada)?.professor?.nome || 'Sem professor'
-                  : '-'}
+          <div className="info-section">
+            <div className="info-cards">
+              <div className="info-card">
+                <label>Data</label>
+                <input
+                  type="date"
+                  value={dataSelecionada}
+                  onChange={(e) => setDataSelecionada(e.target.value)}
+                  className="date-control"
+                />
               </div>
-            </div>
 
-            <div className="info-card">
-              <label>Nº Aulas</label>
-              <input
-                type="number"
-                min="1"
-                max="5"
-                value={numeroAulasPadrao}
-                onChange={(e) => {
-                  const valor = Math.min(5, Math.max(1, parseInt(e.target.value) || 1))
-                  setNumeroAulasPadrao(valor)
-                }}
-                className="number-control"
-                disabled={!disciplinaSelecionada}
-              />
+              <div className="info-card">
+                <label>Disciplina</label>
+                <select
+                  value={disciplinaSelecionada}
+                  onChange={(e) => setDisciplinaSelecionada(e.target.value)}
+                  className="select-control"
+                >
+                  <option value="">Selecione a disciplina</option>
+                  {disciplinasDoDia.map(disc => (
+                    <option key={disc.id} value={disc.id}>
+                      {disc.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="info-card">
+                <label>Professor</label>
+                <div className="info-value">
+                  {disciplinaSelecionada 
+                    ? turmaSelecionada?.disciplinas?.find(d => d.id === disciplinaSelecionada)?.professor?.nome || 'Sem professor'
+                    : '-'}
+                </div>
+              </div>
+
+              <div className="info-card">
+                <label>Nº Aulas</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="5"
+                  value={numeroAulasPadrao}
+                  onChange={(e) => {
+                    const valor = Math.min(5, Math.max(1, parseInt(e.target.value) || 1))
+                    setNumeroAulasPadrao(valor)
+                  }}
+                  className="number-control"
+                  disabled={!disciplinaSelecionada}
+                />
+              </div>
             </div>
           </div>
         </div>
+        <button className="btn-voltar" onClick={handleVoltar} style={{ marginTop: '8px' }}>
+          <ArrowLeft size={16} />
+          Voltar
+        </button>
       </div>
 
       <div className="table-container">

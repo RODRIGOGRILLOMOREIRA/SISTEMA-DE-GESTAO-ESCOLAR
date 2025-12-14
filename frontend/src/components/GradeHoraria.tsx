@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Edit, Save, X } from 'lucide-react'
+import { Plus, Edit, Save, X, Calendar } from 'lucide-react'
 import axios from 'axios'
 import './GradeHoraria.css'
 import '../pages/CommonPages.css'
@@ -231,19 +231,26 @@ const GradeHoraria = () => {
       {/* Seleção de Nível de Ensino */}
       {!nivelEnsino && (
         <div className="selection-section">
-          <div className="nivel-ensino-buttons">
+          <div className="selection-header">
+            <Calendar size={24} className="selection-icon" />
+            <h2>Selecione a Categoria</h2>
+          </div>
+          <div className="selection-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', maxWidth: '600px', margin: '0 auto' }}>
             <button
-              className="btn-nivel-ensino"
+              className="selection-btn"
               onClick={() => setNivelEnsino('INICIAIS')}
             >
-              Anos Iniciais
+              <div className="selection-btn-content">
+                <span className="selection-btn-title">Anos Iniciais</span>
+              </div>
             </button>
-
             <button
-              className="btn-nivel-ensino"
+              className="selection-btn"
               onClick={() => setNivelEnsino('FINAIS')}
             >
-              Anos Finais
+              <div className="selection-btn-content">
+                <span className="selection-btn-title">Anos Finais</span>
+              </div>
             </button>
           </div>
         </div>
@@ -252,15 +259,30 @@ const GradeHoraria = () => {
       {/* Seleção de Turma */}
       {nivelEnsino && !turmaId && (
         <div className="selection-section">
-          <h2 style={{ 
-            margin: 0, 
-            marginBottom: '20px',
-            fontSize: '1.25rem',
-            fontWeight: '600',
-            color: 'var(--text-primary)'
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            marginBottom: '16px',
+            padding: '12px 0',
+            borderBottom: '2px solid #e5e7eb'
           }}>
-            Selecione a Turma - {nivelEnsino === 'INICIAIS' ? 'Anos Iniciais' : 'Anos Finais'}
-          </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Calendar size={24} className="selection-icon" />
+              <h2 style={{ 
+                margin: 0, 
+                fontSize: '1.25rem',
+                fontWeight: '600',
+                color: '#1f2937'
+              }}>
+                Selecione a Turma - {nivelEnsino === 'INICIAIS' ? 'Anos Iniciais' : 'Anos Finais'}
+              </h2>
+            </div>
+            <button className="btn-voltar" onClick={() => setNivelEnsino(null)}>
+              <ArrowLeft size={16} />
+              Voltar
+            </button>
+          </div>
           <div className="selection-grid" style={{ 
             gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
             gap: '12px' 

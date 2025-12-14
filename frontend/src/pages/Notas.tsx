@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Edit, X, Save, Users, GraduationCap, BookOpen, CheckCircle, XCircle } from 'lucide-react'
 import { alunosAPI, disciplinasAPI, turmasAPI, Aluno, Disciplina, Turma, api } from '../lib/api'
-import './CommonPages.css'
+import './ModernPages.css'
 import './Notas.css'
 import '../components/Modal.css'
 

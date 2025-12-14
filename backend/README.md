@@ -2,6 +2,8 @@
 
 API RESTful completa e robusta para gerenciamento escolar, desenvolvida com Node.js, TypeScript, Express e Prisma ORM, com sistema de notas avançado e média parcial progressiva.
 
+**Integração Frontend:** API otimizada para servir uma interface moderna e 100% responsiva (desktop, tablet, mobile) com tema cyan premium e modo escuro.
+
 ## 📋 Índice
 
 - [Tecnologias](#tecnologias)
@@ -12,6 +14,32 @@ API RESTful completa e robusta para gerenciamento escolar, desenvolvida com Node
 - [Cálculos Automáticos](#cálculos-automáticos)
 - [Instalação](#instalação)
 - [Scripts](#scripts)
+
+## 🎨 Interface Responsiva
+
+A API serve um frontend moderno com:
+
+**Design System:**
+- Tema cyan premium (#00BCD4, #00ACC1, #0097A7)
+- Modo escuro com bordas arredondadas e efeitos glow
+- Animações CSS (gradientShift, rotate, shine, textGlow)
+- Tipografia Poppins (400, 600, 700, 800, 900)
+
+**Responsividade Completa:**
+- 📱 Smartphones (320px - 640px): Sidebar horizontal inferior
+- 📱 Tablets (640px - 1024px): Sidebar compacta (ícones)
+- 💻 Notebooks (1024px - 1440px): Sidebar completa (280px)
+- 🖥️ Desktops (1440px+): Layout full HD/2K/4K
+
+**Arquivos CSS Responsivos:**
+- `Layout.css`: 449 linhas + 130 linhas de media queries
+- `Dashboard.css`: 352 linhas + 120 linhas responsivas
+- `ModernPages.css`: 533 linhas + 150 linhas responsivas
+- `Notas.css`: 739 linhas + 100 linhas responsivas
+- `Modal.css`: 253 linhas + 90 linhas responsivas
+
+**Compatibilidade:**
+Testado em Chrome, Firefox, Safari, Edge e dispositivos iOS/Android (iPhone, iPad, Galaxy, Pixel).
 
 ## 🛠️ Tecnologias
 

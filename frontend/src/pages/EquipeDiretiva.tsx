@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, Edit, X, Save } from 'lucide-react'
 import { equipeDiretivaAPI, type EquipeDiretiva } from '../lib/api'
-import './CommonPages.css'
+import './EquipeDiretiva.css'
 import '../components/Modal.css'
 
 interface EquipeDiretivaForm {

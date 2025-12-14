@@ -16,27 +16,60 @@
 
 .nivel-ensino-buttons {
   display: flex;
-  gap: 16px;
+  gap: 24px;
   width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
 }
 
 .btn-nivel-ensino {
   flex: 1;
-  padding: 20px;
-  font-size: 1.2rem;
-  font-weight: 600;
-  border: 2px solid var(--border-color);
-  border-radius: 12px;
-  background: var(--card-bg);
-  color: var(--text-primary);
+  padding: 32px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  border: 3px solid #00BCD4;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #263238 0%, #37474f 100%);
+  color: white;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 188, 212, 0.3);
+  position: relative;
+  overflow: hidden;
+  text-shadow: 
+    1px 1px 2px rgba(0, 131, 143, 0.8),
+    0 0 10px rgba(0, 188, 212, 0.5);
+}
+
+.btn-nivel-ensino::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .btn-nivel-ensino:hover {
-  border-color: var(--primary-color);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  background: linear-gradient(135deg, #00BCD4 0%, #00ACC1 50%, #0097A7 100%);
+  background-size: 200% 200%;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 
+    0 8px 32px rgba(0, 188, 212, 0.5),
+    0 0 60px rgba(0, 188, 212, 0.3),
+    inset 0 0 40px rgba(255, 255, 255, 0.1);
+  animation: gradientShift 6s ease infinite;
+}
+
+.btn-nivel-ensino:hover::before {
+  opacity: 1;
+  animation: rotate 10s linear infinite;
 }
 
 .selection-header {
@@ -70,57 +103,155 @@
   .selection-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .selection-btn {
+    padding: 20px;
+  }
+
+  .selection-btn-title {
+    font-size: 1rem;
+  }
+
+  .nivel-ensino-buttons {
+    gap: 16px;
+  }
+
+  .btn-nivel-ensino {
+    padding: 24px;
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .selection-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .selection-btn {
+    padding: 16px;
+  }
+
+  .selection-btn-title {
+    font-size: 0.9rem;
+  }
+
+  .btn-nivel-ensino {
+    padding: 20px;
+    font-size: 1rem;
+  }
 }
 
 @media (max-width: 640px) {
   .selection-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .selection-btn {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .selection-btn-title {
+    font-size: 0.85rem;
+  }
+
+  .nivel-ensino-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-nivel-ensino {
+    padding: 16px;
+    font-size: 0.95rem;
+    border-radius: 12px;
+  }
+
+  .selection-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .selection-header h2 {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .selection-btn {
+    padding: 12px;
+  }
+
+  .selection-btn-title {
+    font-size: 0.8rem;
+  }
+
+  .btn-nivel-ensino {
+    padding: 14px;
+    font-size: 0.9rem;
   }
 }
 
 .selection-btn {
   position: relative;
-  padding: 20px;
-  background: var(--card-bg);
-  border: 2px solid var(--border-color);
-  border-radius: 12px;
+  padding: 24px;
+  background: linear-gradient(135deg, #263238 0%, #37474f 100%);
+  border: 3px solid #00BCD4;
+  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  text-align: left;
+  transition: all 0.3s ease;
+  text-align: center;
   overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 188, 212, 0.3);
 }
 
 .selection-btn::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--primary-color);
-  transform: scaleY(0);
-  transition: transform 0.3s ease;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .selection-btn:hover {
-  border-color: var(--primary-color);
+  background: linear-gradient(135deg, #00BCD4 0%, #00ACC1 50%, #0097A7 100%);
+  background-size: 200% 200%;
+  border: 3px solid rgba(255, 255, 255, 0.3);
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
-  background: rgba(59, 130, 246, 0.04);
+  box-shadow: 
+    0 8px 32px rgba(0, 188, 212, 0.5),
+    0 0 60px rgba(0, 188, 212, 0.3),
+    inset 0 0 40px rgba(255, 255, 255, 0.1);
+  animation: gradientShift 6s ease infinite;
 }
 
 .selection-btn:hover::before {
-  transform: scaleY(1);
+  opacity: 1;
+  animation: rotate 10s linear infinite;
 }
 
 .selection-btn.active {
-  background: rgba(59, 130, 246, 0.08);
-  border-color: var(--primary-color);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+  background: linear-gradient(135deg, #00BCD4 0%, #00ACC1 50%, #0097A7 100%);
+  background-size: 200% 200%;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 8px 32px rgba(0, 188, 212, 0.5),
+    0 0 60px rgba(0, 188, 212, 0.3),
+    inset 0 0 40px rgba(255, 255, 255, 0.1);
+  animation: gradientShift 6s ease infinite;
 }
 
 .selection-btn.active::before {
-  transform: scaleY(1);
+  opacity: 1;
+  animation: rotate 10s linear infinite;
 }
 
 .selection-btn-content {
@@ -128,46 +259,69 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .selection-btn-content svg {
-  color: var(--primary-color);
+  color: white;
   flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
 }
 
 .selection-btn-title {
   font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  color: white;
   line-height: 1.4;
   text-align: center;
+  -webkit-text-stroke: 0.5px #00838f;
+  text-shadow: 
+    1px 1px 2px rgba(0, 131, 143, 0.8),
+    0 0 10px rgba(0, 188, 212, 0.5);
 }
 
 .selection-btn.active .selection-btn-title {
-  color: var(--primary-color);
-  font-weight: 700;
+  color: white;
+  font-weight: 800;
+  -webkit-text-stroke: 1px #00838f;
+  text-shadow: 
+    2px 2px 4px rgba(0, 131, 143, 0.8),
+    0 0 15px rgba(0, 188, 212, 0.6);
 }
 
 .selection-btn-subtitle {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  font-family: 'Poppins', sans-serif;
+  color: rgba(255, 255, 255, 0.9);
   line-height: 1.4;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Melhor contraste para modo escuro */
+/* Modo escuro - cards cyan por padrão */
 :root[data-theme="dark"] .selection-btn {
-  background: var(--card-bg);
-  border-color: var(--border-color);
+  background: linear-gradient(135deg, #00BCD4 0%, #00ACC1 50%, #0097A7 100%);
+  background-size: 200% 200%;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 4px 20px rgba(0, 188, 212, 0.4),
+    0 0 40px rgba(0, 188, 212, 0.3);
 }
 
 :root[data-theme="dark"] .selection-btn:hover {
-  background: rgba(96, 165, 250, 0.1);
-  border-color: var(--primary-color);
+  transform: translateY(-4px);
+  box-shadow: 
+    0 8px 32px rgba(0, 188, 212, 0.5),
+    0 0 60px rgba(0, 188, 212, 0.4);
 }
 
 :root[data-theme="dark"] .selection-btn.active {
-  background: rgba(96, 165, 250, 0.15);
-  border-color: var(--primary-color);
+  background: linear-gradient(135deg, #00BCD4 0%, #00ACC1 50%, #0097A7 100%);
+  border: 3px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 
+    0 8px 32px rgba(0, 188, 212, 0.6),
+    0 0 60px rgba(0, 188, 212, 0.4);
 }
 
 .empty-message {

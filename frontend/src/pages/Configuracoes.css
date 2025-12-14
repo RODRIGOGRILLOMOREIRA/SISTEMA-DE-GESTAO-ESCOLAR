@@ -4,19 +4,24 @@
 
 .config-container {
   background: var(--card-bg);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 32px;
-  box-shadow: var(--shadow);
+  border: 3px solid #00BCD4;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.1),
+    0 0 40px rgba(0, 188, 212, 0.2);
+  max-width: 1300px;
+  margin: 0 auto;
 }
 
 .config-form {
-  max-width: 800px;
+  max-width: 100%;
 }
 
 .config-section {
   margin-bottom: 40px;
   padding-bottom: 32px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 2px solid rgba(0, 188, 212, 0.2);
 }
 
 .config-section:last-of-type {
@@ -25,8 +30,11 @@
 
 .config-section h2 {
   font-size: 20px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 24px;
+  letter-spacing: 0.5px;
 }
 
 /* Logo Upload */
@@ -42,8 +50,9 @@
   height: 200px;
   border-radius: 12px;
   overflow: hidden;
-  border: 2px solid var(--border-color);
+  border: 3px solid #00BCD4;
   background: var(--bg-secondary);
+  box-shadow: 0 4px 15px rgba(0, 188, 212, 0.3);
 }
 
 .logo-preview img {

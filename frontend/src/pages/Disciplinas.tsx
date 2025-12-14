@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, Edit, X, Save, BookOpen, GraduationCap, ArrowLeft } from 'lucide-react'
 import { disciplinasAPI, professoresAPI, turmasAPI, Disciplina, Professor, Turma } from '../lib/api'
-import './CommonPages.css'
+import './ModernPages.css'
 import '../components/Modal.css'
 import './DisciplinasAutocomplete.css'
 import './Notas.css'
@@ -245,19 +245,26 @@ const Disciplinas = () => {
       {/* Seleção de Categoria */}
       {!categoriaAtiva && (
         <div className="selection-section">
-          <div className="nivel-ensino-buttons">
+          <div className="selection-header">
+            <BookOpen size={24} className="selection-icon" />
+            <h2>Selecione a Categoria</h2>
+          </div>
+          <div className="selection-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', maxWidth: '600px', margin: '0 auto' }}>
             <button
-              className="btn-nivel-ensino"
+              className="selection-btn"
               onClick={() => setCategoriaAtiva('iniciais')}
             >
-              Anos Iniciais
+              <div className="selection-btn-content">
+                <span className="selection-btn-title">Anos Iniciais</span>
+              </div>
             </button>
-
             <button
-              className="btn-nivel-ensino"
+              className="selection-btn"
               onClick={() => setCategoriaAtiva('finais')}
             >
-              Anos Finais
+              <div className="selection-btn-content">
+                <span className="selection-btn-title">Anos Finais</span>
+              </div>
             </button>
           </div>
         </div>
@@ -288,30 +295,7 @@ const Disciplinas = () => {
               </div>
               <button 
                 onClick={voltarParaCategorias}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 14px',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#6b7280',
-                  backgroundColor: '#f9fafb',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f3f4f6'
-                  e.currentTarget.style.borderColor = '#d1d5db'
-                  e.currentTarget.style.color = '#374151'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f9fafb'
-                  e.currentTarget.style.borderColor = '#e5e7eb'
-                  e.currentTarget.style.color = '#6b7280'
-                }}
+                className="btn-voltar"
               >
                 <ArrowLeft size={16} />
                 Voltar
@@ -381,30 +365,7 @@ const Disciplinas = () => {
             <div style={{ display: 'flex', gap: '8px' }}>
               <button 
                 onClick={() => setTurmaSelecionada(null)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 14px',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#6b7280',
-                  backgroundColor: '#f9fafb',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f3f4f6'
-                  e.currentTarget.style.borderColor = '#d1d5db'
-                  e.currentTarget.style.color = '#374151'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f9fafb'
-                  e.currentTarget.style.borderColor = '#e5e7eb'
-                  e.currentTarget.style.color = '#6b7280'
-                }}
+                className="btn-voltar"
               >
                 <ArrowLeft size={16} />
                 Voltar

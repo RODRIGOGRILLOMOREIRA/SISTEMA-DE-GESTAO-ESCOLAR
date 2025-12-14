@@ -160,7 +160,7 @@ const Turmas = () => {
             <BookOpen size={24} className="selection-icon" />
             <h2>Selecione a Categoria</h2>
           </div>
-          <div className="selection-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', maxWidth: '600px' }}>
+          <div className="selection-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', maxWidth: '600px', margin: '0 auto' }}>
             <button
               className="selection-btn"
               onClick={() => setCategoriaAtiva('iniciais')}
@@ -184,8 +184,8 @@ const Turmas = () => {
           <div className="page-header">
             <h1>{categoriaAtiva === 'iniciais' ? 'Anos Iniciais (1º ao 5º)' : 'Anos Finais (6º ao 9º)'}</h1>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="btn-secondary" onClick={voltarParaCategorias}>
-                <ArrowLeft size={20} />
+              <button className="btn-voltar" onClick={voltarParaCategorias}>
+                <ArrowLeft size={16} />
                 Voltar
               </button>
               <button className="btn-primary" onClick={() => openModal()}>

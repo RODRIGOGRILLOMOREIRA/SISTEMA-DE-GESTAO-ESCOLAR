@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Save, Upload, Moon, Sun } from 'lucide-react'
 import { configuracoesAPI, Configuracao } from '../lib/api'
 import { useTheme } from '../contexts/ThemeContext'
+import './ModernPages.css'
 import './Configuracoes.css'
 
 const Configuracoes = () => {

@@ -3,7 +3,7 @@ import { Calendar, Clock, CheckSquare, ArrowLeft } from 'lucide-react'
 import CalendarioEscolar from '../components/CalendarioEscolar'
 import GradeHoraria from '../components/GradeHoraria'
 import RegistroFrequencia from '../components/RegistroFrequencia'
-import './CommonPages.css'
+import './ModernPages.css'
 import './Notas.css'
 
 type ModuloFrequencia = 'calendario' | 'grade' | 'registro' | null
@@ -64,15 +64,15 @@ const Frequencia = () => {
   return (
     <div className="page">
       <div className="page-header">
-        <button className="btn-secondary" onClick={voltarParaModulos}>
-          <ArrowLeft size={20} />
-          Voltar
-        </button>
         <h1>
           {moduloAtivo === 'calendario' && 'Calendário Escolar'}
           {moduloAtivo === 'grade' && 'Grade Horária'}
           {moduloAtivo === 'registro' && 'Registro de Frequência'}
         </h1>
+        <button className="btn-voltar" onClick={voltarParaModulos}>
+          <ArrowLeft size={16} />
+          Voltar
+        </button>
       </div>
 
       <div className="content-container">
