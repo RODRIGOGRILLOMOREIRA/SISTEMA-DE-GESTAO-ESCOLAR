@@ -53,9 +53,9 @@ equipeDiretivaRouter.post('/', async (req, res) => {
         nome: data.nome,
         cpf: data.cpf,
         email: data.email,
+        telefone: data.telefone || null,
         cargo: data.cargo,
         updatedAt: new Date(),
-        ...(data.telefone && { telefone: data.telefone }),
       }
     });
     
@@ -64,6 +64,7 @@ equipeDiretivaRouter.post('/', async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
+    console.error('Erro ao criar membro da equipe diretiva:', error);
     res.status(500).json({ error: 'Erro ao criar membro' });
   }
 });
@@ -75,11 +76,15 @@ equipeDiretivaRouter.put('/:id', async (req, res) => {
     
     const membro = await prisma.equipe_diretiva.update({
       where: { id: req.params.id },
-      data
+      data: {
+        ...data,
+        updatedAt: new Date(),
+      }
     });
     
     res.json(membro);
   } catch (error) {
+    console.error('Erro ao atualizar membro da equipe diretiva:', error);
     res.status(500).json({ error: 'Erro ao atualizar membro' });
   }
 });
