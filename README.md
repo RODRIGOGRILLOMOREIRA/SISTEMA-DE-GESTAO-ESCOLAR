@@ -22,7 +22,7 @@ O Sistema de Gestão Escolar é uma aplicação web completa que automatiza e fa
 - **Boletim de Desempenho**: Relatórios detalhados por aluno com opções de impressão
 - **Grade Horária**: Organização de horários de aulas por turma
 
-### 📅 Gestão de Calendário
+### 📅 Gestão de Calendário Escolar
 - **Calendário Escolar**: Planejamento anual com eventos, feriados e períodos letivos
 - **Eventos**: Gestão de início/fim de ano, recesso, reuniões pedagógicas e datas importantes
 
