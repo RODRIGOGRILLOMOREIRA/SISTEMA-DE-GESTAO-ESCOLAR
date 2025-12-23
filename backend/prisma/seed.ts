@@ -11,11 +11,12 @@ async function main() {
   console.log('👤 Criando usuário administrador...');
   const senhaHash = await bcrypt.hash('admin123', 10);
 
-  const admin = await prisma.usuario.upsert({
+  const admin = await prisma.usuarios.upsert({
     where: { email: 'admin@escola.com' },
     update: {
       senha: senhaHash,
       ativo: true,
+      updatedAt: new Date(),
     },
     create: {
       id: 'admin-001',
@@ -24,6 +25,7 @@ async function main() {
       senha: senhaHash,
       tipo: 'ADMIN',
       ativo: true,
+      updatedAt: new Date(),
     },
   });
 
@@ -33,7 +35,7 @@ async function main() {
   console.log('');
   console.log('⚙️  Criando configurações padrão...');
   
-  const config = await prisma.configuracao.upsert({
+  const config = await prisma.configuracoes.upsert({
     where: { id: 'config-001' },
     update: {},
     create: {
@@ -44,6 +46,7 @@ async function main() {
       telefone: '(00) 0000-0000',
       email: 'contato@escola.com',
       temaModo: 'light',
+      updatedAt: new Date(),
     },
   });
 

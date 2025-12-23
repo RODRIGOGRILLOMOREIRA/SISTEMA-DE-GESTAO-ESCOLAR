@@ -907,21 +907,31 @@ const Relatorios = () => {
       </div>
 
       {/* Segmento */}
-      <div className="segmento-selection">
-        <button
-          className={`segmento-btn ${segmento === 'iniciais' ? 'active' : ''}`}
-          onClick={() => setSegmento('iniciais')}
-        >
-          <BookOpen size={20} />
-          Anos Iniciais (1º ao 5º)
-        </button>
-        <button
-          className={`segmento-btn ${segmento === 'finais' ? 'active' : ''}`}
-          onClick={() => setSegmento('finais')}
-        >
-          <TrendingUp size={20} />
-          Anos Finais (6º ao 9º)
-        </button>
+      <div className="selection-section" style={{ marginBottom: '2rem' }}>
+        <div className="selection-header">
+          <BookOpen size={24} className="selection-icon" />
+          <h2>Selecione o Segmento</h2>
+        </div>
+        <div className="selection-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', maxWidth: '600px', margin: '0 auto' }}>
+          <button
+            className={`selection-btn ${segmento === 'iniciais' ? 'active' : ''}`}
+            onClick={() => setSegmento('iniciais')}
+          >
+            <div className="selection-btn-content">
+              <span className="selection-btn-title">Anos Iniciais</span>
+              <span className="selection-btn-subtitle">(1º ao 5º ano)</span>
+            </div>
+          </button>
+          <button
+            className={`selection-btn ${segmento === 'finais' ? 'active' : ''}`}
+            onClick={() => setSegmento('finais')}
+          >
+            <div className="selection-btn-content">
+              <span className="selection-btn-title">Anos Finais</span>
+              <span className="selection-btn-subtitle">(6º ao 9º ano)</span>
+            </div>
+          </button>
+        </div>
       </div>
 
       {/* Filtros de Período */}

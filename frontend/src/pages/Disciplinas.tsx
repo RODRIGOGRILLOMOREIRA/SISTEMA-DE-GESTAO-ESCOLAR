@@ -240,6 +240,26 @@ const Disciplinas = () => {
     <div className="page">
       <div className="page-header">
         <h1>Disciplinas</h1>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {categoriaAtiva && !turmaSelecionada && (
+            <button className="btn-voltar" onClick={voltarParaCategorias}>
+              <ArrowLeft size={16} />
+              Voltar
+            </button>
+          )}
+          {turmaSelecionada && (
+            <>
+              <button className="btn-voltar" onClick={voltarParaTurmas}>
+                <ArrowLeft size={16} />
+                Voltar
+              </button>
+              <button className="btn-primary" onClick={() => openModal()}>
+                <Plus size={20} />
+                Cadastrar Disciplina
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Seleção de Categoria */}
@@ -293,13 +313,6 @@ const Disciplinas = () => {
                   Selecione a Turma - {categoriaAtiva === 'iniciais' ? 'Anos Iniciais' : 'Anos Finais'}
                 </h2>
               </div>
-              <button 
-                onClick={voltarParaCategorias}
-                className="btn-voltar"
-              >
-                <ArrowLeft size={16} />
-                Voltar
-              </button>
             </div>
             <div className="selection-grid" style={{ 
               gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
@@ -363,13 +376,6 @@ const Disciplinas = () => {
               {turmaSelecionada.nome}
             </h2>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button 
-                onClick={() => setTurmaSelecionada(null)}
-                className="btn-voltar"
-              >
-                <ArrowLeft size={16} />
-                Voltar
-              </button>
               <button 
                 onClick={() => openModal(turmaSelecionada)}
                 style={{

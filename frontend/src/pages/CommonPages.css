@@ -267,3 +267,58 @@ td {
   font-size: 16px;
   margin-top: 12px;
 }
+
+/* Status badges para matrícula */
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.ativo {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+[data-theme="dark"] .status-badge.ativo {
+  background-color: rgba(110, 231, 183, 0.2);
+  color: #6ee7b7;
+}
+
+.status-badge.inativo {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+[data-theme="dark"] .status-badge.inativo {
+  background-color: rgba(252, 165, 165, 0.2);
+  color: #fca5a5;
+}
+
+.status-badge.transferido {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #1e3a8a;
+  border: 1px solid #3b82f6;
+}
+
+[data-theme="dark"] .status-badge.transferido {
+  background-color: rgba(147, 197, 253, 0.2);
+  color: #93c5fd;
+}
+
+.status-badge.concluido {
+  background-color: rgba(168, 85, 247, 0.15);
+  color: #581c87;
+  border: 1px solid #a855f7;
+}
+
+[data-theme="dark"] .status-badge.concluido {
+  background-color: rgba(216, 180, 254, 0.2);
+  color: #d8b4fe;
+}

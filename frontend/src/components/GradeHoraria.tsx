@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Edit, Save, X, Calendar } from 'lucide-react'
+import { Plus, Edit, Save, X, Calendar, ArrowLeft } from 'lucide-react'
 import axios from 'axios'
 import './GradeHoraria.css'
 import '../pages/CommonPages.css'
@@ -77,7 +77,6 @@ const GradeHoraria = () => {
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [nivelEnsino, setNivelEnsino] = useState<NivelEnsino>(null)
   const [turmaId, setTurmaId] = useState<string>('')
-  const [periodoAtivo, setPeriodoAtivo] = useState<Periodo>(null)
   const [gradeHoraria, setGradeHoraria] = useState<GradeHoraria | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [selectedCell, setSelectedCell] = useState<{ dia: string; ordem: number } | null>(null)
@@ -126,8 +125,33 @@ const GradeHoraria = () => {
     )
   }
 
+  const turmaSelecionada = turmas.find(t => t.id === turmaId)
+  
+  // Normalizar o período da turma para o formato esperado
+  const normalizarPeriodo = (periodo?: string): Periodo => {
+    if (!periodo) return null
+    const periodoUpper = periodo.toUpperCase()
+    if (periodoUpper.includes('MANH') || periodoUpper === 'M') return 'MANHA'
+    if (periodoUpper.includes('TARD') || periodoUpper === 'T') return 'TARDE'
+    return null
+  }
+  
+  const periodoAtivo: Periodo = normalizarPeriodo(turmaSelecionada?.periodo)
+  
+  // Debug
+  if (turmaId && turmaSelecionada) {
+    console.log('Turma selecionada:', turmaSelecionada)
+    console.log('Período original:', turmaSelecionada.periodo)
+    console.log('Período normalizado:', periodoAtivo)
+  }
+
   const openModalForCell = (dia: string, ordem: number) => {
-    const horarioPadrao = horariosPadrao[periodoAtivo!].find(h => h.ordem === ordem)
+    if (!periodoAtivo) {
+      alert('Esta turma não possui um turno definido. Por favor, edite a turma e defina o turno (Manhã ou Tarde).')
+      return
+    }
+    
+    const horarioPadrao = horariosPadrao[periodoAtivo].find(h => h.ordem === ordem)
     if (horarioPadrao?.isRecreiro) {
       return // Não permite editar recreio
     }
@@ -148,7 +172,6 @@ const GradeHoraria = () => {
     if (!selectedCell || !selectedDisciplina || !periodoAtivo) return
 
     try {
-      const turmaSelecionada = turmas.find(t => t.id === turmaId)
       const disciplina = turmaSelecionada?.disciplinas?.find(d => d.id === selectedDisciplina)
       
       if (!disciplina) {
@@ -217,7 +240,6 @@ const GradeHoraria = () => {
     }
   }
 
-  const turmaSelecionada = turmas.find(t => t.id === turmaId)
   const turmasFiltradas = turmas
     .filter(t => {
       if (!nivelEnsino) return false
@@ -228,6 +250,25 @@ const GradeHoraria = () => {
 
   return (
     <div className="page">
+      <div className="page-header">
+        <h1>Grade Horária</h1>
+        {(nivelEnsino || turmaId) && (
+          <button 
+            className="btn-voltar" 
+            onClick={() => {
+              if (turmaId) {
+                setTurmaId('')
+              } else if (nivelEnsino) {
+                setNivelEnsino(null)
+              }
+            }}
+          >
+            <ArrowLeft size={16} />
+            Voltar
+          </button>
+        )}
+      </div>
+
       {/* Seleção de Nível de Ensino */}
       {!nivelEnsino && (
         <div className="selection-section">
@@ -261,7 +302,7 @@ const GradeHoraria = () => {
         <div className="selection-section">
           <div style={{ 
             display: 'flex', 
-            justifyContent: 'space-between', 
+            justifyContent: 'flex-start', 
             alignItems: 'center',
             marginBottom: '16px',
             padding: '12px 0',
@@ -278,10 +319,6 @@ const GradeHoraria = () => {
                 Selecione a Turma - {nivelEnsino === 'INICIAIS' ? 'Anos Iniciais' : 'Anos Finais'}
               </h2>
             </div>
-            <button className="btn-voltar" onClick={() => setNivelEnsino(null)}>
-              <ArrowLeft size={16} />
-              Voltar
-            </button>
           </div>
           <div className="selection-grid" style={{ 
             gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
@@ -309,65 +346,43 @@ const GradeHoraria = () => {
       )}
 
       {/* Grade Horária */}
-      {turmaId && (
-        <div className="grade-container">
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-            <button
-              className="selection-btn"
-              style={{
-                cursor: 'default',
-                padding: '12px 16px',
-                minHeight: 'auto',
-                minWidth: '150px'
-              }}
-            >
-              <div className="selection-btn-content">
-                <span className="selection-btn-title" style={{ fontSize: '0.875rem' }}>
-                  {turmaSelecionada?.ano}º ANO
-                </span>
-              </div>
-            </button>
-          </div>
+      {turmaId && !periodoAtivo && (
+        <div className="empty-state">
+          <Calendar size={64} />
+          <h3>Turno não definido</h3>
+          <p>Esta turma ({turmaSelecionada?.nome}) não possui um turno cadastrado.</p>
+          <p>Por favor, edite a turma na aba "Turmas" e defina o turno (Manhã ou Tarde).</p>
+        </div>
+      )}
 
-          <div className="selection-grid" style={{ 
-            gridTemplateColumns: 'repeat(2, 1fr)', 
-            gap: '12px',
-            marginBottom: '20px'
+      {turmaId && periodoAtivo && (
+        <div className="grade-container">
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            gap: '16px',
+            marginBottom: '20px' 
           }}>
             <button
-              className={`selection-btn ${periodoAtivo === 'MANHA' ? 'active' : ''}`}
-              onClick={() => setPeriodoAtivo('MANHA')}
-              style={{ 
-                padding: '12px 16px',
-                minHeight: 'auto'
+              className="selection-btn active"
+              style={{
+                cursor: 'default',
+                padding: '12px 24px',
+                minHeight: 'auto',
+                minWidth: '180px'
               }}
             >
               <div className="selection-btn-content">
-                <span className="selection-btn-title" style={{ fontSize: '0.875rem' }}>
-                  Turno da Manhã
-                </span>
-              </div>
-            </button>
-            <button
-              className={`selection-btn ${periodoAtivo === 'TARDE' ? 'active' : ''}`}
-              onClick={() => setPeriodoAtivo('TARDE')}
-              style={{ 
-                padding: '12px 16px',
-                minHeight: 'auto'
-              }}
-            >
-              <div className="selection-btn-content">
-                <span className="selection-btn-title" style={{ fontSize: '0.875rem' }}>
-                  Turno da Tarde
+                <span className="selection-btn-title" style={{ fontSize: '0.95rem' }}>
+                  {turmaSelecionada?.nome} - Turno {periodoAtivo === 'MANHA' ? 'da Manhã' : 'da Tarde'}
                 </span>
               </div>
             </button>
           </div>
 
-          {periodoAtivo && (
-            <>
-              <div className="table-container">
-                <table className="grade-table">
+          <div className="table-container">
+            <table className="grade-table">
               <thead>
                 <tr>
                   <th>Horário</th>
@@ -431,8 +446,6 @@ const GradeHoraria = () => {
               </tbody>
             </table>
           </div>
-          </>
-        )}
         </div>
       )}
 

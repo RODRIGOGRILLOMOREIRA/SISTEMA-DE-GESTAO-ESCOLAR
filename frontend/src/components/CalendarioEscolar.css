@@ -6,11 +6,202 @@
 
 .ano-selector h1 {
   margin: 0;
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: var(--primary-color);
-  min-width: 150px;
+  color: var(--text-primary);
+  min-width: 320px;
   text-align: center;
+}
+
+/* Container de Calendário */
+.calendario-container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-top: 24px;
+}
+
+/* Categoria de Eventos */
+.categoria-eventos {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+  border: 2px solid rgba(0, 188, 212, 0.2);
+  transition: all 0.3s ease;
+}
+
+.categoria-eventos:hover {
+  border-color: rgba(0, 188, 212, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.categoria-titulo {
+  margin: 0 0 20px 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  color: var(--text-primary);
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(0, 188, 212, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.categoria-titulo::before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  background: linear-gradient(135deg, #00BCD4, #0097A7);
+  border-radius: 2px;
+}
+
+/* Grid de Eventos */
+.eventos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+/* Card de Evento */
+.evento-card {
+  background: var(--card-bg);
+  border: 2px solid #e5e7eb;
+  border-left-width: 4px;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .evento-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.evento-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-right-width: 2px;
+}
+
+.evento-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.evento-tipo-badge {
+  flex: 1;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  color: white;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.evento-acoes {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-icon-small {
+  padding: 6px;
+  border: none;
+  background: rgba(0, 188, 212, 0.1);
+  color: #00BCD4;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon-small:hover {
+  background: rgba(0, 188, 212, 0.2);
+  transform: scale(1.1);
+}
+
+.btn-icon-small.btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.btn-icon-small.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.evento-descricao {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.evento-datas {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 188, 212, 0.1);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.data-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.data-item svg {
+  color: #00BCD4;
+  flex-shrink: 0;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 32px;
+  text-align: center;
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  border: 2px dashed rgba(0, 188, 212, 0.3);
+  margin-top: 24px;
+}
+
+.empty-state svg {
+  color: rgba(0, 188, 212, 0.4);
+  margin-bottom: 24px;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: 'Poppins', sans-serif;
+}
+
+.empty-state p {
+  margin: 0 0 32px 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
 }
 
 @media (max-width: 768px) {
@@ -19,7 +210,19 @@
   }
 
   .ano-selector h1 {
-    font-size: 1.5rem;
-    min-width: 100px;
+    font-size: 1.25rem;
+    min-width: 240px;
+  }
+
+  .eventos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .categoria-eventos {
+    padding: 16px;
+  }
+
+  .empty-state {
+    padding: 48px 24px;
   }
 }

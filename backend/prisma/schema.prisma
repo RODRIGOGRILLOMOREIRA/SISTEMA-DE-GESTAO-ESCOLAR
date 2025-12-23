@@ -8,23 +8,25 @@ datasource db {
 }
 
 model alunos {
-  id             String           @id
-  nome           String
-  cpf            String           @unique
-  dataNascimento DateTime
-  email          String           @unique
-  telefone       String?
-  endereco       String?
-  responsavel    String
-  telefoneResp   String
-  turmaId        String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime
-  turmas         turmas?          @relation(fields: [turmaId], references: [id])
-  frequencias    frequencias[]
-  matriculas     matriculas[]
-  notas          notas[]
-  presenca_aluno PresencaAluno[]
+  id               String           @id
+  nome             String
+  cpf              String           @unique
+  dataNascimento   DateTime
+  email            String           @unique
+  telefone         String?
+  endereco         String?
+  responsavel      String
+  telefoneResp     String
+  turmaId          String?
+  numeroMatricula  String?
+  statusMatricula  String?          @default("ATIVO")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime
+  turmas           turmas?          @relation(fields: [turmaId], references: [id])
+  frequencias      frequencias[]
+  matriculas       matriculas[]
+  notas            notas[]
+  presenca_aluno   PresencaAluno[]
 }
 
 model calendario_escolar {
@@ -78,14 +80,17 @@ model disciplinas_turmas {
 }
 
 model equipe_diretiva {
-  id        String   @id
-  nome      String
-  cpf       String
-  email     String
-  telefone  String?
-  cargo     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime
+  id                     String                   @id
+  nome                   String
+  cpf                    String
+  email                  String
+  telefone               String?
+  cargo                  String
+  cargaHorariaSemanal    Int?                     @default(40)
+  horarioEntradaPadrao   String?
+  horarioSaidaPadrao     String?
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime
 }
 
 model eventos_calendario {
@@ -114,15 +119,18 @@ model frequencias {
 }
 
 model funcionarios {
-  id        String   @id
-  nome      String
-  cpf       String
-  email     String
-  telefone  String?
-  cargo     String
-  setor     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime
+  id                     String                   @id
+  nome                   String
+  cpf                    String
+  email                  String
+  telefone               String?
+  cargo                  String
+  setor                  String?
+  cargaHorariaSemanal    Int?                     @default(40)
+  horarioEntradaPadrao   String?
+  horarioSaidaPadrao     String?
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime
 }
 
 model grade_horaria {
@@ -218,22 +226,25 @@ model PresencaAluno {
 }
 
 model professores {
-  id                  String                @id
-  nome                String
-  cpf                 String
-  email               String
-  telefone            String
-  especialidade       String?
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime
-  area                String?
-  componentes         String?
-  turmasVinculadas    String?
-  disciplinas         disciplinas[]
-  disciplinas_turmas  disciplinas_turmas[]
-  horarios_aula       horarios_aula[]
-  registro_frequencia registro_frequencia[]
-  turmas              turmas[]
+  id                     String                   @id
+  nome                   String
+  cpf                    String
+  email                  String
+  telefone               String
+  especialidade          String?
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime
+  area                   String?
+  componentes            String?
+  turmasVinculadas       String?
+  cargaHorariaSemanal    Int?                     @default(40)
+  horarioEntradaPadrao   String?
+  horarioSaidaPadrao     String?
+  disciplinas            disciplinas[]
+  disciplinas_turmas     disciplinas_turmas[]
+  horarios_aula          horarios_aula[]
+  registro_frequencia    registro_frequencia[]
+  turmas                 turmas[]
 }
 
 model registro_frequencia {
@@ -279,8 +290,8 @@ model usuarios {
   email            String    @unique
   senha            String
   tipo             String    @default("USUARIO")
+  cargo            String?
   ativo            Boolean   @default(true)
-  resetToken       String?
   resetTokenExpira DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime
@@ -308,4 +319,68 @@ enum TipoEvento {
   FIM_TRIMESTRE
   PERIODO_EAC
   OUTRO
+}
+
+enum TipoPessoa {
+  PROFESSOR
+  FUNCIONARIO
+  EQUIPE_DIRETIVA
+}
+
+enum TipoRegistroPonto {
+  ENTRADA
+  SAIDA
+  INTERVALO_INICIO
+  INTERVALO_FIM
+}
+
+model registro_ponto {
+  id                String             @id @default(uuid())
+  pessoaId          String
+  tipoPessoa        TipoPessoa
+  data              DateTime           @default(now())
+  horaRegistro      DateTime
+  tipoRegistro      TipoRegistroPonto
+  localizacao       String?
+  observacao        String?
+  aprovado          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([pessoaId, data])
+  @@index([tipoPessoa])
+}
+
+model configuracao_jornada {
+  id                     String            @id @default(uuid())
+  pessoaId               String            @unique
+  tipoPessoa             TipoPessoa
+  cargaHorariaSemanal    Int               @default(40)
+  cargaHorariaDiaria     Int               @default(8)
+  horarioEntrada         String?
+  horarioSaida           String?
+  horarioIntervaloInicio String?
+  horarioIntervaloFim    String?
+  diasTrabalho           String[]          @default(["SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA"])
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+
+  @@index([pessoaId])
+}
+
+model banco_horas {
+  id               String      @id @default(uuid())
+  pessoaId         String
+  tipoPessoa       TipoPessoa
+  mes              Int
+  ano              Int
+  horasTrabalhadas Float       @default(0)
+  horasDevidas     Float       @default(0)
+  saldo            Float       @default(0)
+  observacao       String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@unique([pessoaId, mes, ano])
+  @@index([pessoaId])
 }

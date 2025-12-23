@@ -38,11 +38,28 @@ function calcularNotaFinalTrimestre(mediaM1: number | null, avaliacaoEAC: number
 // Função para calcular a média final anual
 function calcularMediaFinal(t1: number | null | undefined, t2: number | null | undefined, t3: number | null | undefined): number | null {
   if (t1 !== null && t1 !== undefined && t2 !== null && t2 !== undefined && t3 !== null && t3 !== undefined) {
-    // Fórmula: (T1*1 + T2*2 + T3*3) / 6
-    const mediaFinal = (t1 * 1 + t2 * 2 + t3 * 3) / 6;
+    // Fórmula: (T1*3 + T2*3 + T3*4) / 10
+    const mediaFinal = (t1 * 3 + t2 * 3 + t3 * 4) / 10;
     return parseFloat(mediaFinal.toFixed(2));
   }
   return null;
+}
+
+// Função para determinar status de aprovação
+function determinarStatusAprovacao(media: number | null): { aprovado: boolean; status: string; cor: string } {
+  if (media === null) {
+    return { aprovado: false, status: 'Pendente', cor: 'gray' };
+  }
+  
+  if (media >= 8.0) {
+    return { aprovado: true, status: 'Aprovado Excelente', cor: 'green-dark' };
+  } else if (media >= 6.0) {
+    return { aprovado: true, status: 'Aprovado - Pode Evoluir', cor: 'green-light' };
+  } else if (media >= 4.0) {
+    return { aprovado: false, status: 'Reprovado - Pode Evoluir', cor: 'yellow' };
+  } else {
+    return { aprovado: false, status: 'Reprovado - Intervenção Urgente', cor: 'red' };
+  }
 }
 
 // Função para atualizar a nota final do aluno na disciplina
@@ -66,7 +83,8 @@ async function atualizarNotaFinal(alunoId: string, disciplinaId: string, anoLeti
   const t3 = notaTri3?.notaFinalTrimestre;
 
   const mediaFinal = calcularMediaFinal(t1, t2, t3);
-  const aprovado = mediaFinal !== null && mediaFinal >= 6.0;
+  const statusInfo = determinarStatusAprovacao(mediaFinal);
+  const aprovado = statusInfo.aprovado;
 
   // Upsert na tabela NotaFinal
   await prisma.notas_finais.upsert({

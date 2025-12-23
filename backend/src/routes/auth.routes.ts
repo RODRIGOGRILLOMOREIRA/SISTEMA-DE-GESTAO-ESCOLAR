@@ -20,6 +20,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   senha: z.string().min(6),
   tipo: z.enum(['admin', 'usuario']).optional(),
+  cargo: z.string().optional(),
 });
 
 const resetPasswordRequestSchema = z.object({
@@ -69,7 +70,8 @@ authRouter.post('/login', async (req, res) => {
       { 
         id: usuario.id, 
         email: usuario.email,
-        tipo: usuario.tipo 
+        tipo: usuario.tipo,
+        cargo: usuario.cargo
       },
       JWT_SECRET,
       { expiresIn: '7d' }
@@ -83,6 +85,7 @@ authRouter.post('/login', async (req, res) => {
         nome: usuario.nome,
         email: usuario.email,
         tipo: usuario.tipo,
+        cargo: usuario.cargo,
       },
     });
   } catch (error) {
@@ -119,6 +122,7 @@ authRouter.post('/register', async (req, res) => {
         email: data.email,
         senha: senhaHash,
         tipo: 'USUARIO',
+        cargo: data.cargo || null,
         updatedAt: new Date(),
       },
     });
@@ -128,7 +132,8 @@ authRouter.post('/register', async (req, res) => {
       { 
         id: usuario.id, 
         email: usuario.email,
-        tipo: usuario.tipo 
+        tipo: usuario.tipo,
+        cargo: usuario.cargo
       },
       JWT_SECRET,
       { expiresIn: '7d' }
@@ -141,6 +146,7 @@ authRouter.post('/register', async (req, res) => {
         nome: usuario.nome,
         email: usuario.email,
         tipo: usuario.tipo,
+        cargo: usuario.cargo,
       },
     });
   } catch (error) {

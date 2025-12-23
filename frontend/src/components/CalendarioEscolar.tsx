@@ -151,9 +151,61 @@ const CalendarioEscolar = () => {
     return tiposEvento.find(t => t.value === tipo)?.label || tipo
   }
 
+  const getTipoColor = (tipo: string) => {
+    const cores: { [key: string]: string } = {
+      'INICIO_ANO_LETIVO': '#10b981',
+      'FIM_ANO_LETIVO': '#ef4444',
+      'DIA_LETIVO': '#3b82f6',
+      'DIA_NAO_LETIVO': '#6b7280',
+      'PARADA_PEDAGOGICA': '#8b5cf6',
+      'RECESSO': '#f59e0b',
+      'SABADO_LETIVO': '#06b6d4',
+      'FERIADO': '#ec4899',
+      'INICIO_TRIMESTRE': '#14b8a6',
+      'FIM_TRIMESTRE': '#f97316',
+      'PERIODO_EAC': '#a855f7',
+      'OUTRO': '#64748b',
+    }
+    return cores[tipo] || '#64748b'
+  }
+
+  const agruparEventosPorCategoria = () => {
+    if (!calendario?.eventos_calendario) return {}
+    
+    const categorias: { [key: string]: EventoCalendario[] } = {
+      'Ano Letivo': [],
+      'Trimestres': [],
+      'Dias Especiais': [],
+      'Feriados e Recessos': [],
+      'Outros': []
+    }
+
+    calendario.eventos_calendario.forEach(evento => {
+      if (['INICIO_ANO_LETIVO', 'FIM_ANO_LETIVO'].includes(evento.tipo)) {
+        categorias['Ano Letivo'].push(evento)
+      } else if (['INICIO_TRIMESTRE', 'FIM_TRIMESTRE', 'PERIODO_EAC'].includes(evento.tipo)) {
+        categorias['Trimestres'].push(evento)
+      } else if (['DIA_LETIVO', 'DIA_NAO_LETIVO', 'SABADO_LETIVO', 'PARADA_PEDAGOGICA'].includes(evento.tipo)) {
+        categorias['Dias Especiais'].push(evento)
+      } else if (['FERIADO', 'RECESSO'].includes(evento.tipo)) {
+        categorias['Feriados e Recessos'].push(evento)
+      } else {
+        categorias['Outros'].push(evento)
+      }
+    })
+
+    // Ordenar eventos dentro de cada categoria por data
+    Object.keys(categorias).forEach(key => {
+      categorias[key].sort((a, b) => new Date(a.dataInicio).getTime() - new Date(b.dataInicio).getTime())
+    })
+
+    return categorias
+  }
+
   if (loading) return <div className="loading">Carregando...</div>
 
   const calendario = calendarios[0]
+  const eventosAgrupados = agruparEventosPorCategoria()
 
   return (
     <div className="page">
@@ -162,7 +214,7 @@ const CalendarioEscolar = () => {
           <button className="btn-secondary" onClick={() => setAnoSelecionado(anoSelecionado - 1)}>
             ← {anoSelecionado - 1}
           </button>
-          <h1>{anoSelecionado}</h1>
+          <h1>Calendário Escolar {anoSelecionado}</h1>
           <button className="btn-secondary" onClick={() => setAnoSelecionado(anoSelecionado + 1)}>
             {anoSelecionado + 1} →
           </button>
@@ -173,60 +225,80 @@ const CalendarioEscolar = () => {
         </button>
       </div>
 
-      <div className="table-container">
-        {calendario?.eventos_calendario && calendario.eventos_calendario.length > 0 ? (
-          <table>
-            <thead>
-              <tr>
-                <th>Tipo</th>
-                <th>Descrição</th>
-                <th>Data Início</th>
-                <th>Data Fim</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {calendario.eventos_calendario.map((evento) => (
-                <tr key={evento.id}>
-                  <td>{getTipoLabel(evento.tipo)}</td>
-                  <td>{evento.descricao || '-'}</td>
-                  <td>{formatDate(evento.dataInicio)}</td>
-                  <td>{evento.dataFim ? formatDate(evento.dataFim) : '-'}</td>
-                  <td>
-                    <div className="action-buttons">
-                      <button 
-                        className="btn-icon btn-edit" 
-                        onClick={() => openModal(evento)}
-                        title="Editar"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button 
-                        className="btn-icon btn-danger" 
-                        onClick={() => handleDelete(evento.id)}
-                        title="Excluir"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+      {calendario?.eventos_calendario && calendario.eventos_calendario.length > 0 ? (
+        <div className="calendario-container">
+          {Object.entries(eventosAgrupados).map(([categoria, eventos]) => {
+            if (eventos.length === 0) return null
+            
+            return (
+              <div key={categoria} className="categoria-eventos">
+                <h2 className="categoria-titulo">{categoria}</h2>
+                <div className="eventos-grid">
+                  {eventos.map((evento) => (
+                    <div 
+                      key={evento.id} 
+                      className="evento-card"
+                      style={{ borderLeftColor: getTipoColor(evento.tipo) }}
+                    >
+                      <div className="evento-header">
+                        <div 
+                          className="evento-tipo-badge"
+                          style={{ backgroundColor: getTipoColor(evento.tipo) }}
+                        >
+                          {getTipoLabel(evento.tipo)}
+                        </div>
+                        <div className="evento-acoes">
+                          <button 
+                            className="btn-icon-small" 
+                            onClick={() => openModal(evento)}
+                            title="Editar"
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button 
+                            className="btn-icon-small btn-danger" 
+                            onClick={() => handleDelete(evento.id)}
+                            title="Excluir"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {evento.descricao && (
+                        <div className="evento-descricao">{evento.descricao}</div>
+                      )}
+                      
+                      <div className="evento-datas">
+                        <div className="data-item">
+                          <CalendarIcon size={14} />
+                          <span>{formatDate(evento.dataInicio)}</span>
+                        </div>
+                        {evento.dataFim && (
+                          <div className="data-item">
+                            <span>até</span>
+                            <span>{formatDate(evento.dataFim)}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <tbody>
-            <tr>
-              <td colSpan={5} style={{ textAlign: 'center', padding: '48px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', color: 'var(--text-secondary)' }}>
-                  <CalendarIcon size={48} style={{ opacity: 0.4 }} />
-                  <p style={{ margin: 0 }}>Nenhum evento cadastrado para {anoSelecionado}</p>
+                  ))}
                 </div>
-              </td>
-            </tr>
-          </tbody>
-        )}
-      </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="empty-state">
+          <CalendarIcon size={64} />
+          <h3>Nenhum evento cadastrado</h3>
+          <p>Adicione eventos para organizar o calendário escolar de {anoSelecionado}</p>
+          <button className="btn-primary" onClick={() => openModal()}>
+            <Plus size={20} />
+            Adicionar Primeiro Evento
+          </button>
+        </div>
+      )}
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>

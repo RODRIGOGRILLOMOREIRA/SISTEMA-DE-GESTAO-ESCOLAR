@@ -15,6 +15,7 @@ import { funcionariosRouter } from './routes/funcionarios.routes';
 import { calendarioRouter } from './routes/calendario.routes';
 import { gradeHorariaRouter } from './routes/grade-horaria.routes';
 import { frequenciaRouter } from './routes/frequencia.routes';
+import { pontoRouter } from './routes/ponto.routes';
 
 dotenv.config();
 
@@ -23,7 +24,7 @@ const PORT = process.env.PORT || 3333;
 
 // Middlewares
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173'
+  origin: ['http://localhost:5173', 'http://localhost:5174']
 }));
 // Aumentar limite para aceitar imagens em base64
 app.use(express.json({ limit: '10mb' }));
@@ -48,6 +49,7 @@ app.use('/api/funcionarios', funcionariosRouter);
 app.use('/api/calendario', calendarioRouter);
 app.use('/api/grade-horaria', gradeHorariaRouter);
 app.use('/api/registro-frequencia', frequenciaRouter);
+app.use('/api/ponto', pontoRouter);
 
 // Start server
 app.listen(PORT, () => {

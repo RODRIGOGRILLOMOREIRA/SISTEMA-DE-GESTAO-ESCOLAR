@@ -152,6 +152,18 @@ const Turmas = () => {
     <div className="page">
       <div className="page-header">
         <h1>Turmas</h1>
+        {categoriaAtiva && (
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button className="btn-voltar" onClick={voltarParaCategorias}>
+              <ArrowLeft size={16} />
+              Voltar
+            </button>
+            <button className="btn-primary" onClick={() => openModal()}>
+              <Plus size={20} />
+              Nova Turma
+            </button>
+          </div>
+        )}
       </div>
 
       {!categoriaAtiva ? (
@@ -181,19 +193,6 @@ const Turmas = () => {
         </div>
       ) : (
         <>
-          <div className="page-header">
-            <h1>{categoriaAtiva === 'iniciais' ? 'Anos Iniciais (1º ao 5º)' : 'Anos Finais (6º ao 9º)'}</h1>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="btn-voltar" onClick={voltarParaCategorias}>
-                <ArrowLeft size={16} />
-                Voltar
-              </button>
-              <button className="btn-primary" onClick={() => openModal()}>
-                <Plus size={20} />
-                Nova Turma
-              </button>
-            </div>
-          </div>
 
           {turmasFiltradas.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>

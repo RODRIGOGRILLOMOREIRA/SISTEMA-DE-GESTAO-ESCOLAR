@@ -46,6 +46,8 @@ export interface Aluno {
   telefoneResp: string;
   turmaId?: string;
   turma?: Turma;
+  numeroMatricula?: string;
+  statusMatricula?: string;
 }
 
 export interface Professor {
@@ -211,6 +213,7 @@ export interface Usuario {
   nome: string;
   email: string;
   tipo: string;
+  cargo?: string;
 }
 
 export interface AuthResponse {

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Edit, X, Save } from 'lucide-react'
+import { Plus, Trash2, Edit, X, Save, BookOpen, ArrowLeft } from 'lucide-react'
 import { alunosAPI, turmasAPI, Aluno, Turma } from '../lib/api'
 import './CommonPages.css'
 import '../components/Modal.css'
+import './Notas.css'
 
 interface AlunoForm {
   nome: string
@@ -14,7 +15,11 @@ interface AlunoForm {
   responsavel: string
   telefoneResp: string
   turmaId: string
+  numeroMatricula: string
+  statusMatricula: string
 }
+
+type CategoriaAno = 'iniciais' | 'finais' | null
 
 const Alunos = () => {
   const [alunos, setAlunos] = useState<Aluno[]>([])
@@ -22,6 +27,8 @@ const Alunos = () => {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [categoriaAtiva, setCategoriaAtiva] = useState<CategoriaAno>(null)
+  const [turmaSelecionada, setTurmaSelecionada] = useState<Turma | null>(null)
   const [formData, setFormData] = useState<AlunoForm>({
     nome: '',
     cpf: '',
@@ -31,7 +38,9 @@ const Alunos = () => {
     endereco: '',
     responsavel: '',
     telefoneResp: '',
-    turmaId: ''
+    turmaId: '',
+    numeroMatricula: '',
+    statusMatricula: 'ATIVO'
   })
 
   useEffect(() => {
@@ -59,10 +68,36 @@ const Alunos = () => {
     }
   }
 
+  // Função para filtrar turmas por categoria
+  const getTurmasPorCategoria = (): Turma[] => {
+    if (!categoriaAtiva) return []
+    if (categoriaAtiva === 'iniciais') {
+      return turmas.filter(t => t.ano >= 1 && t.ano <= 5)
+    } else {
+      return turmas.filter(t => t.ano >= 6 && t.ano <= 9)
+    }
+  }
+
+  // Função para filtrar alunos da turma selecionada
+  const getAlunosDaTurma = (): Aluno[] => {
+    if (!turmaSelecionada) return []
+    return alunos.filter(a => a.turmaId === turmaSelecionada.id)
+  }
+
+  const voltarParaCategorias = () => {
+    setCategoriaAtiva(null)
+    setTurmaSelecionada(null)
+  }
+
+  const voltarParaTurmas = () => {
+    setTurmaSelecionada(null)
+  }
+
+  const selecionarTurma = (turma: Turma) => {
+    setTurmaSelecionada(turma)
+  }
+
   const openModal = (aluno?: Aluno) => {
-    // Recarregar turmas toda vez que abrir o modal
-    loadTurmas()
-    
     if (aluno) {
       setEditingId(aluno.id)
       setFormData({
@@ -74,7 +109,9 @@ const Alunos = () => {
         endereco: aluno.endereco || '',
         responsavel: aluno.responsavel,
         telefoneResp: aluno.telefoneResp,
-        turmaId: aluno.turmaId || ''
+        turmaId: aluno.turmaId || '',
+        numeroMatricula: aluno.numeroMatricula || '',
+        statusMatricula: aluno.statusMatricula || 'ATIVO'
       })
     } else {
       setEditingId(null)
@@ -87,7 +124,9 @@ const Alunos = () => {
         endereco: '',
         responsavel: '',
         telefoneResp: '',
-        turmaId: ''
+        turmaId: turmaSelecionada?.id || '',
+        numeroMatricula: '',
+        statusMatricula: 'ATIVO'
       })
     }
     setShowModal(true)
@@ -105,7 +144,9 @@ const Alunos = () => {
       endereco: '',
       responsavel: '',
       telefoneResp: '',
-      turmaId: ''
+      turmaId: '',
+      numeroMatricula: '',
+      statusMatricula: 'ATIVO'
     })
   }
 
@@ -147,59 +188,146 @@ const Alunos = () => {
 
   if (loading) return <div className="loading">Carregando...</div>
 
+  const turmasFiltradas = getTurmasPorCategoria()
+  const alunosDaTurma = getAlunosDaTurma()
+
   return (
     <div className="page">
       <div className="page-header">
         <h1>Alunos</h1>
-        <button className="btn-primary" onClick={() => openModal()}>
-          <Plus size={20} />
-          Novo Aluno
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {categoriaAtiva && !turmaSelecionada && (
+            <button className="btn-voltar" onClick={voltarParaCategorias}>
+              <ArrowLeft size={16} />
+              Voltar
+            </button>
+          )}
+          {turmaSelecionada && (
+            <>
+              <button className="btn-voltar" onClick={voltarParaTurmas}>
+                <ArrowLeft size={16} />
+                Voltar
+              </button>
+              <button className="btn-primary" onClick={() => openModal()}>
+                <Plus size={20} />
+                Cadastrar Aluno
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>CPF</th>
-              <th>Email</th>
-              <th>Turma</th>
-              <th>Responsável</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {alunos.map((aluno) => (
-              <tr key={aluno.id}>
-                <td>{aluno.nome}</td>
-                <td>{aluno.cpf}</td>
-                <td>{aluno.email}</td>
-                <td>{aluno.turma?.nome || '-'}</td>
-                <td>{aluno.responsavel}</td>
-                <td>
-                  <div className="action-buttons">
-                    <button 
-                      className="btn-icon" 
-                      title="Editar"
-                      onClick={() => openModal(aluno)}
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button 
-                      className="btn-icon btn-danger" 
-                      title="Excluir"
-                      onClick={() => handleDelete(aluno.id)}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {!categoriaAtiva ? (
+        <div className="selection-section">
+          <div className="selection-header">
+            <BookOpen size={24} className="selection-icon" />
+            <h2>Selecione a Categoria</h2>
+          </div>
+          <div className="selection-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', maxWidth: '600px', margin: '0 auto' }}>
+            <button
+              className="selection-btn"
+              onClick={() => setCategoriaAtiva('iniciais')}
+            >
+              <div className="selection-btn-content">
+                <span className="selection-btn-title">Anos Iniciais</span>
+              </div>
+            </button>
+            <button
+              className="selection-btn"
+              onClick={() => setCategoriaAtiva('finais')}
+            >
+              <div className="selection-btn-content">
+                <span className="selection-btn-title">Anos Finais</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      ) : !turmaSelecionada ? (
+        <>
+          <div className="selection-section">
+            <div className="selection-header">
+              <BookOpen size={24} className="selection-icon" />
+              <h2>Selecione a Turma</h2>
+            </div>
+            {turmasFiltradas.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                <p>Nenhuma turma cadastrada nesta categoria.</p>
+              </div>
+            ) : (
+              <div className="selection-grid">
+                {turmasFiltradas.map((turma) => (
+                  <button
+                    key={turma.id}
+                    className="selection-btn"
+                    onClick={() => selecionarTurma(turma)}
+                  >
+                    <div className="selection-btn-content">
+                      <span className="selection-btn-title">
+                        {turma.nome}
+                      </span>
+                      <span className="selection-btn-title" style={{ fontSize: '0.9rem', marginTop: '4px' }}>
+                        {turma.alunos?.length || 0} {(turma.alunos?.length || 0) === 1 ? 'aluno' : 'alunos'}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          {alunosDaTurma.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+              <p>Nenhum aluno cadastrado nesta turma.</p>
+            </div>
+          ) : (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Número de Matrícula</th>
+                    <th>Status da Matrícula</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {alunosDaTurma.map((aluno) => (
+                    <tr key={aluno.id}>
+                      <td>{aluno.nome}</td>
+                      <td>{aluno.numeroMatricula || '-'}</td>
+                      <td>
+                        <span className={`status-badge ${aluno.statusMatricula?.toLowerCase()}`}>
+                          {aluno.statusMatricula || 'ATIVO'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="action-buttons">
+                          <button 
+                            className="btn-icon" 
+                            title="Editar"
+                            onClick={() => openModal(aluno)}
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button 
+                            className="btn-icon btn-danger" 
+                            title="Excluir"
+                            onClick={() => handleDelete(aluno.id)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
@@ -222,6 +350,33 @@ const Alunos = () => {
                     placeholder="Digite o nome completo"
                     required
                   />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Número de Matrícula *</label>
+                    <input
+                      type="text"
+                      value={formData.numeroMatricula}
+                      onChange={(e) => setFormData({ ...formData, numeroMatricula: e.target.value })}
+                      placeholder="Digite o número de matrícula"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Status da Matrícula *</label>
+                    <select
+                      value={formData.statusMatricula}
+                      onChange={(e) => setFormData({ ...formData, statusMatricula: e.target.value })}
+                      required
+                    >
+                      <option value="ATIVO">Ativo</option>
+                      <option value="INATIVO">Inativo</option>
+                      <option value="TRANSFERIDO">Transferido</option>
+                      <option value="CONCLUIDO">Concluído</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="form-row">
@@ -306,17 +461,20 @@ const Alunos = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Turma</label>
+                  <label>Turma *</label>
                   <select
                     value={formData.turmaId}
                     onChange={(e) => setFormData({ ...formData, turmaId: e.target.value })}
+                    required
                   >
                     <option value="">Selecione uma turma</option>
-                    {turmas.map((turma) => (
-                      <option key={turma.id} value={turma.id}>
-                        {turma.nome} - {turma.ano} ({turma.periodo})
-                      </option>
-                    ))}
+                    {turmas
+                      .filter(t => categoriaAtiva === 'iniciais' ? t.ano >= 1 && t.ano <= 5 : t.ano >= 6 && t.ano <= 9)
+                      .map((turma) => (
+                        <option key={turma.id} value={turma.id}>
+                          {turma.nome} - {turma.ano}º Ano ({turma.periodo})
+                        </option>
+                      ))}
                   </select>
                 </div>
               </div>

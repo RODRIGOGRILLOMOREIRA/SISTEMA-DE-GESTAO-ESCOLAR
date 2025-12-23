@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Edit, X, Save, Users, GraduationCap, BookOpen, CheckCircle, XCircle } from 'lucide-react'
 import { alunosAPI, disciplinasAPI, turmasAPI, Aluno, Disciplina, Turma, api } from '../lib/api'
+import { useAuth } from '../contexts/AuthContext'
+import { isAdmin, isProfessor } from '../lib/permissions'
 import './ModernPages.css'
 import './Notas.css'
 import '../components/Modal.css'
@@ -31,6 +33,7 @@ interface NotaFinal {
 }
 
 const Notas = () => {
+  const { user } = useAuth()
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [alunos, setAlunos] = useState<Aluno[]>([])
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([])
@@ -46,11 +49,38 @@ const Notas = () => {
   const [saving, setSaving] = useState(false)
   const [anoLetivo, setAnoLetivo] = useState<number>(new Date().getFullYear())
   const [anosDisponiveis, setAnosDisponiveis] = useState<number[]>([])
+  const [professorDisciplinas, setProfessorDisciplinas] = useState<string[]>([])
+  const [professorTurmas, setProfessorTurmas] = useState<string[]>([])
 
   useEffect(() => {
     loadData()
     loadAnosDisponiveis()
+    
+    // Adicionar listener para recarregar quando a janela ganhar foco
+    const handleFocus = () => {
+      loadAnosDisponiveis()
+    }
+    
+    window.addEventListener('focus', handleFocus)
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [])
+
+  useEffect(() => {
+    // Carregar disciplinas do professor se não for admin
+    if (user && isProfessor(user) && !isAdmin(user)) {
+      loadProfessorDisciplinas()
+    }
+  }, [user])
+
+  useEffect(() => {
+    // Recarregar turmas quando as disciplinas do professor forem carregadas
+    if (professorDisciplinas.length > 0 || professorTurmas.length > 0) {
+      loadData()
+    }
+  }, [professorDisciplinas, professorTurmas])
 
   useEffect(() => {
     if (selectedTurma) {
@@ -62,7 +92,7 @@ const Notas = () => {
       setSelectedAluno('')
       setSelectedDisciplina('')
     }
-  }, [selectedTurma])
+  }, [selectedTurma, professorDisciplinas])
 
   useEffect(() => {
     if (selectedAluno && selectedDisciplina) {
@@ -74,14 +104,41 @@ const Notas = () => {
     try {
       const response = await api.get('/calendario-escolar')
       const anos = response.data.map((cal: any) => cal.ano)
-      setAnosDisponiveis(anos.sort((a: number, b: number) => b - a))
+      const anosUnicos = [...new Set(anos)].sort((a: number, b: number) => b - a)
+      setAnosDisponiveis(anosUnicos)
       
-      if (anos.length > 0 && !anos.includes(anoLetivo)) {
-        setAnoLetivo(anos[0])
+      if (anosUnicos.length > 0) {
+        const anoInicial = anosUnicos.includes(anoLetivo) ? anoLetivo : anosUnicos[0]
+        setAnoLetivo(anoInicial)
       }
     } catch (error) {
       console.error('Erro ao carregar anos disponíveis:', error)
-      setAnosDisponiveis([new Date().getFullYear()])
+      setAnosDisponiveis([])
+    }
+  }
+
+  const loadProfessorDisciplinas = async () => {
+    if (!user?.email) return
+    
+    try {
+      // Buscar professor pelo email do usuário
+      const professoresRes = await api.get('/professores')
+      const professor = professoresRes.data.find((p: any) => p.email?.toLowerCase() === user.email?.toLowerCase())
+      
+      if (professor) {
+        // Buscar disciplinas_turmas do professor
+        const disciplinasTurmasRes = await api.get('/disciplina-turma')
+        const vinculosProfessor = disciplinasTurmasRes.data.filter((dt: any) => dt.professorId === professor.id)
+        
+        // Extrair IDs únicos de disciplinas e turmas
+        const disciplinasIds = [...new Set(vinculosProfessor.map((dt: any) => dt.disciplinaId))]
+        const turmasIds = [...new Set(vinculosProfessor.map((dt: any) => dt.turmaId))]
+        
+        setProfessorDisciplinas(disciplinasIds)
+        setProfessorTurmas(turmasIds)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar disciplinas do professor:', error)
     }
   }
 
@@ -91,17 +148,26 @@ const Notas = () => {
         turmasAPI.getAll(),
         disciplinasAPI.getAll()
       ])
+      
+      // Se for professor (não admin), filtrar apenas suas turmas
+      let turmasParaExibir = turmasRes.data
+      if (user && isProfessor(user) && !isAdmin(user) && professorTurmas.length > 0) {
+        turmasParaExibir = turmasRes.data.filter((t: Turma) => professorTurmas.includes(t.id))
+      }
+      
       // Ordenar turmas de forma crescente pelo ano (1º ao 9º)
-      const turmasOrdenadas = turmasRes.data.sort((a, b) => {
+      const turmasOrdenadas = turmasParaExibir.sort((a, b) => {
         // Primeiro por ano (crescente)
         if (a.ano !== b.ano) return a.ano - b.ano
         // Depois por nome (crescente)
         return a.nome.localeCompare(b.nome)
       })
+      
       // Ordenar disciplinas em ordem alfabética crescente (A → Z)
       const disciplinasOrdenadas = disciplinasRes.data.sort((a, b) => {
         return a.nome.localeCompare(b.nome)
       })
+      
       setTurmas(turmasOrdenadas)
       setDisciplinas(disciplinasOrdenadas)
     } catch (error) {
@@ -129,8 +195,17 @@ const Notas = () => {
       
       // Filtrar apenas as disciplinas que estão vinculadas à turma
       if (turmaComDisciplinas.disciplinas && turmaComDisciplinas.disciplinas.length > 0) {
+        let disciplinasParaExibir = turmaComDisciplinas.disciplinas
+        
+        // Se for professor (não admin), filtrar apenas suas disciplinas
+        if (user && isProfessor(user) && !isAdmin(user) && professorDisciplinas.length > 0) {
+          disciplinasParaExibir = disciplinasParaExibir.filter((d: Disciplina) => 
+            professorDisciplinas.includes(d.id)
+          )
+        }
+        
         // Ordenar disciplinas em ordem alfabética
-        const disciplinasOrdenadas = turmaComDisciplinas.disciplinas.sort((a, b) => {
+        const disciplinasOrdenadas = disciplinasParaExibir.sort((a, b) => {
           return a.nome.localeCompare(b.nome)
         })
         setDisciplinasDaTurma(disciplinasOrdenadas)
@@ -227,7 +302,14 @@ const Notas = () => {
     if (nota >= 5.0) return 'nota-amarela'
     return 'nota-vermelha'
   }
-
+  const getStatusNota = (media: number | null) => {
+    if (media === null) return { label: 'Pendente', cor: '#94a3b8', icon: null }
+    
+    if (media >= 8.0) return { label: 'Aprovado Excelente', cor: '#059669', icon: <CheckCircle size={32} /> } // verde escuro
+    if (media >= 6.0) return { label: 'Aprovado - Pode Evoluir', cor: '#10b981', icon: <CheckCircle size={32} /> } // verde claro
+    if (media >= 4.0) return { label: 'Reprovado - Pode Evoluir', cor: '#f59e0b', icon: <XCircle size={32} /> } // amarelo
+    return { label: 'Reprovado - Intervenção Urgente', cor: '#ef4444', icon: <XCircle size={32} /> } // vermelho
+  }
   const openModal = (trimestre: number) => {
     const nota = notas.find(n => n.trimestre === trimestre) || {
       alunoId: selectedAluno,
@@ -326,7 +408,7 @@ const Notas = () => {
       </div>
 
       {/* Seleção de Ano Letivo */}
-      <div className="selection-section" style={{ backgroundColor: '#f0f9ff', border: '2px solid #3b82f6' }}>
+      <div className="selection-section">
         <div className="selection-header">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="selection-icon">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -350,16 +432,9 @@ const Notas = () => {
                   setSelectedAluno('')
                   setSelectedDisciplina('')
                 }}
-                style={{ 
-                  backgroundColor: anoLetivo === ano ? '#3b82f6' : '#fff',
-                  borderColor: '#3b82f6',
-                  fontWeight: '600',
-                  fontSize: '1.1rem'
-                }}
               >
                 <div className="selection-btn-content">
                   <span className="selection-btn-title">{ano}</span>
-                  <span className="selection-btn-subtitle">Ano Letivo</span>
                 </div>
               </button>
             ))
@@ -592,18 +667,16 @@ const Notas = () => {
               <div className="momento-section status-section">
                 <h4>Status Final</h4>
                 {notaFinal?.mediaFinal !== null && notaFinal?.mediaFinal !== undefined ? (
-                  <div className={`status-badge ${notaFinal.aprovado ? 'aprovado' : 'reprovado'}`}>
-                    {notaFinal.aprovado ? (
-                      <>
-                        <CheckCircle size={32} />
-                        <span>APROVADO</span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle size={32} />
-                        <span>REPROVADO</span>
-                      </>
-                    )}
+                  <div 
+                    className="status-badge"
+                    style={{ 
+                      backgroundColor: getStatusNota(notaFinal.mediaFinal).cor,
+                      color: 'white',
+                      border: 'none'
+                    }}
+                  >
+                    {getStatusNota(notaFinal.mediaFinal).icon}
+                    <span>{getStatusNota(notaFinal.mediaFinal).label}</span>
                   </div>
                 ) : (
                   <div className="status-badge pendente">

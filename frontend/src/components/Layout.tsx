@@ -13,17 +13,30 @@ import {
   LogOut,
   User,
   Crown,
-  Briefcase
+  Briefcase,
+  Calendar,
+  Clock,
+  ChevronDown,
+  ChevronRight,
+  FolderOpen
 } from 'lucide-react'
 import { configuracoesAPI, Configuracao } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import './Layout.css'
+
+interface MenuItem {
+  path?: string
+  icon: any
+  label: string
+  subItems?: MenuItem[]
+}
 
 const Layout = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const [config, setConfig] = useState<Configuracao | null>(null)
+  const [openDropdowns, setOpenDropdowns] = useState<string[]>([])
 
   useEffect(() => {
     loadConfig()
@@ -40,6 +53,23 @@ const Layout = () => {
     }
   }, [])
 
+  useEffect(() => {
+    // Auto-expandir dropdown se uma subrota estiver ativa
+    const autoExpandDropdowns = () => {
+      const newOpenDropdowns: string[] = []
+      menuItems.forEach(item => {
+        if (item.subItems) {
+          const hasActiveChild = item.subItems.some(sub => sub.path === location.pathname)
+          if (hasActiveChild) {
+            newOpenDropdowns.push(item.label)
+          }
+        }
+      })
+      setOpenDropdowns(newOpenDropdowns)
+    }
+    autoExpandDropdowns()
+  }, [location.pathname])
+
   const loadConfig = async () => {
     try {
       const response = await configuracoesAPI.get()
@@ -49,17 +79,41 @@ const Layout = () => {
     }
   }
 
-  const menuItems = [
+  const toggleDropdown = (label: string) => {
+    setOpenDropdowns(prev => 
+      prev.includes(label) 
+        ? prev.filter(item => item !== label)
+        : [...prev, label]
+    )
+  }
+
+  const menuItems: MenuItem[] = [
     { path: '/dashboard', icon: LayoutDashboard, label: config?.nomeEscola ? `SGE - ${config.nomeEscola}` : 'SGE' },
-    { path: '/equipe-diretiva', icon: Crown, label: 'Equipe Diretiva' },
-    { path: '/funcionarios', icon: Briefcase, label: 'Funcionários' },
-    { path: '/professores', icon: GraduationCap, label: 'Professores' },
-    { path: '/turmas', icon: School, label: 'Turmas' },
-    { path: '/alunos', icon: Users, label: 'Alunos' },
-    { path: '/disciplinas', icon: BookOpen, label: 'Disciplinas' },
-    { path: '/notas', icon: ClipboardCheck, label: 'Notas' },
-    { path: '/frequencia', icon: UserCheck, label: 'Frequência' },
-    { path: '/relatorios', icon: FileBarChart, label: 'Relatórios' },
+    { 
+      icon: FolderOpen, 
+      label: 'Gestão',
+      subItems: [
+        { path: '/equipe-diretiva', icon: Crown, label: 'Equipe Diretiva' },
+        { path: '/funcionarios', icon: Briefcase, label: 'Funcionários' },
+        { path: '/professores', icon: GraduationCap, label: 'Professores' },
+        { path: '/registro-ponto', icon: Clock, label: 'Registro de Ponto' },
+        { path: '/turmas', icon: School, label: 'Turmas' },
+        { path: '/alunos', icon: Users, label: 'Alunos' },
+        { path: '/disciplinas', icon: BookOpen, label: 'Disciplinas' },
+        { path: '/calendario-escolar', icon: Calendar, label: 'Calendário Escolar' },
+        { path: '/grade-horaria', icon: Clock, label: 'Grade Horária' },
+      ]
+    },
+    {
+      icon: ClipboardCheck,
+      label: 'Registros',
+      subItems: [
+        { path: '/frequencia', icon: UserCheck, label: 'Frequência' },
+        { path: '/notas', icon: ClipboardCheck, label: 'Notas e Avaliações' },
+        { path: '/boletim', icon: FileBarChart, label: 'Boletim de Desempenho' },
+        { path: '/relatorios', icon: FileBarChart, label: 'Relatórios' },
+      ]
+    },
     { path: '/configuracoes', icon: Settings, label: 'Configurações' },
   ]
 
@@ -87,12 +141,55 @@ const Layout = () => {
         <nav className="menu">
           {menuItems.map((item) => {
             const Icon = item.icon
+            const isOpen = openDropdowns.includes(item.label)
+            
+            // Se tem subitens, renderiza como dropdown
+            if (item.subItems) {
+              const hasActiveChild = item.subItems.some(sub => sub.path === location.pathname)
+              
+              return (
+                <div key={item.label} className="menu-dropdown">
+                  <button
+                    className={`menu-item dropdown-toggle ${hasActiveChild ? 'active' : ''}`}
+                    onClick={() => toggleDropdown(item.label)}
+                  >
+                    <div className="menu-item-content">
+                      <Icon size={20} />
+                      <span>{item.label}</span>
+                    </div>
+                    {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                  </button>
+                  
+                  {isOpen && (
+                    <div className="dropdown-content">
+                      {item.subItems.map((subItem) => {
+                        const SubIcon = subItem.icon
+                        const isActive = location.pathname === subItem.path
+                        
+                        return (
+                          <Link
+                            key={subItem.path}
+                            to={subItem.path!}
+                            className={`menu-item sub-item ${isActive ? 'active' : ''}`}
+                          >
+                            <SubIcon size={18} />
+                            <span>{subItem.label}</span>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            }
+            
+            // Item normal sem subitens
             const isActive = location.pathname === item.path
             
             return (
               <Link
                 key={item.path}
-                to={item.path}
+                to={item.path!}
                 className={`menu-item ${isActive ? 'active' : ''}`}
               >
                 <Icon size={20} />
