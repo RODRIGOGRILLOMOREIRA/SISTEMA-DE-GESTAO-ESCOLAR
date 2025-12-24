@@ -52,11 +52,16 @@ const Disciplinas = () => {
 
   // Função para buscar professor pelo nome
   const handleProfessorSearch = (searchTerm: string) => {
+    console.log('Buscando professor:', searchTerm)
+    console.log('Total de professores disponíveis:', professores.length)
+    console.log('Professores:', professores)
+    
     setFormData({ ...formData, professorNome: searchTerm })
     if (searchTerm.length > 0) {
       const filtered = professores.filter(p => 
         p.nome.toLowerCase().includes(searchTerm.toLowerCase())
       )
+      console.log('Professores filtrados:', filtered)
       setProfessorSuggestions(filtered)
     } else {
       setProfessorSuggestions([])
@@ -105,7 +110,10 @@ const Disciplinas = () => {
 
   const loadProfessores = async () => {
     try {
+      console.log('Carregando professores...')
       const response = await professoresAPI.getAll()
+      console.log('Professores carregados:', response.data)
+      console.log('Número de professores:', response.data.length)
       setProfessores(response.data)
     } catch (error) {
       console.error('Erro ao carregar professores:', error)
@@ -151,8 +159,14 @@ const Disciplinas = () => {
     return turma.disciplinas || []
   }
 
-  const openModal = (turma: Turma, disciplina?: Disciplina) => {
-    loadProfessores()
+  const openModal = async (turma: Turma, disciplina?: Disciplina) => {
+    console.log('Abrindo modal...')
+    console.log('Turma:', turma)
+    console.log('Disciplina:', disciplina)
+    
+    // Recarregar professores antes de abrir o modal
+    await loadProfessores()
+    
     setTurmaSelecionada(turma)
     
     if (disciplina) {
@@ -162,6 +176,8 @@ const Disciplinas = () => {
         cargaHoraria: disciplina.cargaHoraria.toString(),
         professorNome: disciplina.professor?.nome || ''
       })
+      console.log('Editando disciplina:', disciplina)
+      console.log('Professor da disciplina:', disciplina.professor)
     } else {
       setEditingId(null)
       setFormData({
@@ -169,6 +185,7 @@ const Disciplinas = () => {
         cargaHoraria: '',
         professorNome: ''
       })
+      console.log('Nova disciplina')
     }
     setProfessorSuggestions([])
     setShowModal(true)
@@ -189,6 +206,12 @@ const Disciplinas = () => {
   const voltarParaCategorias = () => {
     setCategoriaAtiva(null)
     setTurmaSelecionada(null)
+  }
+
+  const voltarParaTurmas = () => {
+    setTurmaSelecionada(null)
+    // Recarregar turmas para obter dados atualizados
+    loadTurmas()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -239,7 +262,19 @@ const Disciplinas = () => {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Disciplinas</h1>
+        <div>
+          <h1>Disciplinas</h1>
+          {turmaSelecionada && (
+            <p style={{ 
+              margin: '4px 0 0 0', 
+              fontSize: '0.9rem', 
+              color: '#6b7280',
+              fontWeight: '500'
+            }}>
+              Turma: {turmaSelecionada.nome}
+            </p>
+          )}
+        </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           {categoriaAtiva && !turmaSelecionada && (
             <button className="btn-voltar" onClick={voltarParaCategorias}>
@@ -353,61 +388,6 @@ const Disciplinas = () => {
       {/* Lista de Disciplinas da Turma */}
       {turmaSelecionada && (
         <>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            marginBottom: '16px',
-            padding: '12px 0',
-            borderBottom: '2px solid #e5e7eb'
-          }}>
-            <h2 style={{ 
-              margin: 0, 
-              fontSize: '0.875rem',
-              fontWeight: '600',
-              color: '#1f2937',
-              padding: '8px 14px',
-              backgroundColor: '#f8fafc',
-              border: '2px solid #e2e8f0',
-              borderRadius: '8px',
-              display: 'inline-block',
-              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-            }}>
-              {turmaSelecionada.nome}
-            </h2>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button 
-                onClick={() => openModal(turmaSelecionada)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 14px',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: 'white',
-                  backgroundColor: '#3b82f6',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#2563eb'
-                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#3b82f6'
-                  e.currentTarget.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-                }}
-              >
-                <Plus size={16} />
-                Nova Disciplina
-              </button>
-            </div>
-          </div>
-
           <div className="table-container">
             <table>
               <thead>
@@ -502,25 +482,40 @@ const Disciplinas = () => {
 
                 <div className="form-group autocomplete-container">
                   <label>Professor</label>
-                  <input
-                    type="text"
-                    value={formData.professorNome}
-                    onChange={(e) => handleProfessorSearch(e.target.value)}
-                    placeholder="Digite para buscar professor..."
-                    autoComplete="off"
-                  />
-                  {professorSuggestions.length > 0 && (
-                    <div className="autocomplete-suggestions">
-                      {professorSuggestions.map((professor) => (
-                        <div
-                          key={professor.id}
-                          onClick={() => selectProfessor(professor)}
-                          className="autocomplete-suggestion-item"
-                        >
-                          {professor.nome} - {professor.especialidade}
-                        </div>
-                      ))}
+                  {professores.length === 0 ? (
+                    <div style={{
+                      padding: '12px',
+                      backgroundColor: '#fff3cd',
+                      border: '1px solid #ffc107',
+                      borderRadius: '4px',
+                      color: '#856404',
+                      fontSize: '0.9em'
+                    }}>
+                      ⚠️ Nenhum professor cadastrado. Cadastre professores primeiro na aba "Professores".
                     </div>
+                  ) : (
+                    <>
+                      <input
+                        type="text"
+                        value={formData.professorNome}
+                        onChange={(e) => handleProfessorSearch(e.target.value)}
+                        placeholder="Digite para buscar professor..."
+                        autoComplete="off"
+                      />
+                      {professorSuggestions.length > 0 && (
+                        <div className="autocomplete-suggestions">
+                          {professorSuggestions.map((professor) => (
+                            <div
+                              key={professor.id}
+                              onClick={() => selectProfessor(professor)}
+                              className="autocomplete-suggestion-item"
+                            >
+                              {professor.nome} - {professor.especialidade || professor.area || 'Sem especialidade'}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

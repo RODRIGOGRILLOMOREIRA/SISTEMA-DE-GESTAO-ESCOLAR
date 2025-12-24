@@ -157,10 +157,10 @@ http://localhost:3333/api
 - `DELETE /:id` - Remover
 
 #### Professores (`/api/professores`)
-- `GET /` - Listar todos
+- `GET /` - Listar todos (incluindo disciplinas e turmas vinculadas)
 - `GET /:id` - Buscar por ID
-- `POST /` - Criar novo
-- `PUT /:id` - Atualizar
+- `POST /` - Criar novo (com vinculação automática de disciplinas e turmas)
+- `PUT /:id` - Atualizar (atualiza vinculações automaticamente)
 - `DELETE /:id` - Remover
 
 #### Funcionários (`/api/funcionarios`)
@@ -408,6 +408,22 @@ Para adicionar novas rotas:
 - [Express.js Guide](https://expressjs.com/pt-br/)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 - [JWT.io](https://jwt.io/)
+
+## 🔄 Últimas Atualizações (Dezembro/2024)
+
+### Melhorias no Sistema de Professores e Disciplinas
+- ✅ **GET /professores**: Agora retorna professores com `includes` de disciplinas e turmas vinculadas
+- ✅ **POST /professores**: Vinculação automática de disciplinas e turmas via `disciplinas_turmas`
+- ✅ **PUT /professores**: Atualização inteligente de vínculos, removendo antigos e criando novos
+- ✅ **Validação Aprimorada**: Campo `area` obrigatório (Anos Iniciais/Anos Finais/Ambos)
+- ✅ **Relacionamentos**: Suporte completo a múltiplas disciplinas por professor e múltiplas turmas
+- ✅ **Atomicidade**: Operações transacionais garantindo integridade dos dados
+
+### Correções e Otimizações
+- 🔧 Corrigido retorno de professores na API para incluir relacionamentos
+- 🔧 Implementado sistema de logs para debug e monitoramento
+- 🔧 Otimizada lógica de vinculação professor-disciplina-turma
+- 🔧 Melhorada validação de dados com Zod
 
 ---
 

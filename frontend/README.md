@@ -202,7 +202,7 @@ npm run preview
 | `/funcionarios` | Funcionarios.tsx | Gestão de funcionários |
 | `/equipe-diretiva` | EquipeDiretiva.tsx | Gestão da equipe diretiva |
 | `/turmas` | Turmas.tsx | Gestão de turmas |
-| `/disciplinas` | Disciplinas.tsx | Gestão de disciplinas |
+| `/disciplinas` | Disciplinas.tsx | Gestão de disciplinas com autocomplete de professores |
 | `/notas` | Notas.tsx | Lançamento de notas |
 | `/frequencia` | FrequenciaPage.tsx | Registro de frequências |
 | `/boletim` | BoletimDesempenho.tsx | Boletim do aluno |
@@ -554,6 +554,23 @@ export default defineConfig({
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 - [React Router](https://reactrouter.com)
 - [Axios Docs](https://axios-http.com/docs/intro)
+
+## 🔄 Últimas Atualizações (Dezembro/2024)
+
+### Melhorias na Página de Disciplinas
+- ✅ **Autocomplete de Professores**: Campo de busca inteligente com sugestões em tempo real
+- ✅ **Validação de Professores**: Alerta visual quando não há professores cadastrados
+- ✅ **Interface Otimizada**: Removido botão duplicado, mantendo apenas "Cadastrar Disciplina"
+- ✅ **Navegação Melhorada**: Função `voltarParaTurmas` implementada com recarregamento de dados
+- ✅ **Logs de Debug**: Sistema completo de logs para facilitar troubleshooting
+- ✅ **Carregamento Assíncrono**: Professores carregados automaticamente ao abrir modal
+- ✅ **Feedback Visual**: Indicadores claros de estado e mensagens de ajuda
+- ✅ **Exibição Simplificada**: Nome da turma exibido discretamente no cabeçalho
+
+### Componentes Atualizados
+- `Disciplinas.tsx`: Lógica de autocomplete e validação de professores
+- `DisciplinasAutocomplete.css`: Estilos para sugestões de autocomplete
+- API Client (`api.ts`): Logs detalhados de requisições e respostas
 
 ## 🤝 Contribuindo
 
