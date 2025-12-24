@@ -12,7 +12,7 @@ O Sistema de Gestão Escolar é uma aplicação web completa que automatiza e fa
 - **Alunos**: Cadastro completo com matrícula, dados pessoais, responsáveis e histórico
 - **Professores**: Gerenciamento de docentes, especialidades, áreas (Anos Iniciais/Finais/Ambos) e vinculação automática com disciplinas e turmas
 - **Funcionários**: Controle de equipe administrativa e de apoio
-- **Equipe Diretiva**: Gestão da direção e coordenação
+- **Equipe Diretiva**: Gestão da Direção, Orientação e Supervisão.
 
 ### 📚 Gestão Acadêmica
 - **Turmas**: Organização por anos letivos (1º ao 9º ano), períodos e professores responsáveis
