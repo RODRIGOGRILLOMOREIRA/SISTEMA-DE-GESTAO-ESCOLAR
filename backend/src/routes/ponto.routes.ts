@@ -1,7 +1,44 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 const pontoRouter = Router();
+
+// Configuração do Multer para upload de fotos
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../../uploads/registro-ponto');
+    
+    // Criar diretório se não existir
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, `registro-${uniqueSuffix}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Apenas imagens JPEG, JPG e PNG são permitidas!'));
+    }
+  }
+});
 
 // Listar todos os registros de ponto com filtros
 pontoRouter.get('/', async (req, res) => {
@@ -76,9 +113,10 @@ pontoRouter.get('/pessoa/:pessoaId', async (req, res) => {
 });
 
 // Registrar ponto
-pontoRouter.post('/', async (req, res) => {
+pontoRouter.post('/', upload.single('foto'), async (req, res) => {
   try {
-    const { pessoaId, tipoPessoa, tipoRegistro, horaRegistro, observacao } = req.body;
+    const { pessoaId, tipoPessoa, tipoRegistro, horaRegistro, observacao, attestado } = req.body;
+    const foto = req.file;
 
     if (!pessoaId || !tipoPessoa || !tipoRegistro) {
       return res.status(400).json({ error: 'Dados incompletos' });
@@ -92,7 +130,9 @@ pontoRouter.post('/', async (req, res) => {
         data: new Date(),
         horaRegistro: horaRegistro ? new Date(horaRegistro) : new Date(),
         observacao,
-        aprovado: true
+        aprovado: true,
+        fotoPath: foto ? foto.filename : undefined,
+        attestado: attestado === 'true' || attestado === true
       }
     });
 

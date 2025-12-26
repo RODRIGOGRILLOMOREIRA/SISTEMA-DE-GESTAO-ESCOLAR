@@ -16,6 +16,7 @@ import { calendarioRouter } from './routes/calendario.routes';
 import { gradeHorariaRouter } from './routes/grade-horaria.routes';
 import { frequenciaRouter } from './routes/frequencia.routes';
 import { pontoRouter } from './routes/ponto.routes';
+import reconhecimentoFacialRouter from './routes/reconhecimento-facial.routes';
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.use('/api/calendario', calendarioRouter);
 app.use('/api/grade-horaria', gradeHorariaRouter);
 app.use('/api/registro-frequencia', frequenciaRouter);
 app.use('/api/ponto', pontoRouter);
+app.use('/api/reconhecimento-facial', reconhecimentoFacialRouter);
 
 // Start server
 app.listen(PORT, () => {

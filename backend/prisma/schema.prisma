@@ -344,6 +344,8 @@ model registro_ponto {
   localizacao       String?
   observacao        String?
   aprovado          Boolean            @default(true)
+  fotoPath          String?
+  attestado         Boolean            @default(false)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
@@ -383,4 +385,18 @@ model banco_horas {
 
   @@unique([pessoaId, mes, ano])
   @@index([pessoaId])
+}
+
+model reconhecimento_facial {
+  id            String      @id @default(uuid())
+  pessoaId      String      @unique
+  tipoPessoa    TipoPessoa
+  descritores   String      // JSON array de descritores faciais
+  fotos         String[]    // URLs das fotos de cadastro
+  cadastradoEm  DateTime    @default(now())
+  atualizadoEm  DateTime    @updatedAt
+  ativo         Boolean     @default(true)
+
+  @@index([pessoaId])
+  @@index([tipoPessoa])
 }

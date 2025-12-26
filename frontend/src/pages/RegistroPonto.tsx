@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import * as faceapi from 'face-api.js';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { isAdmin } from '../lib/permissions';
 import RelatorioGeralPonto from '../components/RelatorioGeralPonto';
+import CadastroFacial from '../components/CadastroFacial';
 import './ModernPages.css';
+import './RegistroPonto.css';
 
 interface Professor {
   id: string;
@@ -67,6 +70,20 @@ export default function RegistroPonto() {
   const [tipoRegistro, setTipoRegistro] = useState<'ENTRADA' | 'SAIDA' | 'INTERVALO_INICIO' | 'INTERVALO_FIM'>('ENTRADA');
   const [observacao, setObservacao] = useState('');
   
+  // Estados para reconhecimento facial
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [cameraAtiva, setCameraAtiva] = useState(false);
+  const [reconhecendoRosto, setReconhecendoRosto] = useState(false);
+  const [pessoaReconhecida, setPessoaReconhecida] = useState<{id: string, nome: string, tipo: string} | null>(null);
+  const [confianca, setConfianca] = useState<number>(0);
+  const [fotoCapturada, setFotoCapturada] = useState<string>('');
+  const [attestado, setAttestado] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const detectionInterval = useRef<any>(null);
+  const labeledDescriptors = useRef<faceapi.LabeledFaceDescriptors[]>([]);
+  
   const [professores, setProfessores] = useState<Professor[]>([]);
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [equipeDiretiva, setEquipeDiretiva] = useState<EquipeDiretiva[]>([]);
@@ -80,6 +97,16 @@ export default function RegistroPonto() {
   
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  
+  // Estados para o modal de cadastro facial
+  const [mostrarCadastroFacial, setMostrarCadastroFacial] = useState(false);
+  const [cadastroFacialExiste, setCadastroFacialExiste] = useState(false);
+  
+  // DEBUG: Monitorar mudanças no modal
+  useEffect(() => {
+    console.log(`🔍 mostrarCadastroFacial mudou para: ${mostrarCadastroFacial}`);
+    console.trace('🔍 Stack trace:');
+  }, [mostrarCadastroFacial]);
   
   // Estado para armazenar o ID e tipo da pessoa logada
   const [pessoaLogadaId, _setPessoaLogadaId] = useState<string>('');
@@ -98,6 +125,14 @@ export default function RegistroPonto() {
 
   useEffect(() => {
     carregarPessoas();
+    carregarModelos();
+  }, []);
+  
+  // Limpeza da câmera ao desmontar componente
+  useEffect(() => {
+    return () => {
+      pararCamera();
+    };
   }, []);
   
   useEffect(() => {
@@ -124,8 +159,306 @@ export default function RegistroPonto() {
       } else if (view === 'banco-horas') {
         carregarBancoHoras();
       }
+      
+      // Verificar se tem cadastro facial
+      verificarCadastroFacial();
     }
   }, [pessoaSelecionada, view, mesFiltro, anoFiltro]);
+
+  // Funções de IA e Reconhecimento Facial
+  const carregarModelos = async () => {
+    try {
+      setMessage({ type: 'info', text: '📦 Carregando modelos de IA...' });
+      
+      const MODEL_URL = '/models';
+      
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+        faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+      ]);
+
+      setModelsLoaded(true);
+      setMessage({ type: 'success', text: '✅ Sistema de reconhecimento facial pronto!' });
+      
+      // Carregar descritores faciais cadastrados
+      await carregarDescritoresFaciais();
+    } catch (error) {
+      console.error('Erro ao carregar modelos:', error);
+      setMessage({ type: 'error', text: 'Erro ao carregar modelos de IA. Reconhecimento facial desativado.' });
+    }
+  };
+
+  const carregarDescritoresFaciais = async () => {
+    try {
+      console.log('📥 Carregando descritores faciais do banco de dados...');
+      const response = await api.get('/reconhecimento-facial');
+      const cadastros = response.data;
+
+      console.log(`📊 Cadastros encontrados no banco: ${cadastros.length}`);
+
+      if (cadastros.length === 0) {
+        console.log('⚠️ Nenhum cadastro facial encontrado');
+        setMessage({ type: 'warning', text: '⚠️ Nenhum cadastro facial encontrado. Cadastre rostos primeiro.' });
+        return;
+      }
+
+      const labeled: faceapi.LabeledFaceDescriptors[] = [];
+
+      for (const cadastro of cadastros) {
+        console.log(`🔍 Processando cadastro: ${cadastro.pessoaId} (${cadastro.tipoPessoa})`);
+        const descritores = JSON.parse(cadastro.descritores);
+        console.log(`  📊 Descritores: ${descritores.length} vetores`);
+        
+        const descriptors = descritores.map((d: number[]) => new Float32Array(d));
+        
+        // Buscar nome da pessoa
+        let nome = '';
+        const todasPessoas = [...professores, ...funcionarios, ...equipeDiretiva];
+        const pessoa = todasPessoas.find(p => p.id === cadastro.pessoaId);
+        nome = pessoa ? pessoa.nome : cadastro.pessoaId;
+        console.log(`  👤 Nome: ${nome}`);
+
+        const labeledDescriptor = new faceapi.LabeledFaceDescriptors(
+          `${cadastro.pessoaId}|${cadastro.tipoPessoa}|${nome}`,
+          descriptors
+        );
+        labeled.push(labeledDescriptor);
+      }
+
+      labeledDescriptors.current = labeled;
+      console.log(`✅ ${labeled.length} cadastros faciais carregados e prontos para reconhecimento`);
+      setMessage({ type: 'success', text: `✅ ${labeled.length} cadastro(s) facial(is) carregado(s)` });
+    } catch (error) {
+      console.error('❌ Erro ao carregar descritores faciais:', error);
+      setMessage({ type: 'error', text: '❌ Erro ao carregar cadastros faciais do banco' });
+    }
+  };
+
+  const verificarCadastroFacial = async () => {
+    if (!pessoaSelecionada) return;
+    
+    try {
+      const response = await api.get(`/reconhecimento-facial/${pessoaSelecionada}`);
+      setCadastroFacialExiste(response.data && response.data.ativo);
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        setCadastroFacialExiste(false);
+      }
+    }
+  };
+
+  const iniciarReconhecimentoFacial = async () => {
+    console.log('🎯 Iniciando reconhecimento facial automático...');
+    
+    if (!modelsLoaded) {
+      console.error('❌ Modelos de IA não carregados');
+      setMessage({ type: 'error', text: '❌ Modelos de IA não carregados' });
+      return;
+    }
+
+    if (labeledDescriptors.current.length === 0) {
+      console.error('❌ Nenhum cadastro facial encontrado no sistema');
+      setMessage({ type: 'error', text: '❌ Nenhum cadastro facial encontrado. Cadastre rostos primeiro.' });
+      return;
+    }
+
+    console.log(`✅ ${labeledDescriptors.current.length} cadastro(s) disponível(is) para comparação`);
+
+    try {
+      console.log('📹 Solicitando acesso à câmera...');
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user'
+        }
+      });
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+        setCameraAtiva(true);
+        setMessage({ type: 'info', text: '👤 Posicione seu rosto para reconhecimento automático...' });
+        console.log('✅ Câmera iniciada, aguardando carregamento...');
+        
+        videoRef.current.onloadedmetadata = () => {
+          console.log('✅ Metadados do vídeo carregados, iniciando detecção...');
+          iniciarDeteccaoTempoReal();
+        };
+      }
+    } catch (error) {
+      console.error('❌ Erro ao acessar câmera:', error);
+      setMessage({ type: 'error', text: '❌ Erro ao acessar câmera' });
+    }
+  };
+
+  const iniciarDeteccaoTempoReal = () => {
+    console.log('🔍 Iniciando detecção em tempo real...');
+    setReconhecendoRosto(true);
+
+    const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors.current, 0.6);
+    console.log('✅ FaceMatcher criado, threshold: 0.6');
+    
+    detectionInterval.current = setInterval(async () => {
+      if (videoRef.current && canvasRef.current && modelsLoaded) {
+        const detections = await faceapi
+          .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
+          .withFaceLandmarks()
+          .withFaceDescriptors();
+
+        const displaySize = {
+          width: videoRef.current.videoWidth,
+          height: videoRef.current.videoHeight
+        };
+
+        if (canvasRef.current) {
+          canvasRef.current.width = displaySize.width;
+          canvasRef.current.height = displaySize.height;
+
+          const resizedDetections = faceapi.resizeResults(detections, displaySize);
+          const canvas = canvasRef.current;
+          const ctx = canvas.getContext('2d');
+          
+          if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (detections.length > 0) {
+              const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor));
+              
+              // Desenhar detecções
+              faceapi.draw.drawDetections(canvas, resizedDetections);
+              faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+              
+              // Verificar melhor match
+              const bestMatch = results[0];
+              console.log('🎯 Match encontrado:', bestMatch.label, '| Distância:', bestMatch.distance.toFixed(3));
+              
+              if (bestMatch && bestMatch.label !== 'unknown') {
+                const [pessoaId, tipoPessoa, nome] = bestMatch.label.split('|');
+                const distancia = bestMatch.distance;
+                const confiancaCalc = Math.round((1 - distancia) * 100);
+
+                console.log(`✅ Reconhecido: ${nome} | Confiança: ${confiancaCalc}%`);
+
+                // Desenhar label
+                const box = resizedDetections[0].detection.box;
+                const drawBox = new faceapi.draw.DrawBox(box, { 
+                  label: `${nome} (${confiancaCalc}%)`,
+                  boxColor: confiancaCalc > 70 ? '#10b981' : '#f59e0b'
+                });
+                drawBox.draw(canvas);
+
+                setPessoaReconhecida({ id: pessoaId, nome, tipo: tipoPessoa });
+                setConfianca(confiancaCalc);
+
+                // Auto-selecionar se confiança for alta
+                if (confiancaCalc > 80 && pessoaSelecionada !== pessoaId) {
+                  console.log(`🎉 Auto-selecionando ${nome} com ${confiancaCalc}% de confiança`);
+                  setPessoaSelecionada(pessoaId);
+                  setTipoPessoa(tipoPessoa as any);
+                  setMessage({ type: 'success', text: `✅ ${nome} reconhecido(a) com ${confiancaCalc}% de confiança!` });
+                }
+              } else {
+                console.log('❌ Rosto não reconhecido (unknown)');
+                setPessoaReconhecida(null);
+                setConfianca(0);
+                // Desenhar box vermelho para desconhecido
+                const box = resizedDetections[0].detection.box;
+                const drawBox = new faceapi.draw.DrawBox(box, { 
+                  label: '❌ Não Reconhecido',
+                  boxColor: '#ef4444'
+                });
+                drawBox.draw(canvas);
+              }
+            } else {
+              // Nenhum rosto detectado neste frame
+              setPessoaReconhecida(null);
+              setConfianca(0);
+            }
+          }
+        }
+      }
+    }, 150); // Atualizar a cada 150ms
+    
+    console.log('✅ Loop de detecção iniciado (150ms)');
+  };
+
+  const pararCamera = () => {
+    if (detectionInterval.current) {
+      clearInterval(detectionInterval.current);
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setCameraAtiva(false);
+    setReconhecendoRosto(false);
+    setPessoaReconhecida(null);
+    setConfianca(0);
+  };
+
+  const iniciarCamera = async () => {
+    if (!pessoaSelecionada) {
+      setMessage({ type: 'error', text: 'Selecione uma pessoa primeiro' });
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user'
+        }
+      });
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+        setCameraAtiva(true);
+        setMessage({ type: 'info', text: '📷 Câmera ativada. Posicione seu rosto e capture a foto.' });
+      }
+    } catch (error) {
+      console.error('Erro ao acessar câmera:', error);
+      setMessage({ type: 'error', text: 'Erro ao acessar câmera. Verifique as permissões.' });
+    }
+  };
+
+  const capturarFoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        const fotoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        setFotoCapturada(fotoDataUrl);
+        setAttestado(true);
+        pararCamera();
+        
+        if (reconhecendoRosto && pessoaReconhecida) {
+          setMessage({ type: 'success', text: `✅ Foto capturada e reconhecida: ${pessoaReconhecida.nome} (${confianca}%)` });
+        } else {
+          setMessage({ type: 'success', text: '✅ Foto capturada com sucesso!' });
+        }
+      }
+    }
+  };
+
+  const refazerFoto = () => {
+    setFotoCapturada('');
+    setAttestado(false);
+    setMessage({ type: 'info', text: 'Capture uma nova foto' });
+  };
 
   const carregarPessoas = async () => {
     try {
@@ -248,21 +581,50 @@ export default function RegistroPonto() {
 
   const registrarPonto = async () => {
     if (!pessoaSelecionada) {
-      setMessage({ type: 'error', text: 'Selecione uma pessoa' });
+      setMessage({ type: 'error', text: 'Selecione uma pessoa ou use reconhecimento facial' });
+      return;
+    }
+
+    if (!attestado || !fotoCapturada) {
+      setMessage({ type: 'error', text: 'É necessário capturar uma foto para atestar o registro' });
       return;
     }
 
     setLoading(true);
     try {
-      await api.post('/ponto', {
-        pessoaId: pessoaSelecionada,
-        tipoPessoa,
-        tipoRegistro,
-        observacao: observacao || undefined
+      // Converter a foto de base64 para Blob
+      const blob = await fetch(fotoCapturada).then(r => r.blob());
+      
+      // Criar FormData para enviar foto
+      const formData = new FormData();
+      formData.append('foto', blob, 'registro-ponto.jpg');
+      formData.append('pessoaId', pessoaSelecionada);
+      formData.append('tipoPessoa', tipoPessoa);
+      formData.append('tipoRegistro', tipoRegistro);
+      formData.append('attestado', 'true');
+      
+      if (observacao) {
+        formData.append('observacao', observacao);
+      }
+
+      await api.post('/ponto', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
 
-      setMessage({ type: 'success', text: 'Ponto registrado com sucesso!' });
+      const nomePessoa = getNomePessoa(pessoaSelecionada);
+      setMessage({ type: 'success', text: `✅ Ponto de ${nomePessoa} registrado com sucesso!` });
       setObservacao('');
+      setFotoCapturada('');
+      setAttestado(false);
+      pararCamera();
+      setPessoaReconhecida(null);
+      
+      // Se não for admin, não limpar a pessoa selecionada
+      if (isAdmin(user)) {
+        setPessoaSelecionada('');
+      }
       
       // Recarregar registros se estiver na aba de consulta
       if (view === 'consulta') {
@@ -534,12 +896,204 @@ export default function RegistroPonto() {
               />
             </div>
 
+            {/* Seção de Reconhecimento Facial */}
+            <div className="facial-recognition-section">
+              <h3>📸 Atestação Facial</h3>
+              <p className="info-text">
+                Para registrar o ponto, capture uma foto ou use reconhecimento facial automático.
+              </p>
+
+              {/* Status do Cadastro Facial */}
+              {pessoaSelecionada && (
+                <div style={{ marginBottom: '15px' }}>
+                  {cadastroFacialExiste ? (
+                    <div className="message" style={{ backgroundColor: '#d1fae5', color: '#065f46', padding: '10px', borderRadius: '8px' }}>
+                      ✅ Cadastro facial encontrado - Reconhecimento automático disponível
+                    </div>
+                  ) : (
+                    <div className="message" style={{ backgroundColor: '#fef3c7', color: '#92400e', padding: '10px', borderRadius: '8px' }}>
+                      ⚠️ Nenhum cadastro facial - Cadastre sua face para usar reconhecimento automático
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Botões de Ação */}
+              {pessoaSelecionada && !fotoCapturada && !cameraAtiva && (
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
+                  {cadastroFacialExiste && (
+                    <button 
+                      className="btn-primary"
+                      onClick={iniciarCamera}
+                      disabled={loading}
+                      style={{ backgroundColor: '#10b981', fontSize: '1.1rem', fontWeight: 'bold' }}
+                      title="Tirar foto agora e comparar com cadastro"
+                    >
+                      ✅ REGISTRAR PONTO COM FOTO
+                    </button>
+                  )}
+                  
+                  {!cadastroFacialExiste && (
+                    <button 
+                      className="btn-primary"
+                      onClick={iniciarCamera}
+                      disabled={loading}
+                      title="Capturar uma foto simples para atestação"
+                    >
+                      📷 Capturar Foto Simples
+                    </button>
+                  )}
+                  
+                  {cadastroFacialExiste && modelsLoaded && (
+                    <button 
+                      className="btn-primary"
+                      onClick={iniciarReconhecimentoFacial}
+                      disabled={loading}
+                      style={{ backgroundColor: '#3b82f6' }}
+                      title="Usar reconhecimento facial automático com IA"
+                    >
+                      🤖 Reconhecimento Automático (IA)
+                    </button>
+                  )}
+                  
+                  <button 
+                    className="btn-secondary"
+                    onClick={() => setMostrarCadastroFacial(true)}
+                    disabled={loading}
+                    title={cadastroFacialExiste ? "Recadastrar sua face" : "Fazer cadastro facial inicial"}
+                  >
+                    {cadastroFacialExiste ? '🔄 Recadastrar Face' : '➕ Cadastrar Face'}
+                  </button>
+                </div>
+              )}
+              
+              {!pessoaSelecionada && (
+                <div className="message info">
+                  ℹ️ Selecione uma pessoa para liberar as opções de atestação
+                </div>
+              )}
+              
+              {cameraAtiva && reconhecendoRosto && (
+                <div className="camera-container">
+                  <div className="video-wrapper">
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      playsInline
+                      className="video-preview"
+                    />
+                    <canvas 
+                      ref={canvasRef} 
+                      className="face-canvas"
+                      style={{ position: 'absolute', top: 0, left: 0 }}
+                    />
+                    {pessoaReconhecida && confianca > 70 && (
+                      <div className="recognition-overlay" style={{
+                        position: 'absolute',
+                        top: '10px',
+                        left: '10px',
+                        backgroundColor: 'rgba(16, 185, 129, 0.9)',
+                        color: 'white',
+                        padding: '10px 15px',
+                        borderRadius: '8px',
+                        fontSize: '16px',
+                        fontWeight: 'bold'
+                      }}>
+                        ✅ {pessoaReconhecida.nome} - {confianca}% confiança
+                      </div>
+                    )}
+                  </div>
+                  <div className="camera-controls">
+                    <button 
+                      className="btn-primary"
+                      onClick={capturarFoto}
+                      disabled={!pessoaReconhecida || confianca < 70}
+                      title={confianca < 70 ? "Posicione melhor o rosto para aumentar a confiança" : "Capturar foto com reconhecimento"}
+                    >
+                      {pessoaReconhecida && confianca >= 70 ? `✅ Confirmar (${confianca}%)` : '⏳ Aguardando reconhecimento...'}
+                    </button>
+                    <button 
+                      className="btn-cancel"
+                      onClick={pararCamera}
+                    >
+                      ❌ Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {cameraAtiva && !reconhecendoRosto && (
+                <button 
+                  className="btn-camera"
+                  onClick={iniciarCamera}
+                  disabled={loading || !pessoaSelecionada}
+                >
+                  📷 Ativar Câmera
+                </button>
+              )}
+              
+              {cameraAtiva && !reconhecendoRosto && (
+                <div className="camera-container">
+                  <div className="video-wrapper">
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      playsInline
+                      className="video-preview"
+                    />
+                    <div className="face-guide">
+                      <div className="face-oval"></div>
+                    </div>
+                  </div>
+                  <div className="camera-controls">
+                    <button 
+                      className="btn-capture"
+                      onClick={capturarFoto}
+                    >
+                      📸 Capturar Foto
+                    </button>
+                    <button 
+                      className="btn-cancel"
+                      onClick={pararCamera}
+                    >
+                      ❌ Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {fotoCapturada && (
+                <div className="photo-preview-container">
+                  <div className="photo-preview">
+                    <img src={fotoCapturada} alt="Foto capturada" />
+                    {attestado && (
+                      <div className="attestation-badge">
+                        ✅ ATESTADO
+                      </div>
+                    )}
+                  </div>
+                  <div className="photo-controls">
+                    <button 
+                      className="btn-retake"
+                      onClick={refazerFoto}
+                      disabled={loading}
+                    >
+                      🔄 Refazer Foto
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              <canvas ref={canvasRef} style={{ display: 'none' }} />
+            </div>
+
             <button 
-              className="btn-primary"
+              className="btn-primary btn-register"
               onClick={registrarPonto}
-              disabled={loading || !pessoaSelecionada}
+              disabled={loading || !pessoaSelecionada || !attestado}
+              title={!attestado ? 'É necessário capturar uma foto para atestar o registro' : ''}
             >
-              {loading ? 'Registrando...' : '✅ Registrar Ponto'}
+              {loading ? 'Registrando...' : attestado ? '✅ Registrar Ponto Atestado' : '🔒 Registrar Ponto (Atestação Necessária)'}
             </button>
           </div>
         </div>
@@ -816,6 +1370,24 @@ export default function RegistroPonto() {
           carregarBancoHoras={carregarBancoHoras}
           formatarData={formatarData}
           formatarHora={formatarHora}
+        />
+      )}
+
+      {/* Modal de Cadastro Facial */}
+      {mostrarCadastroFacial && pessoaSelecionada && (
+        <CadastroFacial
+          pessoaId={pessoaSelecionada}
+          pessoaNome={getNomePessoa(pessoaSelecionada)}
+          tipoPessoa={tipoPessoa}
+          onConcluido={() => {
+            setMostrarCadastroFacial(false);
+            setMessage({ type: 'success', text: '✅ Cadastro facial concluído com sucesso!' });
+            verificarCadastroFacial();
+            carregarDescritoresFaciais();
+          }}
+          onCancelar={() => {
+            setMostrarCadastroFacial(false);
+          }}
         />
       )}
     </div>
