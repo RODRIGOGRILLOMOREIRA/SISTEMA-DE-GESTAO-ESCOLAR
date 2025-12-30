@@ -346,6 +346,8 @@ model registro_ponto {
   aprovado          Boolean            @default(true)
   fotoPath          String?
   attestado         Boolean            @default(false)
+  reconhecimentoIA  Boolean            @default(false)
+  confianca         Float?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 

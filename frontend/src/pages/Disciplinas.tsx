@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, Edit, X, Save, BookOpen, GraduationCap, ArrowLeft } from 'lucide-react'
 import { disciplinasAPI, professoresAPI, turmasAPI, Disciplina, Professor, Turma } from '../lib/api'
+import BackButton from '../components/BackButton'
 import './ModernPages.css'
 import '../components/Modal.css'
 import './DisciplinasAutocomplete.css'
@@ -261,20 +262,9 @@ const Disciplinas = () => {
 
   return (
     <div className="page">
+      <BackButton />
       <div className="page-header">
-        <div>
-          <h1>Disciplinas</h1>
-          {turmaSelecionada && (
-            <p style={{ 
-              margin: '4px 0 0 0', 
-              fontSize: '0.9rem', 
-              color: '#6b7280',
-              fontWeight: '500'
-            }}>
-              Turma: {turmaSelecionada.nome}
-            </p>
-          )}
-        </div>
+        <h1>Disciplinas</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
           {categoriaAtiva && !turmaSelecionada && (
             <button className="btn-voltar" onClick={voltarParaCategorias}>
@@ -410,10 +400,10 @@ const Disciplinas = () => {
                     .sort((a, b) => a.nome.localeCompare(b.nome))
                     .map((disciplina) => (
                       <tr key={disciplina.id}>
-                        <td>{disciplina.nome}</td>
-                        <td>{disciplina.cargaHoraria}h</td>
-                        <td>{disciplina.professor?.nome || 'Sem professor'}</td>
-                        <td>
+                        <td data-label="Nome">{disciplina.nome}</td>
+                        <td data-label="Carga Horária">{disciplina.cargaHoraria}h</td>
+                        <td data-label="Professor">{disciplina.professor?.nome || 'Sem professor'}</td>
+                        <td data-label="Ações">
                           <div className="action-buttons">
                             <button
                               className="btn-edit"

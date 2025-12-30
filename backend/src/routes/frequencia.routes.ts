@@ -220,53 +220,26 @@ frequenciaRouter.post('/', async (req, res) => {
       disciplinaSelecionada = turma.disciplinas_turmas[0];
     }
     
-    // Verificar se já existe registro para essa turma/data/período/disciplina
-    const existente = await prisma.registro_frequencia.findFirst({
-      where: {
-        turmaId: data.turmaId,
-        data: new Date(data.data),
-        periodo: data.periodo,
-        disciplinaId: disciplinaSelecionada.disciplinaId,
-      }
-    });
-    
-    if (existente) {
-      // Se existe, apenas atualizar as presenças
-      await prisma.presencaAluno.deleteMany({
-        where: { registroId: existente.id }
-      });
-      
-      // Criar um registro de presença para cada aula
-      const presencasParaCriar = data.presencas.flatMap(presenca => 
-        presenca.presencas.map((presente, aulaIndex) => ({
-          registroId: existente.id,
-          alunoId: presenca.alunoId,
-          presente,
-          aulaIndex,
-          justificativa: presenca.justificativa,
-        }))
-      );
-      
-      await prisma.presencaAluno.createMany({
-        data: presencasParaCriar
-      });
-      
-      const registroAtualizado = await prisma.registro_frequencia.findUnique({
-        where: { id: existente.id },
-        include: { turmas: true, disciplinas: true, professores: true,
-          presenca_aluno: {
-            include: { alunos: true }
-          }
-        }
-      });
-      
-      return res.json(registroAtualizado);
-    }
+    // NÃO verificar se já existe - sempre criar novo registro
+    // Cada registro de frequência é independente (pode ter 3 aulas de matemática, depois mais 2, etc)
     
     // Validar se tem professor
     if (!disciplinaSelecionada.professorId) {
       return res.status(400).json({ error: 'Disciplina sem professor atribuído' });
     }
+
+    // Calcular número de aulas sendo registradas (apenas para log)
+    const numeroAulas = data.presencas.length > 0 ? data.presencas[0].presencas.length : 1;
+    
+    console.log('📝 Criando NOVO registro de frequência:', {
+      turmaId: data.turmaId,
+      disciplinaId: disciplinaSelecionada.disciplinaId,
+      disciplinaNome: disciplinaSelecionada.disciplinas?.nome,
+      data: data.data,
+      periodo: data.periodo,
+      numeroAulas: numeroAulas,
+      totalAlunos: data.presencas.length
+    });
     
     // Criar novo registro
     const registro = await prisma.registro_frequencia.create({
@@ -277,6 +250,7 @@ frequenciaRouter.post('/', async (req, res) => {
         professorId: disciplinaSelecionada.professorId,
         data: new Date(data.data),
         periodo: data.periodo,
+        // numeroAulas NÃO existe no schema - removido
         updatedAt: new Date(),
         presenca_aluno: {
           create: data.presencas.flatMap(presenca => 
@@ -297,6 +271,13 @@ frequenciaRouter.post('/', async (req, res) => {
       }
     });
     
+    console.log('✅ Registro criado com sucesso:', {
+      id: registro.id,
+      disciplina: registro.disciplinas?.nome,
+      numeroAulas: registro.numeroAulas,
+      totalPresencas: registro.presenca_aluno?.length
+    });
+    
     res.status(201).json(registro);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -304,6 +285,64 @@ frequenciaRouter.post('/', async (req, res) => {
     }
     console.error('Erro ao criar registro de frequência:', error);
     res.status(500).json({ error: 'Erro ao criar registro de frequência' });
+  }
+});
+
+// PATCH /api/registro-frequencia/:id/presenca - Atualizar presença individual de um aluno em uma aula específica
+frequenciaRouter.patch('/registro-frequencia/:id/presenca', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { alunoId, aulaIndex, presente } = req.body;
+
+    if (!alunoId || aulaIndex === undefined || presente === undefined) {
+      return res.status(400).json({ error: 'alunoId, aulaIndex e presente são obrigatórios' });
+    }
+
+    // Buscar presença existente
+    const presencaExistente = await prisma.presencaAluno.findFirst({
+      where: {
+        registroId: id,
+        alunoId: alunoId,
+        aulaIndex: aulaIndex
+      }
+    });
+
+    if (presencaExistente) {
+      // Atualizar presença existente
+      await prisma.presencaAluno.update({
+        where: { id: presencaExistente.id },
+        data: { presente }
+      });
+    } else {
+      // Criar nova presença se não existir
+      await prisma.presencaAluno.create({
+        data: {
+          registroId: id,
+          alunoId: alunoId,
+          presente,
+          aulaIndex
+        }
+      });
+    }
+
+    // Retornar registro atualizado
+    const registroAtualizado = await prisma.registro_frequencia.findUnique({
+      where: { id },
+      include: {
+        presenca_aluno: true,
+        disciplinas: {
+          include: {
+            professores: true
+          }
+        }
+      }
+    });
+
+    console.log('✅ Presença atualizada:', { id, alunoId, aulaIndex, presente });
+    res.json(registroAtualizado);
+  } catch (error) {
+    console.error('Erro ao atualizar presença:', error);
+    res.status(500).json({ error: 'Erro ao atualizar presença' });
   }
 });
 
@@ -624,6 +663,75 @@ frequenciaRouter.get('/turma/:turmaId/resumo', async (req, res) => {
   } catch (error) {
     console.error('Erro ao buscar resumo de frequência:', error);
     res.status(500).json({ error: 'Erro ao buscar resumo de frequência' });
+  }
+});
+
+// GET /api/registro-frequencia/turma/:turmaId/dia - Buscar todos os registros de um dia específico
+frequenciaRouter.get('/registro-frequencia/turma/:turmaId/dia', async (req, res) => {
+  try {
+    const { turmaId } = req.params;
+    const { data, periodo } = req.query;
+
+    if (!data || !periodo) {
+      return res.status(400).json({ error: 'data e periodo são obrigatórios' });
+    }
+
+    const dataConsulta = new Date(data as string);
+    const dataInicio = new Date(dataConsulta);
+    dataInicio.setHours(0, 0, 0, 0);
+    const dataFim = new Date(dataConsulta);
+    dataFim.setHours(23, 59, 59, 999);
+
+    const registros = await prisma.registro_frequencia.findMany({
+      where: {
+        turmaId,
+        periodo: periodo as string,
+        data: {
+          gte: dataInicio,
+          lte: dataFim
+        }
+      },
+      include: {
+        disciplinas: {
+          include: {
+            professores: true
+          }
+        },
+        presenca_aluno: true
+      },
+      orderBy: {
+        createdAt: 'asc'
+      }
+    });
+
+    // Calcular estatísticas para cada registro
+    const registrosComEstatisticas = registros.map(reg => {
+      const totalPresencas = reg.presenca_aluno.filter(p => p.presente).length;
+      const totalFaltas = reg.presenca_aluno.filter(p => !p.presente).length;
+      
+      // Calcular número de aulas baseado no maior aulaIndex + 1
+      const maxAulaIndex = reg.presenca_aluno.reduce((max, p) => Math.max(max, p.aulaIndex || 0), 0);
+      const numeroAulas = maxAulaIndex + 1;
+
+      return {
+        ...reg,
+        totalPresencas,
+        totalFaltas,
+        numeroAulas
+      };
+    });
+
+    console.log('📊 GET /registro-frequencia/turma/:turmaId/dia', {
+      turmaId,
+      data,
+      periodo,
+      registrosEncontrados: registros.length
+    });
+
+    res.json(registrosComEstatisticas);
+  } catch (error) {
+    console.error('Erro ao buscar registros do dia:', error);
+    res.status(500).json({ error: 'Erro ao buscar registros do dia' });
   }
 });
 

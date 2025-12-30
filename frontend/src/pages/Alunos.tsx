@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, Edit, X, Save, BookOpen, ArrowLeft } from 'lucide-react'
 import { alunosAPI, turmasAPI, Aluno, Turma } from '../lib/api'
+import BackButton from '../components/BackButton'
 import './CommonPages.css'
 import '../components/Modal.css'
 import './Notas.css'
@@ -193,6 +194,7 @@ const Alunos = () => {
 
   return (
     <div className="page">
+      <BackButton />
       <div className="page-header">
         <h1>Alunos</h1>
         <div style={{ display: 'flex', gap: '10px' }}>

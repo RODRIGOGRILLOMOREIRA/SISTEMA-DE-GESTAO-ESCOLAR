@@ -4,13 +4,66 @@
   gap: 24px;
 }
 
-.ano-selector h1 {
+.ano-selector button {
+  transition: all 0.2s ease;
+  position: relative;
+  background: linear-gradient(135deg, #673ab7, #512da8);
+  color: white;
+  border: none;
+}
+
+.ano-selector button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(103, 58, 183, 0.3);
+  background: linear-gradient(135deg, #7e57c2, #5e35b1);
+}
+
+.ano-selector button:active {
+  transform: scale(0.95);
+  background: linear-gradient(135deg, #5e35b1, #4527a0) !important;
+  box-shadow: 0 2px 8px rgba(103, 58, 183, 0.5);
+  animation: buttonPulse 0.3s ease;
+}
+
+@keyframes buttonPulse {
+  0% {
+    transform: scale(0.95);
+  }
+  50% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(0.95);
+  }
+}
+
+.calendario-titulo {
   margin: 0;
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--text-primary);
-  min-width: 320px;
   text-align: center;
+}
+
+.ano-numero {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #1e3a8a, #1e40af);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  min-width: 180px;
+  width: 180px;
+  text-align: center;
+  filter: drop-shadow(0 4px 10px rgba(30, 58, 138, 0.4));
+  letter-spacing: 2px;
+  position: relative;
+  padding: 12px 16px;
+  border: 3px solid #1e3a8a;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(30, 58, 138, 0.3), inset 0 0 10px rgba(30, 58, 138, 0.1);
+  margin: 0 auto;
 }
 
 /* Container de Calendário */
@@ -224,5 +277,257 @@
 
   .empty-state {
     padding: 48px 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .calendario-escolar {
+    padding: 0.75rem;
+  }
+
+  /* Header responsivo */
+  .page-header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.75rem;
+    margin-top: 60px;
+  }
+  
+  .calendario-titulo {
+    font-size: clamp(1.2rem, 5vw, 1.5rem);
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .ano-selector {
+    flex-direction: column;
+    gap: 12px;
+    padding: 0;
+    width: 100%;
+    justify-content: center;
+    align-items: stretch;
+  }
+
+  .ano-numero {
+    font-size: clamp(1.8rem, 6vw, 2.2rem);
+    min-width: auto;
+    width: fit-content;
+    text-align: center;
+    padding: 6px 12px;
+    order: 2;
+    letter-spacing: 3px;
+    margin: 0 auto;
+  }
+
+  .ano-selector button,
+  .ano-controls button {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    min-width: 100%;
+    width: 100%;
+    white-space: nowrap;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .ano-selector button:first-of-type {
+    order: 1;
+  }
+  
+  .ano-selector button:last-of-type {
+    order: 3;
+  }
+
+  /* Botão adicionar evento */
+  .btn-primary {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .eventos-grid {
+    gap: 12px;
+  }
+
+  .categoria-eventos {
+    padding: 12px;
+  }
+
+  .categoria-header h2,
+  .categoria-titulo {
+    font-size: clamp(0.9rem, 3vw, 1rem);
+  }
+
+  .evento-item,
+  .evento-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .evento-data {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+  }
+
+  .evento-info h3 {
+    font-size: 0.9rem;
+  }
+
+  .evento-info p {
+    font-size: 0.8rem;
+  }
+
+  /* Evento cards */
+  .evento-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .evento-tipo-badge {
+    font-size: clamp(0.65rem, 2vw, 0.75rem);
+    padding: 4px 8px;
+    word-break: break-word;
+  }
+
+  .evento-acoes {
+    width: 100%;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  
+  .btn-icon-small {
+    padding: 8px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+  
+  .btn-icon-small svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .evento-content {
+    width: 100%;
+  }
+
+  .evento-descricao {
+    font-size: 0.85rem;
+  }
+
+  .evento-datas {
+    font-size: 0.8rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .empty-state {
+    padding: 32px 16px;
+  }
+
+  .empty-state svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .empty-state h3 {
+    font-size: 1rem;
+  }
+
+  .empty-state p {
+    font-size: 0.85rem;
+  }
+
+  /* Formulário no modal */
+  .modal .form-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .modal .form-group {
+    width: 100%;
+  }
+
+  .modal .form-group input,
+  .modal .form-group select,
+  .modal .form-group textarea {
+    font-size: 16px !important;
+    padding: 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse !important;
+    gap: 0.5rem;
+  }
+
+  .modal-footer button {
+    width: 100% !important;
+    padding: 14px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendario-escolar {
+    padding: 0.5rem;
+  }
+  
+  .calendario-titulo {
+    font-size: clamp(1.1rem, 4.5vw, 1.3rem);
+  }
+
+  .ano-selector {
+    padding: 0;
+    gap: 10px;
+  }
+
+  .ano-numero {
+    font-size: clamp(1.5rem, 5.5vw, 1.9rem);
+    padding: 6px 12px;
+    letter-spacing: 2px;
+  }
+
+  .ano-selector button,
+  .ano-controls button {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .btn-primary {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+  }
+
+  .categoria-eventos {
+    padding: 10px;
+  }
+
+  .categoria-header h2,
+  .categoria-titulo {
+    font-size: clamp(0.85rem, 2.8vw, 0.95rem);
+  }
+
+  .evento-item,
+  .evento-card {
+    padding: 10px;
+  }
+  
+  .evento-descricao {
+    font-size: clamp(0.8rem, 2.5vw, 0.85rem);
+  }
+  
+  .evento-datas {
+    font-size: clamp(0.75rem, 2.2vw, 0.8rem);
   }
 }

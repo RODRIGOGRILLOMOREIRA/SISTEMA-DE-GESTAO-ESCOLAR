@@ -4,7 +4,7 @@ Interface web moderna e responsiva para o Sistema de Gestão Escolar, construíd
 
 ## 📋 Visão Geral
 
-Frontend completo que oferece uma experiência de usuário intuitiva e moderna para gerenciar todos os aspectos de uma instituição de ensino, desde alunos e professores até notas, frequências e relatórios.
+Frontend completo que oferece uma experiência de usuário intuitiva e moderna para gerenciar todos os aspectos de uma instituição de ensino. Interface totalmente responsiva com tema claro/escuro, navegação fluida e feedback visual em tempo real.
 
 ## 🛠️ Tecnologias
 
@@ -18,6 +18,126 @@ Frontend completo que oferece uma experiência de usuário intuitiva e moderna p
 - **PDF**: jsPDF 3.0 + jsPDF-AutoTable 5.0
 - **Gráficos**: Recharts 2.10
 - **Planilhas**: XLSX 0.18
+- **IA**: face-api.js - Reconhecimento facial
+
+## 🌟 Funcionalidades Principais
+
+### 🔐 Autenticação e Segurança
+- Login com validação JWT
+- Registro de novos usuários
+- Recuperação de senha
+- Controle de permissões por cargo
+- Rotas protegidas (PrivateRoute)
+- Logout seguro
+
+### 👥 Gestão de Pessoas
+- **Alunos**: CRUD completo com foto, dados pessoais, responsáveis
+- **Professores**: Gestão de docentes com vinculação a disciplinas
+- **Funcionários**: Controle de colaboradores administrativos
+- **Equipe Diretiva**: Gestão de direção, coordenação e supervisão
+
+### 📚 Gestão Acadêmica
+- **Turmas**: Organização por série, turno, ano letivo
+- **Disciplinas**: Cadastro com autocomplete inteligente
+- **Vinculação**: Disciplina-Turma-Professor
+- **Grade Horária**: Montagem visual interativa com drag-and-drop
+- **Calendário Escolar**: Gerenciamento de eventos, feriados e períodos
+
+### 📊 Avaliação e Desempenho
+- **Sistema de Notas**: 
+  - Registro por trimestre
+  - Múltiplas avaliações (A1, A2, A3, Recuperação)
+  - Cálculo automático de médias
+  - Visualização por turma e aluno
+  
+- **Controle de Frequência**:
+  - Registro diário de presença
+  - Justificativas de ausências
+  - Percentual de frequência automático
+  - Relatórios por período
+  
+- **Boletim de Desempenho**:
+  - Visualização completa do rendimento
+  - Notas de todas as disciplinas
+  - Percentual de frequência
+  - Média geral e situação
+  - Geração de PDF com logo da escola
+  - Exportação para Excel
+
+### 🎯 Registro de Habilidades BNCC
+- **Base Completa**: 334+ habilidades da Base Nacional Comum Curricular
+- **Organização por**:
+  - Componente curricular (Língua Portuguesa, Matemática, Ciências, História, Geografia)
+  - Ano escolar (1º ao 9º ano)
+  - Categoria (Anos Iniciais 1º-5º / Anos Finais 6º-9º)
+  
+- **Funcionalidades**:
+  - Navegação hierárquica: Categoria → Turma → Aluno → Disciplina
+  - Visualização de todas as habilidades por componente/ano
+  - Cards individuais com código BNCC e descrição completa
+  - Status de desenvolvimento:
+    - 🔴 Não Iniciado
+    - 🟡 Em Desenvolvimento
+    - 🟢 Desenvolvido
+  - Atribuição por trimestre (1º, 2º, 3º)
+  - Habilitar/desabilitar habilidades individuais
+  - Interface responsiva com grid adaptativo
+  - Salvamento de registros
+
+### ⏰ Controle de Ponto
+- **Cadastro Facial com IA**:
+  - Detecção automática de rosto
+  - Captura e armazenamento de descritores faciais
+  - Interface guiada passo a passo
+  - Suporte a múltiplos registros
+  
+- **Reconhecimento Facial**:
+  - Identificação automática via webcam
+  - Validação de similaridade
+  - Registro automático de entrada/saída
+  - Feedback visual em tempo real
+  
+- **Relatórios de Ponto**:
+  - Visualização por funcionário
+  - Filtros por período e departamento
+  - Listagem de entradas e saídas
+  - Geração de comprovantes em PDF
+  - Consolidação mensal
+
+### 📈 Relatórios e Dashboards
+- **Dashboard Principal**:
+  - Cards com estatísticas gerais
+  - Total de alunos, professores, funcionários
+  - Total de turmas e disciplinas
+  - Tema personalizável
+  
+- **Relatórios Disponíveis**:
+  - Desempenho por turma
+  - Frequência por período
+  - Consolidado de ponto
+  - Boletins individuais
+  - Exportação múltiplos formatos (PDF, Excel)
+
+### 🎨 Interface e UX
+- **Tema Claro/Escuro**:
+  - Alternância com um clique
+  - Persistência no localStorage
+  - Transições suaves
+  - Design consistente
+  
+- **Layout Responsivo**:
+  - Desktop (telas grandes)
+  - Tablet (telas médias)
+  - Mobile (telas pequenas)
+  - Sidebar colapsável
+  
+- **Componentes Modernos**:
+  - Modais elegantes
+  - Formulários validados
+  - Feedback visual
+  - Loading states
+  - Confirmações de ações
+  - Mensagens de erro/sucesso
 
 ## 📁 Estrutura de Pastas
 
@@ -27,8 +147,13 @@ frontend/
 │   ├── components/              # Componentes reutilizáveis
 │   │   ├── Layout.tsx          # Layout principal com sidebar
 │   │   ├── Layout.css
+│   │   ├── BackButton.tsx      # Botão de voltar padronizado
 │   │   ├── PrivateRoute.tsx    # Proteção de rotas
 │   │   ├── Modal.css           # Estilos de modais
+│   │   ├── CadastroFacial.tsx  # Registro facial com IA
+│   │   ├── CadastroFacial.css
+│   │   ├── ReconhecimentoFacialIA.tsx  # Reconhecimento facial
+│   │   ├── ReconhecimentoFacialIA.css
 │   │   ├── CalendarioEscolar.tsx
 │   │   ├── CalendarioEscolar.css
 │   │   ├── GradeHoraria.tsx
@@ -41,7 +166,13 @@ frontend/
 │   │   ├── AuthContext.tsx    # Gerenciamento de autenticação
 │   │   └── ThemeContext.tsx   # Tema claro/escuro
 │   │
-│   ├── lib/                   # Bibliotecas e utilidades
+│   ├── data/                  # Base de dados estática
+│   │   └── habilidadesBNCC.ts # 334+ habilidades BNCC
+│   │
+│   ├── config/               # Configurações
+│   │   └── reconhecimento.config.ts
+│   │
+│   ├── lib/                   # Bibliotecas e utilitários
 │   │   ├── api.ts            # Cliente Axios configurado
 │   │   └── permissions.ts    # Verificação de permissões
 │   │
@@ -52,44 +183,58 @@ frontend/
 │   │   ├── UserManagement.tsx
 │   │   ├── Auth.css          # Estilos de autenticação
 │   │   │
-│   │   ├── Dashboard.tsx
+│   │   ├── Dashboard.tsx     # Dashboard principal
 │   │   ├── Dashboard.css
 │   │   │
-│   │   ├── Alunos.tsx
-│   │   ├── Professores.tsx
-│   │   ├── Funcionarios.tsx
-│   │   ├── EquipeDiretiva.tsx
+│   │   ├── Alunos.tsx        # Gestão de alunos
+│   │   ├── Professores.tsx   # Gestão de professores
+│   │   ├── Funcionarios.tsx  # Gestão de funcionários
+│   │   ├── EquipeDiretiva.tsx # Gestão de equipe diretiva
 │   │   ├── EquipeDiretiva.css
 │   │   │
-│   │   ├── Turmas.tsx
-│   │   ├── Disciplinas.tsx
+│   │   ├── Turmas.tsx        # Gestão de turmas
+│   │   ├── Disciplinas.tsx   # Gestão de disciplinas
 │   │   ├── DisciplinasAutocomplete.css
 │   │   │
-│   │   ├── Notas.tsx
+│   │   ├── Notas.tsx         # Sistema de notas
 │   │   ├── Notas.css
-│   │   ├── FrequenciaPage.tsx
+│   │   ├── FrequenciaPage.tsx # Controle de frequência
 │   │   ├── Frequencia.tsx
-│   │   ├── BoletimDesempenho.tsx
+│   │   ├── BoletimDesempenho.tsx # Boletim completo
 │   │   ├── BoletimDesempenho.css
+│   │   ├── Habilidades.tsx   # Registro de habilidades BNCC
+│   │   ├── Habilidades.css
 │   │   │
-│   │   ├── CalendarioEscolarPage.tsx
-│   │   ├── GradeHorariaPage.tsx
-│   │   ├── RegistroPonto.tsx
+│   │   ├── CalendarioEscolarPage.tsx # Calendário
+│   │   ├── GradeHorariaPage.tsx # Grade horária
+│   │   ├── RegistroPonto.tsx # Controle de ponto
+│   │   ├── CadastroFacialIA.tsx # Cadastro facial
+│   │   ├── CadastroFacialIA.css
 │   │   │
-│   │   ├── Relatorios.tsx
+│   │   ├── Relatorios.tsx    # Central de relatórios
 │   │   ├── Relatorios.css
-│   │   ├── Configuracoes.tsx
+│   │   ├── Configuracoes.tsx # Configurações do sistema
 │   │   ├── Configuracoes.css
 │   │   │
 │   │   ├── CommonPages.css   # Estilos compartilhados
-│   │   └── ModernPages.css   # Estilos modernos
+│   │   └── ModernPages.css   # Estilos modernos padronizados
 │   │
 │   ├── App.tsx               # Componente raiz e rotas
 │   ├── main.tsx             # Ponto de entrada
 │   ├── index.css           # Estilos globais
 │   └── vite-env.d.ts      # Tipos do Vite
 │
+├── public/
+│   └── models/              # Modelos de reconhecimento facial
+│       ├── face_expression_model-*
+│       ├── face_landmark_68_model-*
+│       ├── face_recognition_model-*
+│       └── tiny_face_detector_model-*
+│
 ├── uploads/                # Arquivos temporários
+│   ├── reconhecimento-facial/
+│   └── registro-ponto/
+│
 ├── index.html             # HTML principal
 ├── .env                  # Variáveis de ambiente
 ├── .env.example         # Exemplo de variáveis
@@ -99,6 +244,166 @@ frontend/
 ├── vite.config.ts
 └── README.md
 ```
+
+## 🔐 Variáveis de Ambiente
+
+Crie um arquivo `.env` na raiz do frontend:
+
+```env
+# URL da API Backend
+VITE_API_URL=http://localhost:3333
+```
+
+## 🚀 Instalação e Execução
+
+### 1. Instalar Dependências
+
+```bash
+npm install
+```
+
+### 2. Configurar Variáveis de Ambiente
+
+```bash
+cp .env.example .env
+# Edite o arquivo .env com suas configurações
+```
+
+### 3. Executar em Desenvolvimento
+
+```bash
+npm run dev
+# Aplicação rodando em http://localhost:5173
+```
+
+### 4. Build para Produção
+
+```bash
+npm run build
+# Arquivos gerados em: dist/
+```
+
+### 5. Preview do Build
+
+```bash
+npm run preview
+```
+
+## 📱 Rotas da Aplicação
+
+### Públicas
+- `/` - Login
+- `/register` - Registro de usuário
+- `/forgot-password` - Recuperação de senha
+
+### Privadas (Requerem Autenticação)
+
+**Gestão de Pessoas**
+- `/dashboard` - Dashboard principal
+- `/alunos` - Gestão de alunos
+- `/professores` - Gestão de professores
+- `/funcionarios` - Gestão de funcionários
+- `/equipe-diretiva` - Gestão de equipe diretiva
+
+**Gestão Acadêmica**
+- `/turmas` - Gestão de turmas
+- `/disciplinas` - Gestão de disciplinas
+- `/notas` - Sistema de notas
+- `/frequencia` - Controle de frequência
+- `/boletim` - Boletim de desempenho
+- `/habilidades` - Registro de habilidades BNCC
+
+**Planejamento**
+- `/calendario` - Calendário escolar
+- `/grade-horaria` - Grade horária
+
+**Controle de Ponto**
+- `/registro-ponto` - Controle de ponto
+- `/cadastro-facial` - Cadastro facial com IA
+
+**Sistema**
+- `/relatorios` - Central de relatórios
+- `/configuracoes` - Configurações gerais
+- `/usuarios` - Gestão de usuários
+
+## 🎨 Temas e Personalização
+
+O sistema suporta dois temas:
+- **Claro**: Design clean com fundo branco
+- **Escuro**: Design confortável para uso noturno
+
+A preferência é salva automaticamente no localStorage.
+
+## 📊 Geração de Documentos
+
+### PDF
+- Boletins escolares com logo
+- Comprovantes de ponto
+- Relatórios formatados
+
+### Excel
+- Frequências por período
+- Listagens de alunos
+- Consolidados diversos
+
+## 🔒 Segurança
+
+- Tokens JWT armazenados com segurança
+- Validação de formulários no cliente
+- Proteção de rotas sensíveis
+- Logout automático em caso de token inválido
+- Criptografia de dados sensíveis
+
+## 🌐 Navegadores Suportados
+
+- Chrome/Edge 90+
+- Firefox 88+
+- Safari 14+
+- Opera 76+
+
+## 📦 Scripts Disponíveis
+
+```bash
+npm run dev          # Inicia servidor de desenvolvimento
+npm run build        # Gera build de produção
+npm run preview      # Preview do build
+npm run lint         # Verifica código com ESLint
+```
+
+## 🎯 Melhorias Futuras
+
+- [ ] Progressive Web App (PWA)
+- [ ] Notificações push
+- [ ] Chat em tempo real
+- [ ] Vídeo conferência integrada
+- [ ] Editor de documentos colaborativo
+- [ ] Integração com Google Classroom
+- [ ] App mobile React Native
+
+## 👨‍💻 Desenvolvimento
+
+### Estrutura de Componentes
+
+Os componentes seguem o padrão:
+- Componentes reutilizáveis em `/components`
+- Páginas completas em `/pages`
+- Estilos colocalizados (.tsx + .css)
+- Context API para estado global
+
+### Boas Práticas
+
+- TypeScript para type safety
+- Componentes funcionais com hooks
+- CSS modules quando necessário
+- Validação de formulários
+- Tratamento de erros
+- Loading states
+- Mensagens de feedback
+
+---
+
+Desenvolvido com ❤️ usando React + TypeScript + Vite
+
 
 ## 🔐 Variáveis de Ambiente
 

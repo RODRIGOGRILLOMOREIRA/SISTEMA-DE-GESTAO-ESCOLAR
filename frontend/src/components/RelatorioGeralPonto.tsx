@@ -8,10 +8,13 @@ interface RegistroPonto {
   pessoaId: string;
   tipoPessoa: 'PROFESSOR' | 'FUNCIONARIO' | 'EQUIPE_DIRETIVA';
   data: string;
-  horaRegistro: string;
+  horaRegistro: string | Date;
   tipoRegistro: 'ENTRADA' | 'SAIDA' | 'INTERVALO_INICIO' | 'INTERVALO_FIM';
   observacao?: string;
   aprovado: boolean;
+  reconhecimentoIA?: boolean;
+  confianca?: number;
+  fotoPath?: string;
 }
 
 interface ConfiguracaoJornada {
@@ -51,7 +54,7 @@ interface RelatorioGeralProps {
   carregarRegistros: () => void;
   carregarBancoHoras: () => void;
   formatarData: (data: string) => string;
-  formatarHora: (hora: string) => string;
+  formatarHora: (hora: string | Date) => string;
 }
 
 const RelatorioGeralPonto: React.FC<RelatorioGeralProps> = ({

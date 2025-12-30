@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import { Save, X, Calendar, TrendingUp, ArrowLeft } from 'lucide-react'
 import axios from 'axios'
 import './RegistroFrequencia.css'
+import '../components/Modal.css'
 import '../pages/CommonPages.css'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.5.25:3333/api'
 
 interface Aluno {
   id: string
@@ -44,8 +47,6 @@ interface HorarioAula {
   disciplinaId?: string
 }
 
-const API_URL = 'http://localhost:3333/api'
-
 type NivelEnsino = 'INICIAIS' | 'FINAIS' | null
 type Periodo = 'MANHA' | 'TARDE' | null
 
@@ -62,6 +63,9 @@ const RegistroFrequencia = () => {
   const [numeroAulasPadrao, setNumeroAulasPadrao] = useState<number>(1)
   const [loading, setLoading] = useState(false)
   const [disciplinasDoDia, setDisciplinasDoDia] = useState<Disciplina[]>([])
+  const [forceUpdate, setForceUpdate] = useState(0) // Para forçar re-render
+  const [frequenciasDoDia, setFrequenciasDoDia] = useState<any[]>([]) // Todas as frequências registradas no dia
+  const [mostrarAulasDadas, setMostrarAulasDadas] = useState(false) // Controla visualização das aulas dadas
 
   const diasSemana = ['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO']
 
@@ -71,17 +75,25 @@ const RegistroFrequencia = () => {
 
   useEffect(() => {
     if (turmaId && periodoAtivo && dataSelecionada) {
-      loadNumeroAulasDoDia()
+      const timer = setTimeout(() => {
+        console.log('🔄 useEffect disparado - carregando dados', { turmaId, periodoAtivo, dataSelecionada })
+        loadNumeroAulasDoDia()
+        loadFrequenciasDoDia()
+      }, 150)
+      return () => clearTimeout(timer)
     }
   }, [turmaId, periodoAtivo, dataSelecionada])
 
   useEffect(() => {
     if (turmaId && disciplinaSelecionada && numeroAulasPadrao > 0) {
-      loadRegistroExistente()
+      console.log('FREQUENCIA - useEffect loadRegistroExistente, numeroAulasPadrao:', numeroAulasPadrao)
+      const timer = setTimeout(() => {
+        loadRegistroExistente()
+      }, 200)
+      return () => clearTimeout(timer)
     }
   }, [turmaId, disciplinaSelecionada, numeroAulasPadrao, dataSelecionada, periodoAtivo])
 
-  // Recarregar dashboard após salvar registro
   const handleSalvarRegistro = async () => {
     if (!turmaId || !disciplinaSelecionada || !dataSelecionada || !periodoAtivo) {
       alert('Preencha todos os campos necessários')
@@ -99,9 +111,22 @@ const RegistroFrequencia = () => {
         presencas,
       }
 
-      await axios.post(`${API_URL}/registro-frequencia`, registroData)
+      console.log('💾 Salvando registro...')
+
+      const response = await axios.post(`${API_URL}/registro-frequencia`, registroData)
+      
+      console.log('✅ Registro salvo!')
       
       alert('Registro salvo com sucesso!')
+      
+      // Recarregar as frequências do dia após salvar
+      await loadFrequenciasDoDia()
+      
+      // Limpar campos do formulário DEPOIS de recarregar
+      setDisciplinaSelecionada('')
+      setPresencas([])
+      setMostrarAulasDadas(false)
+      
     } catch (error: any) {
       console.error('Erro ao salvar registro:', error)
       alert(error.response?.data?.error || 'Erro ao salvar registro')
@@ -113,6 +138,7 @@ const RegistroFrequencia = () => {
   const loadTurmas = async () => {
     try {
       const response = await axios.get(`${API_URL}/turmas`)
+      console.log('FREQUENCIA - Turmas carregadas:', response.data.length, response.data)
       setTurmas(response.data)
     } catch (error) {
       console.error('Erro ao carregar turmas:', error)
@@ -121,8 +147,16 @@ const RegistroFrequencia = () => {
 
   const loadNumeroAulasDoDia = async () => {
     try {
+      console.log('FREQUENCIA - loadNumeroAulasDoDia chamado')
+      console.log('turmaId:', turmaId)
+      console.log('periodoAtivo:', periodoAtivo)
+      console.log('dataSelecionada:', dataSelecionada)
+      
       const diaSemanaAtual = getDiaSemanaFromData(dataSelecionada)
+      console.log('diaSemanaAtual:', diaSemanaAtual)
+      
       const response = await axios.get(`${API_URL}/grade-horaria/turma/${turmaId}`)
+      console.log('Grade horária:', response.data)
       
       if (response.data) {
         const horariosDoDia = response.data.horarios_aula.filter(
@@ -131,6 +165,7 @@ const RegistroFrequencia = () => {
             h.periodo === periodoAtivo &&
             h.disciplinaId
         )
+        console.log('Horários do dia filtrados:', horariosDoDia)
         
         // Contar aulas por disciplina
         const disciplinasMap = new Map<string, number>()
@@ -138,25 +173,23 @@ const RegistroFrequencia = () => {
           const count = disciplinasMap.get(h.disciplinaId!) || 0
           disciplinasMap.set(h.disciplinaId!, count + 1)
         })
+        console.log('Disciplinas no dia:', Array.from(disciplinasMap.entries()))
         
         // Filtrar disciplinas da turma que têm aula neste dia
         const turma = turmas.find(t => t.id === turmaId)
+        console.log('Turma encontrada:', turma)
+        console.log('Disciplinas da turma:', turma?.disciplinas)
+        
         const disciplinasDisponiveis = turma?.disciplinas?.filter(
           d => disciplinasMap.has(d.id)
         ) || []
+        console.log('Disciplinas disponíveis:', disciplinasDisponiveis)
         
         setDisciplinasDoDia(disciplinasDisponiveis)
         
         // Se a disciplina selecionada não está disponível neste dia, limpar
         if (disciplinaSelecionada && !disciplinasMap.has(disciplinaSelecionada)) {
           setDisciplinaSelecionada('')
-        }
-        
-        // Definir número de aulas da disciplina selecionada
-        if (disciplinaSelecionada) {
-          const numAulas = disciplinasMap.get(disciplinaSelecionada) || 1
-          setNumeroAulasPadrao(Math.min(numAulas, 5))
-        } else {
           setNumeroAulasPadrao(1)
         }
       }
@@ -246,6 +279,48 @@ const RegistroFrequencia = () => {
     }
   }
 
+  const loadFrequenciasDoDia = async () => {
+    if (!turmaId || !dataSelecionada || !periodoAtivo) return
+
+    const timestamp = new Date().toLocaleTimeString()
+    try {
+      console.log(`⏰ [${timestamp}] FREQUENCIA - Carregando todas frequências do dia`, {
+        turmaId,
+        data: dataSelecionada,
+        periodo: periodoAtivo
+      })
+      const response = await axios.get(
+        `${API_URL}/registro-frequencia/turma/${turmaId}/dia`,
+        {
+          params: {
+            data: dataSelecionada,
+            periodo: periodoAtivo
+          }
+        }
+      )
+      console.log(`⏰ [${timestamp}] FREQUENCIA - Frequências do dia RECEBIDAS:`, {
+        total: response.data?.length || 0,
+        registros: response.data
+      })
+      setFrequenciasDoDia(response.data || [])
+      
+      // Log para debug
+      if (response.data && response.data.length > 0) {
+        console.log(`✅ [${timestamp}] Registros carregados:`, response.data.map((r: any) => ({
+          id: r.id,
+          disciplina: r.disciplina?.nome,
+          numeroAulas: r.numeroAulas,
+          totalPresencas: r.totalPresencas
+        })))
+      } else {
+        console.log(`⚠️ [${timestamp}] Nenhum registro encontrado para este dia/período`)
+      }
+    } catch (error) {
+      console.error(`❌ [${timestamp}] Erro ao carregar frequências do dia:`, error)
+      setFrequenciasDoDia([])
+    }
+  }
+
   const handlePresencaAulaChange = (alunoId: string, aulaIndex: number, presente: boolean) => {
     setPresencas(prev =>
       prev.map(p => {
@@ -272,11 +347,17 @@ const RegistroFrequencia = () => {
 
   const turmasFiltradas = turmas
     .filter(t => {
-      if (nivelEnsino === 'INICIAIS') return t.ano >= 1 && t.ano <= 5
-      if (nivelEnsino === 'FINAIS') return t.ano >= 6 && t.ano <= 9
+      // Converter ano para número para garantir compatibilidade
+      const ano = typeof t.ano === 'string' ? parseInt(t.ano) : t.ano
+      if (nivelEnsino === 'INICIAIS') return ano >= 1 && ano <= 5
+      if (nivelEnsino === 'FINAIS') return ano >= 6 && ano <= 9
       return false
     })
-    .sort((a, b) => a.ano - b.ano || a.nome.localeCompare(b.nome))
+    .sort((a, b) => {
+      const anoA = typeof a.ano === 'string' ? parseInt(a.ano) : a.ano
+      const anoB = typeof b.ano === 'string' ? parseInt(b.ano) : b.ano
+      return anoA - anoB || a.nome.localeCompare(b.nome)
+    })
 
   const turmaSelecionada = turmas.find(t => t.id === turmaId)
 
@@ -456,18 +537,103 @@ const RegistroFrequencia = () => {
 
               <div className="info-card">
                 <label>Nº Aulas</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="5"
-                  value={numeroAulasPadrao}
-                  onChange={(e) => {
-                    const valor = Math.min(5, Math.max(1, parseInt(e.target.value) || 1))
-                    setNumeroAulasPadrao(valor)
-                  }}
-                  className="number-control"
-                  disabled={!disciplinaSelecionada}
-                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const novoValor = Math.max(1, numeroAulasPadrao - 1)
+                      setNumeroAulasPadrao(novoValor)
+                      setForceUpdate(prev => prev + 1)
+                      const turma = turmas.find(t => t.id === turmaId)
+                      if (turma?.alunos) {
+                        setPresencas(turma.alunos.map(aluno => ({
+                          alunoId: aluno.id,
+                          presencas: Array(novoValor).fill(true)
+                        })))
+                      }
+                    }}
+                    disabled={!disciplinaSelecionada || numeroAulasPadrao <= 1}
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      fontSize: '20px',
+                      fontWeight: 'bold',
+                      border: '2px solid var(--primary-color)',
+                      borderRadius: '8px',
+                      background: 'white',
+                      color: 'var(--primary-color)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    −
+                  </button>
+                  <input
+                    key={`aulas-${forceUpdate}`}
+                    type="number"
+                    min="1"
+                    max="5"
+                    value={numeroAulasPadrao}
+                    onChange={(e) => {
+                      let valor = parseInt(e.target.value)
+                      if (isNaN(valor) || valor < 1) valor = 1
+                      if (valor > 5) valor = 5
+                      console.log('FREQUENCIA - Alterando número de aulas para:', valor)
+                      setNumeroAulasPadrao(valor)
+                      setForceUpdate(prev => prev + 1)
+                      const turma = turmas.find(t => t.id === turmaId)
+                      if (turma?.alunos) {
+                        setPresencas(turma.alunos.map(aluno => ({
+                          alunoId: aluno.id,
+                          presencas: Array(valor).fill(true)
+                        })))
+                      }
+                    }}
+                    onBlur={(e) => {
+                      let valor = parseInt(e.target.value)
+                      if (isNaN(valor) || valor < 1) valor = 1
+                      if (valor > 5) valor = 5
+                      setNumeroAulasPadrao(valor)
+                    }}
+                    className="number-control"
+                    disabled={!disciplinaSelecionada}
+                    style={{ flex: 1, textAlign: 'center', fontSize: '16px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const novoValor = Math.min(5, numeroAulasPadrao + 1)
+                      setNumeroAulasPadrao(novoValor)
+                      setForceUpdate(prev => prev + 1)
+                      const turma = turmas.find(t => t.id === turmaId)
+                      if (turma?.alunos) {
+                        setPresencas(turma.alunos.map(aluno => ({
+                          alunoId: aluno.id,
+                          presencas: Array(novoValor).fill(true)
+                        })))
+                      }
+                    }}
+                    disabled={!disciplinaSelecionada || numeroAulasPadrao >= 5}
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      fontSize: '20px',
+                      fontWeight: 'bold',
+                      border: '2px solid var(--primary-color)',
+                      borderRadius: '8px',
+                      background: 'white',
+                      color: 'var(--primary-color)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -478,7 +644,179 @@ const RegistroFrequencia = () => {
         </button>
       </div>
 
-      <div className="table-container">
+      {/* VERSÃO DESKTOP - Tabela */}
+      <div className="table-container desktop-only">
+        {/* BOTÃO AMARELO PARA MOSTRAR AULAS DADAS - DESKTOP */}
+        {frequenciasDoDia.length > 0 && (
+          <button
+            className="btn-aulas-dadas"
+            onClick={() => setMostrarAulasDadas(!mostrarAulasDadas)}
+            style={{
+              width: '100%',
+              padding: '16px',
+              marginBottom: '20px',
+              background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+              border: '2px solid #f59e0b',
+              borderRadius: '12px',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: '700',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 15px rgba(251, 191, 36, 0.4)',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            <span style={{ fontSize: '20px' }}>📚</span>
+            <span>
+              {mostrarAulasDadas ? 'OCULTAR' : 'VER'} AULAS DADAS 
+              ({frequenciasDoDia.reduce((total, freq) => total + (freq.numeroAulas || 0), 0)} aulas registradas)
+            </span>
+            <span style={{ fontSize: '20px' }}>{mostrarAulasDadas ? '▲' : '▼'}</span>
+          </button>
+        )}
+
+        {/* TABELA DE AULAS REGISTRADAS - DESKTOP */}
+        {mostrarAulasDadas && frequenciasDoDia.length > 0 && turmaSelecionada?.alunos && (
+          <div style={{ marginBottom: '30px' }}>
+            <h3 style={{ 
+              marginBottom: '15px', 
+              color: '#1f2937', 
+              fontSize: '1.25rem',
+              fontWeight: '600'
+            }}>
+              📋 Aulas Registradas Hoje - {new Date(dataSelecionada).toLocaleDateString('pt-BR')}
+            </h3>
+            
+            {frequenciasDoDia.map((freq, freqIndex) => (
+              <div key={freqIndex} style={{
+                background: '#f9fafb',
+                border: '2px solid #e5e7eb',
+                borderRadius: '12px',
+                padding: '20px',
+                marginBottom: '20px'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  gap: '12px',
+                  marginBottom: '15px',
+                  alignItems: 'center'
+                }}>
+                  <span style={{
+                    padding: '6px 12px',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    color: 'white',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    fontSize: '14px'
+                  }}>
+                    {freq.disciplina?.nome || 'Disciplina'}
+                  </span>
+                  <span style={{
+                    padding: '6px 12px',
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: 'white',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    fontSize: '14px'
+                  }}>
+                    {freq.disciplina?.professor?.nome || 'Professor'}
+                  </span>
+                  <span style={{
+                    padding: '6px 12px',
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    color: 'white',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    fontSize: '14px'
+                  }}>
+                    📚 {freq.numeroAulas || 0} {freq.numeroAulas === 1 ? 'aula' : 'aulas'}
+                  </span>
+                </div>
+
+                <table className="frequencia-table" style={{ width: '100%' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ width: '50px' }}>Nº</th>
+                      <th>Aluno</th>
+                      {Array.from({ length: freq.numeroAulas || 1 }, (_, i) => (
+                        <th key={i} style={{ width: '80px', textAlign: 'center' }}>
+                          {i + 1}ª Aula
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {turmaSelecionada.alunos.map((aluno, alunoIndex) => {
+                      const presencasAluno = freq.presenca_aluno?.filter((p: any) => p.alunoId === aluno.id) || []
+                      
+                      return (
+                        <tr key={aluno.id}>
+                          <td className="numero-cell">{alunoIndex + 1}</td>
+                          <td className="aluno-nome">{aluno.nome}</td>
+                          {Array.from({ length: freq.numeroAulas || 1 }, (_, aulaIdx) => {
+                            const presencaNaAula = presencasAluno.find((p: any) => p.aulaIndex === aulaIdx)
+                            const presente = presencaNaAula?.presente ?? true
+                            
+                            return (
+                              <td key={aulaIdx} style={{ textAlign: 'center', padding: '8px' }}>
+                                <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                                  <button
+                                    className={`btn-presenca-mini ${presente ? 'active' : ''}`}
+                                    onClick={async () => {
+                                      try {
+                                        await axios.patch(`${API_URL}/registro-frequencia/${freq.id}/presenca`, {
+                                          alunoId: aluno.id,
+                                          aulaIndex: aulaIdx,
+                                          presente: true
+                                        })
+                                        await loadFrequenciasDoDia()
+                                      } catch (error) {
+                                        console.error('Erro ao atualizar presença:', error)
+                                        alert('Erro ao atualizar presença')
+                                      }
+                                    }}
+                                    title="Marcar presença"
+                                  >
+                                    P
+                                  </button>
+                                  <button
+                                    className={`btn-falta-mini ${!presente ? 'active' : ''}`}
+                                    onClick={async () => {
+                                      try {
+                                        await axios.patch(`${API_URL}/registro-frequencia/${freq.id}/presenca`, {
+                                          alunoId: aluno.id,
+                                          aulaIndex: aulaIdx,
+                                          presente: false
+                                        })
+                                        await loadFrequenciasDoDia()
+                                      } catch (error) {
+                                        console.error('Erro ao atualizar presença:', error)
+                                        alert('Erro ao atualizar presença')
+                                      }
+                                    }}
+                                    title="Marcar falta"
+                                  >
+                                    F
+                                  </button>
+                                </div>
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* TABELA DE NOVO REGISTRO - DESKTOP */}
         <table className="frequencia-table">
           <thead>
             <tr>
@@ -551,6 +889,224 @@ const RegistroFrequencia = () => {
             {loading ? 'Salvando...' : 'Salvar Registro'}
           </button>
         </div>
+      </div>
+
+      {/* VERSÃO MOBILE - Cards por aluno */}
+      <div className="mobile-frequencia-container mobile-only">
+        {/* NOVO REGISTRO - FORMULÁRIO SEMPRE NO TOPO */}
+        {disciplinaSelecionada && turmaSelecionada?.alunos && (
+          <>
+            <div style={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              color: 'white',
+              padding: '12px 16px',
+              borderRadius: '12px 12px 0 0',
+              marginTop: '10px',
+              fontWeight: '700',
+              fontSize: '15px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span>✏️</span>
+              <span>Registrando: {disciplinasDoDia.find(d => d.id === disciplinaSelecionada)?.nome}</span>
+            </div>
+            {turmaSelecionada.alunos.map((aluno, index) => {
+              const presencaAluno = presencas.find(p => p.alunoId === aluno.id)
+              return (
+                <div key={aluno.id} className="aluno-card-mobile">
+                  <div className="aluno-card-header">
+                    <span className="aluno-numero">{index + 1}</span>
+                    <span className="aluno-nome-mobile">{aluno.nome}</span>
+                  </div>
+                  
+                  <div className="aulas-grid-mobile">
+                    {Array.from({ length: numeroAulasPadrao }, (_, aulaIndex) => (
+                      <div key={aulaIndex} className="aula-item-mobile">
+                        <div className="aula-label">{aulaIndex + 1}ª Aula</div>
+                        <div className="aula-buttons">
+                          <button
+                            className={`btn-mobile-presenca ${presencaAluno?.presencas[aulaIndex] ? 'active' : ''}`}
+                            onClick={() => handlePresencaAulaChange(aluno.id, aulaIndex, true)}
+                          >
+                            ✓ Presente
+                          </button>
+                          <button
+                            className={`btn-mobile-falta ${!presencaAluno?.presencas[aulaIndex] ? 'active' : ''}`}
+                            onClick={() => handlePresencaAulaChange(aluno.id, aulaIndex, false)}
+                          >
+                            ✗ Falta
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+
+            <div className="actions-container-mobile">
+              <button
+                className="btn-salvar-mobile"
+                onClick={handleSalvarRegistro}
+                disabled={loading}
+              >
+                <Save size={20} />
+                {loading ? 'Salvando...' : 'Salvar Registro'}
+              </button>
+            </div>
+          </>
+        )}
+
+        {!disciplinaSelecionada && frequenciasDoDia.length === 0 && (
+          <div className="selecione-disciplina-mobile">
+            <p>👆 Selecione uma disciplina acima para registrar frequência</p>
+          </div>
+        )}
+
+        {/* BOTÃO AMARELO PARA MOSTRAR AULAS DADAS - SÓ APARECE QUANDO TEM REGISTROS */}
+        {frequenciasDoDia.length > 0 && (
+          <button
+            className="btn-aulas-dadas"
+            onClick={() => setMostrarAulasDadas(!mostrarAulasDadas)}
+            style={{
+              width: '100%',
+              padding: '16px',
+              marginTop: disciplinaSelecionada ? '20px' : '10px',
+              marginBottom: '20px',
+              background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+              border: '2px solid #f59e0b',
+              borderRadius: '12px',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: '700',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 15px rgba(251, 191, 36, 0.4)',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            <span style={{ fontSize: '20px' }}>📚</span>
+            <span>
+              {mostrarAulasDadas ? 'OCULTAR' : 'VER'} AULAS DADAS 
+              ({frequenciasDoDia.reduce((total, freq) => total + (freq.numeroAulas || 0), 0)} aulas)
+            </span>
+            <span style={{ fontSize: '20px' }}>{mostrarAulasDadas ? '▲' : '▼'}</span>
+          </button>
+        )}
+
+        {/* FREQUÊNCIAS JÁ REGISTRADAS DO DIA - EDITÁVEIS (SÓ APARECE AO CLICAR NO BOTÃO) */}
+        {mostrarAulasDadas && frequenciasDoDia.length > 0 && turmaSelecionada?.alunos && (
+          <div className="frequencias-salvas-mobile" style={{
+            background: '#f9fafb',
+            border: '2px solid #e5e7eb',
+            borderRadius: '12px',
+            padding: '15px',
+            marginBottom: '20px'
+          }}>
+            <h3 style={{
+              margin: '0 0 15px 0',
+              color: '#1f2937',
+              fontSize: '16px',
+              fontWeight: '700',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span>📋</span>
+              <span>Aulas Registradas - {new Date(dataSelecionada).toLocaleDateString('pt-BR')}</span>
+            </h3>
+            
+            {frequenciasDoDia.map((freq, freqIndex) => (
+              <div key={freqIndex} className="frequencia-editavel-card">
+                <div className="frequencia-salva-header">
+                  <span className="disciplina-badge">{freq.disciplina?.nome || 'Disciplina'}</span>
+                  <span className="professor-badge">{freq.disciplina?.professor?.nome || 'Professor'}</span>
+                  <span className="aulas-badge">📚 {freq.numeroAulas || 0} {freq.numeroAulas === 1 ? 'aula' : 'aulas'}</span>
+                </div>
+
+                {/* Lista de alunos para esta disciplina */}
+                {turmaSelecionada.alunos.map((aluno, alunoIndex) => {
+                  // Buscar presenças deste aluno para esta frequência
+                  const presencasAluno = freq.presenca_aluno?.filter((p: any) => p.alunoId === aluno.id) || []
+                  
+                  return (
+                    <div key={aluno.id} className="aluno-mini-card">
+                      <div className="aluno-mini-header">
+                        <span className="aluno-mini-numero">{alunoIndex + 1}</span>
+                        <span className="aluno-mini-nome">{aluno.nome}</span>
+                      </div>
+                      
+                      <div className="aulas-mini-grid">
+                        {Array.from({ length: freq.numeroAulas || 1 }, (_, aulaIdx) => {
+                          const presencaNaAula = presencasAluno.find((p: any) => p.aulaIndex === aulaIdx)
+                          const presente = presencaNaAula?.presente ?? true
+                          
+                          return (
+                            <div key={aulaIdx} className="aula-mini-item">
+                              <span className="aula-mini-label">{aulaIdx + 1}ª</span>
+                              <div className="aula-mini-buttons">
+                                <button
+                                  className={`btn-mini-p ${presente ? 'active' : ''}`}
+                                  onClick={async () => {
+                                    // Atualizar presença via API
+                                    try {
+                                      await axios.patch(`${API_URL}/registro-frequencia/${freq.id}/presenca`, {
+                                        alunoId: aluno.id,
+                                        aulaIndex: aulaIdx,
+                                        presente: true
+                                      })
+                                      await loadFrequenciasDoDia()
+                                    } catch (error) {
+                                      console.error('Erro ao atualizar presença:', error)
+                                      alert('Erro ao atualizar presença')
+                                    }
+                                  }}
+                                  title="Marcar presença"
+                                >
+                                  ✓
+                                </button>
+                                <button
+                                  className={`btn-mini-f ${!presente ? 'active' : ''}`}
+                                  onClick={async () => {
+                                    // Atualizar presença via API
+                                    try {
+                                      await axios.patch(`${API_URL}/registro-frequencia/${freq.id}/presenca`, {
+                                        alunoId: aluno.id,
+                                        aulaIndex: aulaIdx,
+                                        presente: false
+                                      })
+                                      await loadFrequenciasDoDia()
+                                    } catch (error) {
+                                      console.error('Erro ao atualizar presença:', error)
+                                      alert('Erro ao atualizar presença')
+                                    }
+                                  }}
+                                  title="Marcar falta"
+                                >
+                                  ✗
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!disciplinaSelecionada && frequenciasDoDia.length === 0 && (
+          <div className="selecione-disciplina-mobile">
+            <p>👆 Selecione uma disciplina acima para registrar frequência</p>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -182,4 +182,49 @@ reconhecimentoFacialRouter.delete('/:pessoaId', async (req, res) => {
   }
 });
 
+// Nova rota: Buscar descritores com nomes das pessoas (otimizada para IA) - DEVE VIR ANTES DE /:pessoaId
+reconhecimentoFacialRouter.get('/api/descritores', async (req, res) => {
+  try {
+    const cadastros = await prisma.reconhecimento_facial.findMany({
+      where: { ativo: true },
+      select: {
+        pessoaId: true,
+        tipoPessoa: true,
+        descritores: true
+      }
+    });
+
+    // Buscar nomes das pessoas
+    const professores = await prisma.professores.findMany({
+      select: { id: true, nome: true }
+    });
+    const funcionarios = await prisma.funcionarios.findMany({
+      select: { id: true, nome: true }
+    });
+    const equipeDiretiva = await prisma.equipe_diretiva.findMany({
+      select: { id: true, nome: true }
+    });
+
+    // Mapear nomes
+    const todasPessoas = new Map<string, string>();
+    professores.forEach(p => todasPessoas.set(p.id, p.nome));
+    funcionarios.forEach(f => todasPessoas.set(f.id, f.nome));
+    equipeDiretiva.forEach(e => todasPessoas.set(e.id, e.nome));
+
+    // Adicionar nomes aos cadastros
+    const cadastrosComNomes = cadastros.map(c => ({
+      pessoaId: c.pessoaId,
+      tipoPessoa: c.tipoPessoa,
+      nome: todasPessoas.get(c.pessoaId) || 'Desconhecido',
+      descritores: c.descritores
+    }));
+
+    console.log(`📊 Enviando ${cadastrosComNomes.length} descritores para frontend`);
+    res.json(cadastrosComNomes);
+  } catch (error) {
+    console.error('Erro ao buscar descritores:', error);
+    res.status(500).json({ error: 'Erro ao buscar descritores' });
+  }
+});
+
 export default reconhecimentoFacialRouter;

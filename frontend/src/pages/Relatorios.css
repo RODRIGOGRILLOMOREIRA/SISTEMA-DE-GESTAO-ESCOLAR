@@ -406,8 +406,8 @@
 }
 
 .chart-card {
-  background: #fafafa;
-  border: 2px solid #e0e0e0;
+  background: #ffffff;
+  border: 2px solid #22d3ee;
   border-radius: 12px;
   padding: 1.5rem;
 }
@@ -416,15 +416,15 @@
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 1rem;
-  color: #1a1a1a;
+  color: #22d3ee;
 }
 
 /* Tabela de Detalhes */
 .dashboard-section {
   margin-top: 2rem;
   padding: 2rem;
-  background: #fafafa;
-  border: 2px solid #e0e0e0;
+  background: #ffffff;
+  border: 2px solid #22d3ee;
   border-radius: 12px;
 }
 
@@ -432,9 +432,9 @@
   font-size: 1.3rem;
   font-weight: 600;
   margin-bottom: 1.5rem;
-  color: #1a1a1a;
+  color: #22d3ee;
   padding-bottom: 0.75rem;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 2px solid #22d3ee;
 }
 
 .details-table {
@@ -459,11 +459,14 @@
 
 .details-table td {
   text-align: center;
+  color: #22d3ee;
+  font-weight: 700;
 }
 
 .details-table td:first-child {
   text-align: left;
-  font-weight: 500;
+  color: #22d3ee;
+  font-weight: 600;
 }
 
 .details-table tbody tr:hover {
@@ -739,3 +742,350 @@
   background: rgba(255, 255, 255, 0.2);
   color: white;
 }
+
+/* ========================================
+   RESPONSIVIDADE MOBILE
+======================================== */
+
+@media (max-width: 768px) {
+  .relatorios-container {
+    padding: 1rem;
+  }
+
+  .relatorios-header h1 {
+    font-size: 1.5rem;
+  }
+
+  /* Tipo de relatório em coluna */
+  .tipo-relatorio {
+    flex-direction: column;
+  }
+
+  .tipo-btn {
+    min-width: auto;
+    width: 100%;
+  }
+
+  /* Charts responsivos */
+  .recharts-responsive-container {
+    min-height: 250px !important;
+  }
+
+  /* Grid de turmas */
+  .turmas-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .relatorios-container {
+    padding: 0.75rem;
+  }
+
+  .relatorios-header {
+    margin-bottom: 1rem;
+  }
+
+  .relatorios-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .relatorios-header p {
+    font-size: 0.85rem;
+  }
+
+  /* Tipo de relatório */
+  .tipo-relatorio {
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tipo-btn {
+    padding: 1rem;
+    border-width: 2px;
+  }
+
+  .tipo-btn-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .tipo-btn-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .tipo-btn-label {
+    font-size: 1rem;
+  }
+
+  .tipo-btn-desc {
+    font-size: 0.8rem;
+  }
+
+  /* Filtros de período */
+  .filtros-periodo {
+    padding: 1rem;
+  }
+
+  .filtros-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem;
+  }
+
+  .form-group select,
+  .form-group input {
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  .btn-gerar {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.95rem;
+  }
+
+  /* Cards de estatísticas */
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .stat-title {
+    font-size: 0.8rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  /* Gráficos */
+  .chart-container {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .chart-container h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .recharts-responsive-container {
+    min-height: 200px !important;
+  }
+
+  /* Tabelas responsivas - Cards */
+  .table-container {
+    padding: 0.5rem;
+  }
+
+  .data-table {
+    display: block;
+  }
+
+  .data-table thead {
+    display: none;
+  }
+
+  .data-table tbody {
+    display: block;
+  }
+
+  .data-table tr {
+    display: block;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: var(--card-bg);
+    border: 2px solid #00BCD4;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 188, 212, 0.1);
+  }
+
+  .data-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border: none;
+    border-bottom: 1px solid rgba(0, 188, 212, 0.1);
+    font-size: 0.9rem;
+  }
+
+  .data-table td:last-child {
+    border-bottom: none;
+  }
+
+  .data-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: #64748b;
+    margin-right: 1rem;
+  }
+
+  /* Grid de turmas */
+  .turmas-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .turma-card {
+    display: flex !important;
+    width: 100% !important;
+    min-height: 70px !important;
+    padding: 1rem !important;
+    margin: 0 !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 1rem;
+    box-sizing: border-box;
+  }
+
+  .turma-card-icon {
+    flex-shrink: 0;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .turma-nome {
+    font-size: 1rem !important;
+    text-align: left !important;
+    font-weight: 600;
+  }
+
+  .turma-info {
+    font-size: 0.85rem !important;
+    text-align: left !important;
+  }
+
+  /* Detalhes do relatório */
+  .relatorio-detalhes {
+    padding: 1rem;
+  }
+
+  .relatorio-detalhes h2 {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .relatorios-container {
+    padding: 0.5rem;
+  }
+
+  .relatorios-header h1 {
+    font-size: 1.1rem;
+  }
+
+  .tipo-btn {
+    padding: 0.875rem;
+  }
+
+  .tipo-btn-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .tipo-btn-label {
+    font-size: 0.95rem;
+  }
+
+  .turmas-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  .chart-container {
+    padding: 0.75rem;
+  }
+
+  .recharts-responsive-container {
+    min-height: 180px !important;
+  }
+}
+
+/* Ajustes para gráficos Recharts no mobile */
+@media (max-width: 640px) {
+  .recharts-wrapper {
+    font-size: 12px !important;
+  }
+
+  .recharts-cartesian-axis-tick-value {
+    font-size: 10px !important;
+  }
+
+  .recharts-legend-wrapper {
+    font-size: 11px !important;
+  }
+}
+
+/* ========================================
+   TEMA ESCURO - Dark Mode
+   ======================================== */
+body.dark-theme .chart-card {
+  background: #1e3a8a !important;
+  border: 2px solid #22d3ee !important;
+}
+
+body.dark-theme .chart-title {
+  color: #22d3ee !important;
+}
+
+body.dark-theme .dashboard-section {
+  background: #1e3a8a !important;
+  border: 2px solid #22d3ee !important;
+}
+
+body.dark-theme .section-title {
+  color: #22d3ee !important;
+  border-bottom-color: #22d3ee !important;
+}
+
+/* Ajustes de texto nos gráficos para dark mode */
+body.dark-theme .recharts-text,
+body.dark-theme .recharts-cartesian-axis-tick-value,
+body.dark-theme .recharts-legend-item-text {
+  fill: #22d3ee !important;
+}
+
+body.dark-theme .recharts-cartesian-grid line {
+  stroke: rgba(34, 211, 238, 0.2) !important;
+}
+
+/* Nome dos alunos em ciano no dark mode */
+body.dark-theme .details-table td {
+  color: #22d3ee !important;
+  font-weight: 700 !important;
+}
+
+body.dark-theme .details-table td:first-child {
+  color: #22d3ee !important;
+}
+
+/* Faltas sempre em vermelho */
+.details-table td.faltas-cell {
+  color: #ef4444 !important;
+  font-weight: 700 !important;
+}
+
+body.dark-theme .details-table td.faltas-cell {
+  color: #ef4444 !important;
+  font-weight: 700 !important;
+}
+

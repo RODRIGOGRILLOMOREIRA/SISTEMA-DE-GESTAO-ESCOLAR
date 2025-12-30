@@ -267,36 +267,130 @@
 }
 
 @media (max-width: 640px) {
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-start;
+  }
+
   .modal {
-    width: 95%;
-    max-height: 95vh;
-    border-radius: 8px;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100vh;
+    min-height: 100vh;
+    border-radius: 0;
+    border: none;
+    margin: 0;
+    overflow-x: hidden;
   }
 
   .modal-header {
-    padding: 16px;
+    padding: 12px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: inherit;
   }
 
   .modal-header h2 {
-    font-size: 1.1rem;
+    font-size: 1rem;
+    white-space: normal;
+    word-break: break-word;
   }
 
   .modal-content {
     padding: 16px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .form-row {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .form-group label {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    display: block;
+    width: 100%;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 16px !important;
+    padding: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    max-width: 100%;
   }
 
   .modal-footer {
-    padding: 16px;
+    padding: 12px 16px;
     gap: 8px;
+    flex-direction: column-reverse;
+    position: sticky;
+    bottom: 0;
+    background: inherit;
   }
 
   .modal-footer button {
     width: 100%;
     justify-content: center;
+    padding: 14px;
+    font-size: 1rem;
+  }
+
+  /* Garantir que autocomplete funcione */
+  .autocomplete-container {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .autocomplete-suggestions {
+    max-height: 200px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Estilos específicos para grid de seleção */
+  .selection-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .selection-btn {
+    width: 100% !important;
+    min-height: 60px !important;
+    padding: 16px !important;
+    box-sizing: border-box;
+  }
+
+  .selection-btn-title {
+    font-size: 1rem !important;
+  }
+
+  /* Garantir que divs inline com estilos não causem overflow */
+  div[style*="display: flex"] {
+    flex-wrap: wrap;
+  }
+
+  div[style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important;
   }
 }
 
@@ -331,5 +425,95 @@
 
   .modal-footer {
     padding: 12px;
+  }
+}
+
+/* Estilos responsivos para tabelas de disciplinas no mobile */
+@media (max-width: 640px) {
+  /* Tabela de disciplinas */
+  .page .table-container table {
+    display: block;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .page .table-container thead {
+    display: none;
+  }
+
+  .page .table-container tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .page .table-container tr {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+    padding: 16px;
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .page .table-container td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border: none;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: right;
+  }
+
+  .page .table-container td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6b7280;
+    margin-right: 12px;
+    flex-shrink: 0;
+    text-align: left;
+  }
+
+  .page .table-container td:not(:last-child) {
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .page .table-container td:last-child {
+    padding-top: 16px;
+    margin-top: 8px;
+    border-top: 2px solid #e5e7eb;
+  }
+
+  .page .table-container .action-buttons {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .page .table-container .btn-edit,
+  .page .table-container .btn-delete {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+  
+  .page .table-container .btn-edit svg,
+  .page .table-container .btn-delete svg {
+    width: 18px;
+    height: 18px;
   }
 }

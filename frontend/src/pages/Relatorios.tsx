@@ -5,6 +5,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
 import { turmasAPI, registroFrequenciaAPI, notasAPI, alunosAPI, api, Turma as TurmaAPI } from '../lib/api'
+import BackButton from '../components/BackButton'
 import './ModernPages.css'
 import './Relatorios.css'
 
@@ -497,8 +498,8 @@ const Relatorios = () => {
     const alunosFiltrados = getAlunosFiltrados(frequenciaAlunos) as FrequenciaAluno[]
 
     const pieData = [
-      { name: 'Presenças', value: frequenciaStats.totalPresencas, color: '#4CAF50' },
-      { name: 'Faltas', value: frequenciaStats.totalFaltas, color: '#f44336' }
+      { name: 'Presenças', value: frequenciaStats.totalPresencas, color: '#10b981' },
+      { name: 'Faltas', value: frequenciaStats.totalFaltas, color: '#ef4444' }
     ]
 
     return (
@@ -589,7 +590,11 @@ const Relatorios = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="value" fill="#4CAF50" />
+                <Bar dataKey="value">
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -644,7 +649,7 @@ const Relatorios = () => {
                       <td>{aluno.alunoNome}</td>
                       <td>{aluno.totalAulas}</td>
                       <td>{aluno.presencas}</td>
-                      <td>{aluno.faltas}</td>
+                      <td className="faltas-cell">{aluno.faltas}</td>
                       <td>{aluno.percentualPresenca.toFixed(1)}%</td>
                       <td>
                         <span className={`status-badge ${aluno.percentualPresenca >= 75 ? 'presente' : 'ausente'}`}>
@@ -696,9 +701,9 @@ const Relatorios = () => {
 
   const renderNotasDashboardContent = (stats: NotasStats, alunosFiltrados: NotaAluno[]) => {
     const pieData = [
-      { name: 'Aprovados', value: stats.aprovados, color: '#4CAF50' },
-      { name: 'Recuperação', value: stats.recuperacao, color: '#ff9800' },
-      { name: 'Reprovados', value: stats.reprovados, color: '#f44336' }
+      { name: 'Aprovados', value: stats.aprovados, color: '#10b981' },
+      { name: 'Recuperação', value: stats.recuperacao, color: '#f59e0b' },
+      { name: 'Reprovados', value: stats.reprovados, color: '#ef4444' }
     ]
 
     return (
@@ -794,7 +799,11 @@ const Relatorios = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="value" fill="#4CAF50" />
+                <Bar dataKey="value">
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -877,6 +886,7 @@ const Relatorios = () => {
 
   return (
     <div className="relatorios-container">
+      <BackButton />
       <div className="relatorios-header">
         <h1>Relatórios</h1>
         <p>Análise completa de frequência e desempenho acadêmico</p>

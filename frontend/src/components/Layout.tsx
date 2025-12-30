@@ -18,7 +18,9 @@ import {
   Clock,
   ChevronDown,
   ChevronRight,
-  FolderOpen
+  FolderOpen,
+  Menu,
+  X
 } from 'lucide-react'
 import { configuracoesAPI, Configuracao } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
@@ -37,7 +39,8 @@ const Layout = () => {
   const { user, logout } = useAuth()
   const [config, setConfig] = useState<Configuracao | null>(null)
   const [openDropdowns, setOpenDropdowns] = useState<string[]>([])
-
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [desktopMenuCollapsed, setDesktopMenuCollapsed] = useState(false)
   useEffect(() => {
     loadConfig()
     
@@ -110,8 +113,10 @@ const Layout = () => {
       subItems: [
         { path: '/frequencia', icon: UserCheck, label: 'Frequência' },
         { path: '/notas', icon: ClipboardCheck, label: 'Notas e Avaliações' },
+        { path: '/habilidades', icon: ClipboardCheck, label: 'Registro de Habilidades' },
         { path: '/boletim', icon: FileBarChart, label: 'Boletim de Desempenho' },
-        { path: '/relatorios', icon: FileBarChart, label: 'Relatórios' },
+        { path: '/relatorios', icon: FileBarChart, label: 'Relatórios Pedagógicos' },
+        { path: '/relatorios-administrativos', icon: FileBarChart, label: 'Relatórios Administrativos' },
       ]
     },
     { path: '/configuracoes', icon: Settings, label: 'Configurações' },
@@ -119,7 +124,24 @@ const Layout = () => {
 
   return (
     <div className="layout">
-      <aside className="sidebar">
+      {/* Botão Hambúrguer para Mobile */}
+      <button 
+        className="mobile-menu-toggle"
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        aria-label="Menu"
+      >
+        {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Overlay para fechar menu ao clicar fora */}
+      {mobileMenuOpen && (
+        <div 
+          className="mobile-overlay"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''} ${desktopMenuCollapsed ? 'collapsed' : ''}`}>
         {/* Área de Logo e Nome da Escola */}
         <div className="sidebar-header">
           <div className="logo-container">
@@ -171,6 +193,7 @@ const Layout = () => {
                             key={subItem.path}
                             to={subItem.path!}
                             className={`menu-item sub-item ${isActive ? 'active' : ''}`}
+                            onClick={() => setMobileMenuOpen(false)}
                           >
                             <SubIcon size={18} />
                             <span>{subItem.label}</span>
@@ -191,6 +214,7 @@ const Layout = () => {
                 key={item.path}
                 to={item.path!}
                 className={`menu-item ${isActive ? 'active' : ''}`}
+                onClick={() => setMobileMenuOpen(false)}
               >
                 <Icon size={20} />
                 <span>{item.label}</span>
@@ -222,7 +246,18 @@ const Layout = () => {
           </button>
         </div>
       </aside>
-      <main className="content">
+
+      {/* Botão Toggle Desktop */}
+      <button 
+        className="desktop-menu-toggle"
+        onClick={() => setDesktopMenuCollapsed(!desktopMenuCollapsed)}
+        aria-label="Toggle Menu Desktop"
+        title={desktopMenuCollapsed ? "Expandir menu" : "Recolher menu"}
+      >
+        {desktopMenuCollapsed ? <Menu size={24} /> : <X size={24} />}
+      </button>
+
+      <main className={`content ${desktopMenuCollapsed ? 'expanded' : ''}`}>
         <Outlet />
       </main>
     </div>

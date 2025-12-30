@@ -12,7 +12,7 @@ import EquipeDiretivaPage from './pages/EquipeDiretiva'
 import FuncionariosPage from './pages/Funcionarios'
 import Alunos from './pages/Alunos'
 import Professores from './pages/Professores'
-import RegistroPonto from './pages/RegistroPonto'
+import RegistroPontoIntegrado from './pages/RegistroPontoIntegrado'
 import Turmas from './pages/Turmas'
 import Disciplinas from './pages/Disciplinas'
 import Notas from './pages/Notas'
@@ -20,6 +20,8 @@ import FrequenciaPage from './pages/FrequenciaPage'
 import CalendarioEscolarPage from './pages/CalendarioEscolarPage'
 import GradeHorariaPage from './pages/GradeHorariaPage'
 import Relatorios from './pages/Relatorios'
+import RelatoriosAdministrativos from './pages/RelatoriosAdministrativos'
+import Habilidades from './pages/Habilidades'
 import Configuracoes from './pages/Configuracoes'
 import BoletimDesempenho from './pages/BoletimDesempenho'
 
@@ -47,15 +49,17 @@ function App() {
               <Route path="funcionarios" element={<FuncionariosPage />} />
               <Route path="alunos" element={<Alunos />} />
               <Route path="professores" element={<Professores />} />
-              <Route path="registro-ponto" element={<RegistroPonto />} />
+              <Route path="registro-ponto" element={<RegistroPontoIntegrado />} />
               <Route path="turmas" element={<Turmas />} />
               <Route path="disciplinas" element={<Disciplinas />} />
               <Route path="calendario-escolar" element={<CalendarioEscolarPage />} />
               <Route path="grade-horaria" element={<GradeHorariaPage />} />
               <Route path="notas" element={<Notas />} />
               <Route path="frequencia" element={<FrequenciaPage />} />
+              <Route path="habilidades" element={<Habilidades />} />
               <Route path="boletim" element={<BoletimDesempenho />} />
               <Route path="relatorios" element={<Relatorios />} />
+              <Route path="relatorios-administrativos" element={<RelatoriosAdministrativos />} />
               <Route path="configuracoes" element={<Configuracoes />} />
             </Route>
           </Routes>

@@ -87,6 +87,8 @@ pontoRouter.get('/pessoa/:pessoaId', async (req, res) => {
     const { pessoaId } = req.params;
     const { mes, ano } = req.query;
 
+    console.log('🔍 Buscando registros para:', { pessoaId, mes, ano });
+
     let where: any = { pessoaId };
 
     if (mes && ano) {
@@ -98,6 +100,7 @@ pontoRouter.get('/pessoa/:pessoaId', async (req, res) => {
         gte: dataInicial,
         lte: dataFinal
       };
+      console.log('📅 Período:', { dataInicial, dataFinal });
     }
 
     const registros = await prisma.registro_ponto.findMany({
@@ -105,22 +108,35 @@ pontoRouter.get('/pessoa/:pessoaId', async (req, res) => {
       orderBy: { data: 'desc' }
     });
 
+    console.log(`✅ ${registros.length} registro(s) encontrado(s)`);
+
     res.json(registros);
   } catch (error) {
-    console.error('Erro ao buscar registros:', error);
+    console.error('❌ Erro ao buscar registros:', error);
     res.status(500).json({ error: 'Erro ao buscar registros' });
   }
 });
 
 // Registrar ponto
 pontoRouter.post('/', upload.single('foto'), async (req, res) => {
+  console.log('\n🟢 ========== NOVA REQUISIÇÃO POST /ponto ==========');
+  console.log('Timestamp:', new Date().toISOString());
   try {
-    const { pessoaId, tipoPessoa, tipoRegistro, horaRegistro, observacao, attestado } = req.body;
+    console.log('📥 Recebendo registro de ponto:', {
+      body: req.body,
+      hasFile: !!req.file,
+      fileName: req.file?.filename
+    });
+
+    const { pessoaId, tipoPessoa, tipoRegistro, horaRegistro, observacao, attestado, reconhecimentoIA, confianca } = req.body;
     const foto = req.file;
 
     if (!pessoaId || !tipoPessoa || !tipoRegistro) {
+      console.error('❌ Dados incompletos:', { pessoaId, tipoPessoa, tipoRegistro });
       return res.status(400).json({ error: 'Dados incompletos' });
     }
+
+    console.log('✅ Dados validados, criando registro...');
 
     const registro = await prisma.registro_ponto.create({
       data: {
@@ -132,14 +148,18 @@ pontoRouter.post('/', upload.single('foto'), async (req, res) => {
         observacao,
         aprovado: true,
         fotoPath: foto ? foto.filename : undefined,
-        attestado: attestado === 'true' || attestado === true
+        attestado: attestado === 'true' || attestado === true,
+        reconhecimentoIA: reconhecimentoIA === 'true' || reconhecimentoIA === true,
+        confianca: confianca ? parseFloat(confianca) : undefined
       }
     });
 
+    console.log('✅ Registro criado com sucesso:', registro.id);
+
     res.status(201).json(registro);
   } catch (error) {
-    console.error('Erro ao registrar ponto:', error);
-    res.status(500).json({ error: 'Erro ao registrar ponto' });
+    console.error('❌ Erro ao registrar ponto:', error);
+    res.status(500).json({ error: 'Erro ao registrar ponto', details: error.message });
   }
 });
 
@@ -220,6 +240,9 @@ pontoRouter.post('/jornada', async (req, res) => {
       return res.status(400).json({ error: 'Dados incompletos' });
     }
 
+    // Remover duplicatas dos dias de trabalho
+    const diasUnicos = diasTrabalho ? Array.from(new Set(diasTrabalho)) : ['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA'];
+
     const jornada = await prisma.configuracao_jornada.upsert({
       where: { pessoaId },
       create: {
@@ -231,7 +254,7 @@ pontoRouter.post('/jornada', async (req, res) => {
         horarioSaida,
         horarioIntervaloInicio,
         horarioIntervaloFim,
-        diasTrabalho: diasTrabalho || ['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA']
+        diasTrabalho: diasUnicos
       },
       update: {
         cargaHorariaSemanal,
@@ -240,7 +263,7 @@ pontoRouter.post('/jornada', async (req, res) => {
         horarioSaida,
         horarioIntervaloInicio,
         horarioIntervaloFim,
-        diasTrabalho
+        diasTrabalho: diasUnicos
       }
     });
 

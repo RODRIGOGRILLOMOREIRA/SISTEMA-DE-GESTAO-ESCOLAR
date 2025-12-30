@@ -3,6 +3,7 @@ import { Edit, X, Save, Users, GraduationCap, BookOpen, CheckCircle, XCircle } f
 import { alunosAPI, disciplinasAPI, turmasAPI, Aluno, Disciplina, Turma, api } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import { isAdmin, isProfessor } from '../lib/permissions'
+import BackButton from '../components/BackButton'
 import './ModernPages.css'
 import './Notas.css'
 import '../components/Modal.css'
@@ -403,6 +404,7 @@ const Notas = () => {
 
   return (
     <div className="page">
+      <BackButton />
       <div className="page-header">
         <h1>Notas e Avaliações</h1>
       </div>

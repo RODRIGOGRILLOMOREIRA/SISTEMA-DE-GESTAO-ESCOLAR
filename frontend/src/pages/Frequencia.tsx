@@ -3,6 +3,7 @@ import { Calendar, Clock, CheckSquare, ArrowLeft } from 'lucide-react'
 import CalendarioEscolar from '../components/CalendarioEscolar'
 import GradeHoraria from '../components/GradeHoraria'
 import RegistroFrequencia from '../components/RegistroFrequencia'
+import BackButton from '../components/BackButton'
 import './ModernPages.css'
 import './Notas.css'
 
@@ -63,6 +64,7 @@ const Frequencia = () => {
   // Renderizar módulo ativo
   return (
     <div className="page">
+      <BackButton />
       <div className="page-header">
         <h1>
           {moduloAtivo === 'calendario' && 'Calendário Escolar'}

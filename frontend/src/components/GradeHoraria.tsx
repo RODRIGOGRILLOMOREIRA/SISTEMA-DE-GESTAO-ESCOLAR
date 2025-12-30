@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Plus, Edit, Save, X, Calendar, ArrowLeft } from 'lucide-react'
 import axios from 'axios'
 import './GradeHoraria.css'
+import '../components/Modal.css'
 import '../pages/CommonPages.css'
 
 interface Professor {
@@ -83,7 +84,7 @@ const GradeHoraria = () => {
   const [selectedDisciplina, setSelectedDisciplina] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
-  const API_URL = 'http://localhost:3333/api'
+  const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.5.25:3333/api'
 
   useEffect(() => {
     loadTurmas()
@@ -98,6 +99,7 @@ const GradeHoraria = () => {
   const loadTurmas = async () => {
     try {
       const response = await axios.get(`${API_URL}/turmas`)
+      console.log('TURMAS CARREGADAS:', response.data.length, response.data)
       setTurmas(response.data)
     } catch (error) {
       console.error('Erro ao carregar turmas:', error)
@@ -243,30 +245,33 @@ const GradeHoraria = () => {
   const turmasFiltradas = turmas
     .filter(t => {
       if (!nivelEnsino) return false
-      if (nivelEnsino === 'INICIAIS') return t.ano >= 1 && t.ano <= 5
-      return t.ano >= 6 && t.ano <= 9
+      // Converter ano para número para garantir compatibilidade
+      const ano = typeof t.ano === 'string' ? parseInt(t.ano) : t.ano
+      if (nivelEnsino === 'INICIAIS') return ano >= 1 && ano <= 5
+      return ano >= 6 && ano <= 9
     })
-    .sort((a, b) => a.ano - b.ano || a.nome.localeCompare(b.nome))
+    .sort((a, b) => {
+      const anoA = typeof a.ano === 'string' ? parseInt(a.ano) : a.ano
+      const anoB = typeof b.ano === 'string' ? parseInt(b.ano) : b.ano
+      return anoA - anoB || a.nome.localeCompare(b.nome)
+    })
+
+  // Debug para celular
+  useEffect(() => {
+    if (nivelEnsino) {
+      console.log('=== GRADE HORARIA DEBUG ===')
+      console.log('nivelEnsino:', nivelEnsino)
+      console.log('Total turmas:', turmas.length)
+      console.log('Turmas:', turmas)
+      console.log('turmasFiltradas:', turmasFiltradas.length)
+      console.log('turmasFiltradas array:', turmasFiltradas)
+    }
+  }, [nivelEnsino, turmas])
 
   return (
     <div className="page">
       <div className="page-header">
         <h1>Grade Horária</h1>
-        {(nivelEnsino || turmaId) && (
-          <button 
-            className="btn-voltar" 
-            onClick={() => {
-              if (turmaId) {
-                setTurmaId('')
-              } else if (nivelEnsino) {
-                setNivelEnsino(null)
-              }
-            }}
-          >
-            <ArrowLeft size={16} />
-            Voltar
-          </button>
-        )}
       </div>
 
       {/* Seleção de Nível de Ensino */}
@@ -324,23 +329,29 @@ const GradeHoraria = () => {
             gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
             gap: '12px' 
           }}>
-            {turmasFiltradas.map(turma => (
-              <button
-                key={turma.id}
-                className="selection-btn"
-                onClick={() => setTurmaId(turma.id)}
-                style={{ 
-                  padding: '12px 16px',
-                  minHeight: 'auto'
-                }}
-              >
-                <div className="selection-btn-content">
-                  <span className="selection-btn-title" style={{ fontSize: '0.875rem' }}>
-                    {turma.nome}
-                  </span>
-                </div>
-              </button>
-            ))}
+            {turmasFiltradas.length === 0 ? (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px' }}>
+                <p>Nenhuma turma cadastrada para {nivelEnsino === 'INICIAIS' ? 'Anos Iniciais (1º ao 5º ano)' : 'Anos Finais (6º ao 9º ano)'}.</p>
+              </div>
+            ) : (
+              turmasFiltradas.map(turma => (
+                <button
+                  key={turma.id}
+                  className="selection-btn"
+                  onClick={() => setTurmaId(turma.id)}
+                  style={{ 
+                    padding: '12px 16px',
+                    minHeight: 'auto'
+                  }}
+                >
+                  <div className="selection-btn-content">
+                    <span className="selection-btn-title" style={{ fontSize: '0.875rem' }}>
+                      {turma.nome}
+                    </span>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
         </div>
       )}
@@ -381,7 +392,8 @@ const GradeHoraria = () => {
             </button>
           </div>
 
-          <div className="table-container">
+          {/* Versão Desktop - Tabela */}
+          <div className="table-container desktop-only">
             <table className="grade-table">
               <thead>
                 <tr>
@@ -445,6 +457,73 @@ const GradeHoraria = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Versão Mobile - Cards por Dia */}
+          <div className="mobile-grade-container mobile-only">
+            {diasSemana.map((dia, diaIdx) => (
+              <div key={dia} className="dia-card">
+                <div className="dia-header">
+                  <Calendar size={20} />
+                  <h3>{diasLabel[diaIdx]}</h3>
+                </div>
+                <div className="horarios-list">
+                  {horariosPadrao[periodoAtivo].map((horario) => {
+                    if (horario.isRecreiro) {
+                      return (
+                        <div key={horario.ordem} className="horario-item recreio">
+                          <div className="horario-info">
+                            <span className="horario-label">RECREIO</span>
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    const horarioAula = getHorarioForCell(dia, horario.ordem, periodoAtivo)
+                    
+                    return (
+                      <div 
+                        key={horario.ordem} 
+                        className={`horario-item ${horarioAula ? 'has-aula' : 'empty'}`}
+                        onClick={() => openModalForCell(dia, horario.ordem)}
+                      >
+                        <div className="horario-info">
+                          <span className="horario-label">
+                            {horario.horaInicio} - {horario.horaFim}
+                          </span>
+                        </div>
+                        <div className="aula-info-mobile">
+                          {horarioAula ? (
+                            <>
+                              <div className="disciplina-nome">
+                                {horarioAula.disciplinas?.nome || 'Sem disciplina'}
+                              </div>
+                              <div className="professor-nome">
+                                {horarioAula.professores?.nome || ''}
+                              </div>
+                              <button
+                                className="btn-remove-mobile"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleRemoveDisciplina(dia, horario.ordem)
+                                }}
+                              >
+                                <X size={16} />
+                              </button>
+                            </>
+                          ) : (
+                            <div className="add-aula">
+                              <Plus size={18} />
+                              <span>Adicionar Aula</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

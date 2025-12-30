@@ -818,4 +818,190 @@
   .selection-button p {
     font-size: 0.9rem;
   }
+
+  /* Tabelas responsivas */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Filtros e formulários */
+  .filters-section,
+  .form-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Selection grid para disciplinas */
+  .selection-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .selection-btn {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .selection-btn-title {
+    font-size: 0.85rem;
+  }
+
+  /* Níveis de ensino */
+  .nivel-ensino-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-nivel-ensino {
+    padding: 16px;
+    font-size: 0.95rem;
+    border-radius: 12px;
+  }
+
+  /* Headers */
+  .selection-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .selection-header h2 {
+    font-size: 1rem;
+  }
+
+  /* Turmas grid */
+  .turmas-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .turma-card,
+  .turma-btn {
+    display: flex !important;
+    width: 100% !important;
+    min-height: 60px;
+    padding: 1rem !important;
+    margin: 0 !important;
+    justify-content: flex-start !important;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .turma-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+  }
+
+  .turma-info {
+    text-align: left;
+    flex: 1;
+  }
+
+  .turma-nome {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .turma-detalhes {
+    font-size: 0.85rem;
+  }
+
+  /* Tabelas como cards */
+  .data-table thead {
+    display: none;
+  }
+
+  .data-table,
+  .data-table tbody,
+  .data-table tr {
+    display: block;
+  }
+
+  .data-table tr {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: var(--card-bg);
+    border: 2px solid #00BCD4;
+    border-radius: 12px;
+  }
+
+  .data-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border: none;
+    border-bottom: 1px solid rgba(0, 188, 212, 0.1);
+  }
+
+  .data-table td:last-child {
+    border-bottom: none;
+  }
+
+  .data-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: #64748b;
+    margin-right: 1rem;
+  }
+
+  /* Inputs e selects */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+    padding: 12px;
+  }
+
+  /* Botões */
+  button {
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+
+  /* Placeholder */
+  .placeholder-content {
+    padding: 48px 24px;
+  }
+
+  .placeholder-content h2 {
+    font-size: 1.25rem;
+  }
+
+  .placeholder-content p {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .selection-btn {
+    padding: 12px;
+  }
+
+  .selection-btn-title {
+    font-size: 0.8rem;
+  }
+
+  .btn-nivel-ensino {
+    padding: 14px;
+    font-size: 0.9rem;
+  }
+
+  .turmas-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .data-table tr {
+    padding: 0.75rem;
+  }
+
+  .data-table td {
+    font-size: 0.85rem;
+    padding: 0.5rem 0;
+  }
 }

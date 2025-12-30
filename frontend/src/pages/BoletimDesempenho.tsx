@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { isAdmin, isProfessor } from '../lib/permissions'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import BackButton from '../components/BackButton'
 import './ModernPages.css'
 import './Notas.css'
 import './BoletimDesempenho.css'
@@ -367,6 +368,7 @@ const BoletimDesempenho = () => {
 
   return (
     <div className="page">
+      <BackButton />
       {/* Cabeçalho Moderno com Logo */}
       <div style={{
         background: 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 50%, #0097A7 100%)',

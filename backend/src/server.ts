@@ -25,7 +25,7 @@ const PORT = process.env.PORT || 3333;
 
 // Middlewares
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174']
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://192.168.5.25:5173', 'http://192.168.5.25:5174']
 }));
 // Aumentar limite para aceitar imagens em base64
 app.use(express.json({ limit: '10mb' }));
@@ -54,6 +54,7 @@ app.use('/api/ponto', pontoRouter);
 app.use('/api/reconhecimento-facial', reconhecimentoFacialRouter);
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  console.log(`📱 Acesse de outros dispositivos: http://192.168.5.25:${PORT}`);
 });

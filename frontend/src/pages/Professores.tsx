@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, Edit, X, Save } from 'lucide-react'
 import { professoresAPI, turmasAPI, disciplinasAPI, Professor, Turma, Disciplina } from '../lib/api'
+import BackButton from '../components/BackButton'
 import './CommonPages.css'
 import '../components/Modal.css'
 
@@ -147,6 +148,7 @@ const Professores = () => {
 
   return (
     <div className="page">
+      <BackButton />
       <div className="page-header">
         <h1>Professores</h1>
         <button className="btn-primary" onClick={() => openModal()}>

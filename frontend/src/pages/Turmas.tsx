@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, Edit, X, Save, BookOpen, GraduationCap, ArrowLeft } from 'lucide-react'
 import { turmasAPI, professoresAPI, Turma, Professor } from '../lib/api'
+import BackButton from '../components/BackButton'
 import './CommonPages.css'
 import '../components/Modal.css'
 import './Notas.css'
@@ -150,6 +151,7 @@ const Turmas = () => {
 
   return (
     <div className="page">
+      <BackButton />
       <div className="page-header">
         <h1>Turmas</h1>
         {categoriaAtiva && (

@@ -210,11 +210,12 @@ const CalendarioEscolar = () => {
   return (
     <div className="page">
       <div className="page-header">
+        <h1 className="calendario-titulo">Calendário Escolar</h1>
         <div className="ano-selector">
           <button className="btn-secondary" onClick={() => setAnoSelecionado(anoSelecionado - 1)}>
             ← {anoSelecionado - 1}
           </button>
-          <h1>Calendário Escolar {anoSelecionado}</h1>
+          <h2 className="ano-numero">{anoSelecionado}</h2>
           <button className="btn-secondary" onClick={() => setAnoSelecionado(anoSelecionado + 1)}>
             {anoSelecionado + 1} →
           </button>

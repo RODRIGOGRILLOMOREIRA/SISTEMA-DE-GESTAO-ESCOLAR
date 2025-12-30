@@ -1,10 +1,10 @@
 # 🔧 Backend - Sistema de Gestão Escolar
 
-API REST completa para gerenciamento de sistemas educacionais, construída com Node.js, TypeScript, Express e Prisma ORM.
+API REST completa e robusta para gerenciamento de sistemas educacionais, construída com Node.js, TypeScript, Express e Prisma ORM.
 
 ## 📋 Visão Geral
 
-Backend robusto e escalável que fornece todos os endpoints necessários para operação de um sistema de gestão escolar, incluindo autenticação, CRUD de entidades, controle de ponto, geração de relatórios e muito mais.
+Backend escalável e bem estruturado que fornece todos os endpoints necessários para operação de um sistema de gestão escolar completo, incluindo autenticação JWT, CRUD de entidades, controle de ponto com IA, geração de relatórios, sistema de notas e frequências.
 
 ## 🛠️ Tecnologias
 
@@ -18,20 +18,157 @@ Backend robusto e escalável que fornece todos os endpoints necessários para op
 - **Validação**: Zod
 - **CORS**: cors
 - **Variáveis de Ambiente**: dotenv
+- **Upload**: Multer
+
+## 🌟 Funcionalidades da API
+
+### 🔐 Autenticação e Segurança
+- **POST** `/auth/login` - Login com JWT
+- **POST** `/auth/register` - Registro de usuários
+- **POST** `/auth/forgot-password` - Recuperação de senha
+- **GET** `/auth/me` - Dados do usuário autenticado
+- Middleware de autenticação JWT
+- Controle de permissões por cargo
+
+### 👥 Gestão de Pessoas
+
+**Alunos** (`/alunos`)
+- **GET** `/` - Listar todos os alunos
+- **GET** `/:id` - Buscar aluno por ID
+- **POST** `/` - Criar novo aluno
+- **PUT** `/:id` - Atualizar aluno
+- **DELETE** `/:id` - Excluir aluno
+- Suporte a upload de foto
+- Dados de responsáveis
+
+**Professores** (`/professores`)
+- **GET** `/` - Listar todos os professores
+- **GET** `/:id` - Buscar professor por ID
+- **POST** `/` - Criar novo professor
+- **PUT** `/:id` - Atualizar professor
+- **DELETE** `/:id` - Excluir professor
+- Vinculação com disciplinas
+
+**Funcionários** (`/funcionarios`)
+- **GET** `/` - Listar todos os funcionários
+- **GET** `/:id` - Buscar funcionário por ID
+- **POST** `/` - Criar novo funcionário
+- **PUT** `/:id` - Atualizar funcionário
+- **DELETE** `/:id` - Excluir funcionário
+- Controle de cargo e departamento
+
+**Equipe Diretiva** (`/equipe-diretiva`)
+- **GET** `/` - Listar equipe diretiva
+- **GET** `/:id` - Buscar membro por ID
+- **POST** `/` - Criar novo membro
+- **PUT** `/:id` - Atualizar membro
+- **DELETE** `/:id` - Excluir membro
+- Cargos: Diretor, Coordenador, Supervisor
+
+### 📚 Gestão Acadêmica
+
+**Turmas** (`/turmas`)
+- **GET** `/` - Listar todas as turmas
+- **GET** `/:id` - Buscar turma por ID com alunos
+- **POST** `/` - Criar nova turma
+- **PUT** `/:id` - Atualizar turma
+- **DELETE** `/:id` - Excluir turma
+- Organização por série, turno, ano letivo
+
+**Disciplinas** (`/disciplinas`)
+- **GET** `/` - Listar todas as disciplinas
+- **GET** `/:id` - Buscar disciplina por ID
+- **POST** `/` - Criar nova disciplina
+- **PUT** `/:id` - Atualizar disciplina
+- **DELETE** `/:id` - Excluir disciplina
+- Carga horária e código
+
+**Disciplina-Turma** (`/disciplina-turma`)
+- **GET** `/turma/:turmaId` - Disciplinas de uma turma
+- **POST** `/` - Vincular disciplina a turma
+- **DELETE** `/:id` - Remover vinculação
+- Associação professor-disciplina-turma
+
+### 📊 Avaliação e Desempenho
+
+**Notas** (`/notas`)
+- **GET** `/turma/:turmaId/trimestre/:trimestre` - Notas por turma/trimestre
+- **GET** `/aluno/:alunoId` - Todas as notas de um aluno
+- **POST** `/` - Registrar nota
+- **PUT** `/:id` - Atualizar nota
+- **DELETE** `/:id` - Excluir nota
+- Sistema trimestral (1º, 2º, 3º)
+- Múltiplas avaliações (A1, A2, A3, Recuperação)
+- Cálculo automático de médias
+
+**Frequências** (`/frequencias`)
+- **GET** `/turma/:turmaId` - Frequências de uma turma
+- **GET** `/aluno/:alunoId` - Frequências de um aluno
+- **POST** `/` - Registrar frequência
+- **PUT** `/:id` - Atualizar frequência
+- Registro por disciplina e data
+- Controle de presença/falta
+
+**Registro de Frequência** (`/frequencia`)
+- **GET** `/turma/:turmaId/data/:data` - Frequência por data
+- **POST** `/registrar` - Registrar presença/ausência
+- **PUT** `/:id/justificar` - Justificar ausência
+- Sistema de justificativas
+
+### 📅 Planejamento
+
+**Calendário Escolar** (`/calendario`)
+- **GET** `/` - Listar todos os eventos
+- **GET** `/mes/:ano/:mes` - Eventos de um mês
+- **GET** `/:id` - Buscar evento por ID
+- **POST** `/` - Criar novo evento
+- **PUT** `/:id` - Atualizar evento
+- **DELETE** `/:id` - Excluir evento
+- Tipos: Aula, Feriado, Evento, Reunião, Avaliação
+
+**Grade Horária** (`/grade-horaria`)
+- **GET** `/turma/:turmaId` - Grade de uma turma
+- **POST** `/` - Criar horário
+- **PUT** `/:id` - Atualizar horário
+- **DELETE** `/:id` - Excluir horário
+- Organização por dia da semana e horário
+
+### ⏰ Controle de Ponto
+
+**Registro de Ponto** (`/ponto`)
+- **GET** `/funcionario/:funcionarioId` - Registros de um funcionário
+- **GET** `/periodo` - Registros por período (query: dataInicio, dataFim)
+- **POST** `/registrar` - Registrar entrada/saída
+- **POST** `/cadastrar-facial` - Cadastrar dados faciais
+- **POST** `/reconhecer` - Reconhecimento facial
+- Upload de fotos
+- Armazenamento de descritores faciais (IA)
+- Tipos: Entrada, Saída, Entrada-Almoço, Saída-Almoço
+
+### ⚙️ Configurações
+
+**Configurações** (`/configuracoes`)
+- **GET** `/` - Buscar configurações da escola
+- **POST** `/` - Criar configurações
+- **PUT** `/` - Atualizar configurações
+- Dados da instituição
+- Logo da escola
+- Informações de contato
 
 ## 📁 Estrutura de Pastas
 
 ```
 backend/
 ├── prisma/
-│   ├── schema.prisma          # Schema do banco de dados
+│   ├── schema.prisma          # Schema completo do banco de dados
 │   ├── seed.ts               # Dados iniciais (usuário admin)
 │   └── migrations/           # Histórico de migrações
 │       ├── migration_lock.toml
-│       └── [timestamps]/     # Arquivos de migração
+│       └── [timestamps]/     # Arquivos de migração SQL
+│
 ├── src/
-│   ├── routes/              # Rotas da API
-│   │   ├── auth.routes.ts           # Autenticação
+│   ├── routes/              # Rotas da API (16 módulos)
+│   │   ├── auth.routes.ts           # Autenticação e registro
 │   │   ├── alunos.routes.ts         # CRUD Alunos
 │   │   ├── professores.routes.ts    # CRUD Professores
 │   │   ├── funcionarios.routes.ts   # CRUD Funcionários
@@ -44,21 +181,102 @@ backend/
 │   │   ├── frequencia.routes.ts     # Registro de frequência
 │   │   ├── calendario.routes.ts     # Calendário escolar
 │   │   ├── grade-horaria.routes.ts  # Grade de horários
-│   │   ├── ponto.routes.ts          # Controle de ponto
+│   │   ├── ponto.routes.ts          # Controle de ponto + IA
+│   │   ├── reconhecimento-facial.routes.ts # Reconhecimento facial
 │   │   └── configuracoes.routes.ts  # Configurações
-│   ├── controllers/         # Lógica de negócio (vazio por enquanto)
-│   ├── services/           # Serviços auxiliares (vazio por enquanto)
+│   │
+│   ├── controllers/         # Lógica de negócio (futuro)
+│   ├── services/           # Serviços auxiliares
+│   │   └── reconhecimento-facial.service.ts
+│   │
 │   ├── lib/
 │   │   └── prisma.ts       # Instância do Prisma Client
+│   │
 │   └── server.ts           # Configuração principal do servidor
-├── uploads/                # Arquivos enviados (imagens, etc)
+│
+├── uploads/                # Arquivos enviados
+│   ├── reconhecimento-facial/  # Fotos para cadastro facial
+│   └── registro-ponto/         # Registros de ponto
+│
+├── models/                 # Arquivos auxiliares
 ├── .env                   # Variáveis de ambiente (não versionado)
 ├── .env.example          # Exemplo de variáveis
 ├── .gitignore
 ├── package.json
 ├── tsconfig.json
+├── limpar-duplicatas.ts  # Script de manutenção
 └── README.md
 ```
+
+## 🗄️ Banco de Dados
+
+### Principais Entidades
+
+**Usuario**
+- Autenticação e controle de acesso
+- Campos: email, senha (hash), nome, cargo
+
+**Aluno**
+- Dados pessoais completos
+- Responsáveis (nome, telefone, email)
+- Foto de perfil
+- Vinculação com turmas
+
+**Professor**
+- Dados pessoais
+- Disciplinas que leciona
+- Vinculação com turmas
+
+**Funcionario**
+- Dados pessoais
+- Cargo e departamento
+- Dados para reconhecimento facial
+
+**EquipeDiretiva**
+- Gestores da instituição
+- Cargos: Diretor, Coordenador, Supervisor
+
+**Turma**
+- Série, nome, turno
+- Ano letivo
+- Lista de alunos
+
+**Disciplina**
+- Nome, código
+- Carga horária
+
+**DisciplinaTurma**
+- Vinculação tripla: Disciplina-Turma-Professor
+
+**Nota**
+- Aluno, disciplina, trimestre
+- Avaliações (A1, A2, A3, Recuperação)
+- Média calculada
+
+**Frequencia**
+- Aluno, disciplina, data
+- Presente/Ausente
+- Justificativa
+
+**EventoCalendario**
+- Título, descrição
+- Data início/fim
+- Tipo de evento
+
+**GradeHoraria**
+- Turma, dia da semana
+- Horário início/fim
+- Disciplina e professor
+
+**RegistroPonto**
+- Funcionário, data/hora
+- Tipo (Entrada/Saída)
+- Foto e descritores faciais (JSON)
+
+**Configuracao**
+- Dados da escola
+- Logo, contatos
+- Configurações gerais
 
 ## 🔐 Variáveis de Ambiente
 
@@ -66,19 +284,28 @@ Crie um arquivo `.env` na raiz do backend:
 
 ```env
 # Conexão com banco de dados PostgreSQL
-DATABASE_URL="postgresql://usuario:senha@localhost:5432/gestao_escolar"
+DATABASE_URL="postgresql://usuario:senha@localhost:5432/gestao_escolar?schema=public"
 
 # Chave secreta para JWT (use uma chave forte em produção!)
-JWT_SECRET="seu-secret-super-secreto-aqui-123"
+JWT_SECRET="seu-secret-super-secreto-aqui-mudar-em-producao-123456"
 
 # Porta do servidor (padrão: 3333)
 PORT=3333
 
-# URL do frontend para CORS (opcional)
+# URL do frontend para CORS
 FRONTEND_URL="http://localhost:5173"
+
+# Ambiente (development | production)
+NODE_ENV=development
 ```
 
 ## 🚀 Instalação e Execução
+
+### Pré-requisitos
+
+- Node.js 18+
+- PostgreSQL 14+
+- npm ou yarn
 
 ### 1. Instalar Dependências
 
@@ -94,11 +321,247 @@ Certifique-se de que o PostgreSQL está rodando e crie o banco:
 CREATE DATABASE gestao_escolar;
 ```
 
-### 3. Executar Migrations
+### 3. Configurar Variáveis de Ambiente
+
+```bash
+cp .env.example .env
+# Edite o arquivo .env com suas configurações
+```
+
+### 4. Executar Migrations
 
 ```bash
 npx prisma migrate dev
 ```
+
+### 5. Popular Banco de Dados
+
+```bash
+npx prisma db seed
+# Cria usuário admin padrão:
+# Email: admin@escola.com
+# Senha: admin123
+```
+
+### 6. Iniciar Servidor
+
+**Desenvolvimento:**
+```bash
+npm run dev
+# Servidor rodando em http://localhost:3333
+```
+
+**Produção:**
+```bash
+npm run build
+npm start
+```
+
+## 📡 Endpoints da API
+
+### Base URL
+```
+http://localhost:3333
+```
+
+### Autenticação
+Todas as rotas exceto `/auth/*` requerem token JWT no header:
+```
+Authorization: Bearer <token>
+```
+
+### Exemplos de Uso
+
+**Login:**
+```bash
+POST /auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@escola.com",
+  "senha": "admin123"
+}
+```
+
+**Criar Aluno:**
+```bash
+POST /alunos
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "nome": "João Silva",
+  "dataNascimento": "2010-05-15",
+  "cpf": "12345678901",
+  "email": "joao@email.com",
+  "telefone": "(11) 98765-4321",
+  "endereco": "Rua Exemplo, 123",
+  "nomeResponsavel": "Maria Silva",
+  "telefoneResponsavel": "(11) 91234-5678"
+}
+```
+
+**Registrar Nota:**
+```bash
+POST /notas
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "alunoId": "uuid-do-aluno",
+  "disciplinaId": "uuid-da-disciplina",
+  "trimestre": 1,
+  "a1": 8.5,
+  "a2": 7.0,
+  "a3": 9.0
+}
+```
+
+**Registrar Ponto:**
+```bash
+POST /ponto/registrar
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "funcionarioId": "uuid-do-funcionario",
+  "tipo": "Entrada"
+}
+```
+
+## 🔧 Scripts Disponíveis
+
+```bash
+npm run dev          # Inicia servidor em modo desenvolvimento (tsx watch)
+npm run build        # Compila TypeScript para JavaScript
+npm start            # Inicia servidor em produção
+npm run seed         # Popula banco de dados
+
+# Prisma
+npx prisma migrate dev       # Cria e aplica migration
+npx prisma migrate deploy    # Aplica migrations (produção)
+npx prisma studio            # Interface visual do banco
+npx prisma generate          # Gera Prisma Client
+npx prisma db seed           # Executa seed
+```
+
+## 🔒 Segurança
+
+- Senhas criptografadas com bcrypt (10 rounds)
+- Tokens JWT com expiração configurável
+- Validação de dados com Zod
+- Proteção CORS
+- Rate limiting (recomendado para produção)
+- Sanitização de inputs
+- Headers de segurança
+
+## 📊 Middleware
+
+- **authMiddleware**: Validação de token JWT
+- **cors**: Controle de acesso entre origens
+- **express.json**: Parser de JSON
+- **multer**: Upload de arquivos
+
+## 🧪 Testes
+
+```bash
+# Futuro
+npm test
+```
+
+## 📈 Monitoramento
+
+Para produção, recomenda-se:
+- PM2 para gerenciamento de processos
+- Winston para logs estruturados
+- Sentry para tracking de erros
+- Prometheus + Grafana para métricas
+
+## 🚀 Deploy
+
+### Opções de Deploy
+
+**Heroku:**
+```bash
+heroku create nome-app
+heroku addons:create heroku-postgresql:hobby-dev
+git push heroku main
+```
+
+**Docker:**
+```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+EXPOSE 3333
+CMD ["npm", "start"]
+```
+
+**Railway/Render:**
+- Conectar repositório GitHub
+- Configurar variáveis de ambiente
+- Deploy automático
+
+## 📝 Logs
+
+Logs são exibidos no console em desenvolvimento.
+Para produção, configure um sistema de logs apropriado.
+
+## 🔄 Migrations
+
+Histórico de mudanças no banco:
+```
+20251202235526_init              # Schema inicial
+20251203001127_add_configuracao  # Tabela Configuracao
+20251203010311_add_usuario       # Tabela Usuario
+```
+
+## 🎯 Próximas Melhorias
+
+- [ ] Testes unitários e de integração
+- [ ] Documentação Swagger/OpenAPI
+- [ ] Rate limiting
+- [ ] Cache com Redis
+- [ ] Logs estruturados (Winston)
+- [ ] Websockets para notificações em tempo real
+- [ ] Sistema de filas (Bull/BullMQ)
+- [ ] Backup automatizado
+- [ ] Monitoring e alertas
+- [ ] CI/CD pipeline
+
+## 👨‍💻 Desenvolvimento
+
+### Padrões de Código
+
+- TypeScript strict mode
+- ESLint para linting
+- Prettier para formatação
+- Convenções REST
+- Error handling consistente
+
+### Estrutura de Resposta
+
+**Sucesso:**
+```json
+{
+  "data": { ... }
+}
+```
+
+**Erro:**
+```json
+{
+  "error": "Mensagem de erro"
+}
+```
+
+---
+
+Desenvolvido com ❤️ usando Node.js + TypeScript + Prisma
+
 
 ### 4. Popular Banco (Seed)
 
