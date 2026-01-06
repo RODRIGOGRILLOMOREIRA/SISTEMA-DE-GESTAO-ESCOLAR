@@ -548,6 +548,21 @@
   margin-top: 20px;
 }
 
+/* Modal de Importação - Título */
+.modal-content h2 {
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-content h2 svg {
+  color: #10b981;
+}
+
 .btn-success {
   background: linear-gradient(135deg, #10b981, #059669);
   color: white;
@@ -575,37 +590,99 @@
 
 /* Estilos do Modal de Importação */
 .import-info {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 20px;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 24px;
   margin: 20px 0;
+  border: 2px solid #e2e8f0;
 }
 
 .import-info p {
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
   font-weight: 600;
+  color: #1e293b;
+  font-size: 0.95rem;
 }
 
 .import-info ul {
-  margin: 10px 0;
-  padding-left: 20px;
+  margin: 12px 0;
+  padding-left: 24px;
+  color: #334155;
 }
 
 .import-info li {
-  margin: 5px 0;
-  line-height: 1.6;
+  margin: 8px 0;
+  line-height: 1.7;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.import-info li strong {
+  color: #1e293b;
+  font-weight: 600;
 }
 
 .import-tipos-aceitos {
-  margin-top: 15px;
-  padding: 15px;
-  background: white;
-  border-radius: 6px;
+  margin-top: 16px;
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 8px;
   border-left: 4px solid #10b981;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.import-tipos-aceitos p {
+  color: #0f172a;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.import-tipos-aceitos div {
+  color: #334155 !important;
+  font-size: 0.9rem !important;
+  line-height: 1.8 !important;
 }
 
 .upload-area {
-  margin: 20px 0;
+  margin: 24px 0;
+}
+
+.upload-area button {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: white !important;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s ease;
+}
+
+.upload-area button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.upload-area button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.modal-actions button {
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 12px 24px;
+}
+
+.modal-actions .btn-secondary {
+  background: #e2e8f0;
+  color: #334155;
+  border: 2px solid #cbd5e1;
+}
+
+.modal-actions .btn-secondary:hover:not(:disabled) {
+  background: #cbd5e1;
+  color: #1e293b;
 }
 
 .checkbox-label {
@@ -614,16 +691,37 @@
   gap: 10px;
   cursor: pointer;
   user-select: none;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.checkbox-label:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 .checkbox-label input[type="checkbox"] {
   width: 20px;
   height: 20px;
   cursor: pointer;
+  accent-color: #10b981;
 }
 
 .checkbox-label span {
-  font-weight: 500;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 8px;
+  color: #64748b !important;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .spinner {

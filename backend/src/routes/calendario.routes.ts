@@ -331,26 +331,53 @@ calendarioRouter.post('/importar-excel', upload.single('arquivo'), async (req, r
             const excelEpoch = new Date(1899, 11, 30);
             dataInicio = new Date(excelEpoch.getTime() + dataValue * 86400000);
           } else if (typeof dataValue === 'string') {
-            // Tentar parsear string de data
-            dataInicio = new Date(dataValue);
+            // Tentar parsear string de data em formato brasileiro DD/MM/YYYY
+            const dataStr = dataValue.trim();
+            
+            // Regex para DD/MM/YYYY ou DD-MM-YYYY ou DD.MM.YYYY
+            const brDateRegex = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/;
+            const match = dataStr.match(brDateRegex);
+            
+            if (match) {
+              const [, dia, mes, ano] = match;
+              // Criar data no formato ISO (YYYY-MM-DD) para evitar problemas de timezone
+              dataInicio = new Date(`${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}T12:00:00`);
+            } else {
+              // Tentar parsear formato ISO ou outros formatos
+              dataInicio = new Date(dataValue);
+            }
           } else {
             throw new Error('Formato de data inválido');
           }
           
           if (isNaN(dataInicio.getTime())) {
+            console.error(`❌ Data inválida na linha ${index + 1}:`, dataValue);
             throw new Error('Data inválida');
           }
           
-          const tipoValue = row[Object.keys(row).find(k => k.toLowerCase() === tipoKey) || ''];
-          const descricaoValue = row[Object.keys(row).find(k => k.toLowerCase() === descricaoKey) || ''] || '';
+          // Obter valores originais do Excel
+          const tipoOriginalKey = Object.keys(row).find(k => k.toLowerCase() === tipoKey);
+          const descricaoOriginalKey = Object.keys(row).find(k => k.toLowerCase() === descricaoKey);
           
-          // Mapear tipo para enum
+          const tipoValue = tipoOriginalKey ? row[tipoOriginalKey] : '';
+          const descricaoValue = descricaoOriginalKey ? row[descricaoOriginalKey] : '';
+          
+          // Log para debug
+          console.log(`📝 Linha ${index + 1}:`, {
+            data: dataInicio.toLocaleDateString('pt-BR'),
+            tipoOriginal: tipoValue,
+            descricaoOriginal: descricaoValue
+          });
+          
+          // Mapear tipo para enum (mantendo descrição original)
           const tipoMap: Record<string, string> = {
             'inicio ano letivo': 'INICIO_ANO_LETIVO',
             'início ano letivo': 'INICIO_ANO_LETIVO',
             'inicio do ano': 'INICIO_ANO_LETIVO',
+            'inicio das aulas': 'INICIO_ANO_LETIVO',
             'fim ano letivo': 'FIM_ANO_LETIVO',
             'fim do ano': 'FIM_ANO_LETIVO',
+            'encerramento': 'FIM_ANO_LETIVO',
             'dia letivo': 'DIA_LETIVO',
             'aula': 'DIA_LETIVO',
             'letivo': 'DIA_LETIVO',
@@ -361,6 +388,8 @@ calendarioRouter.post('/importar-excel', upload.single('arquivo'), async (req, r
             'parada pedagógica': 'PARADA_PEDAGOGICA',
             'parada pedagogica': 'PARADA_PEDAGOGICA',
             'parada': 'PARADA_PEDAGOGICA',
+            'formação': 'PARADA_PEDAGOGICA',
+            'formacao': 'PARADA_PEDAGOGICA',
             'recesso': 'RECESSO',
             'férias': 'RECESSO',
             'ferias': 'RECESSO',
@@ -370,23 +399,53 @@ calendarioRouter.post('/importar-excel', upload.single('arquivo'), async (req, r
             'inicio trimestre': 'INICIO_TRIMESTRE',
             'início trimestre': 'INICIO_TRIMESTRE',
             'inicio 1º trimestre': 'INICIO_TRIMESTRE',
+            'inicio 1 trimestre': 'INICIO_TRIMESTRE',
+            'inicio primeiro trimestre': 'INICIO_TRIMESTRE',
             'inicio 2º trimestre': 'INICIO_TRIMESTRE',
+            'inicio 2 trimestre': 'INICIO_TRIMESTRE',
+            'inicio segundo trimestre': 'INICIO_TRIMESTRE',
             'inicio 3º trimestre': 'INICIO_TRIMESTRE',
+            'inicio 3 trimestre': 'INICIO_TRIMESTRE',
+            'inicio terceiro trimestre': 'INICIO_TRIMESTRE',
             'fim trimestre': 'FIM_TRIMESTRE',
             'fim 1º trimestre': 'FIM_TRIMESTRE',
+            'fim 1 trimestre': 'FIM_TRIMESTRE',
+            'fim primeiro trimestre': 'FIM_TRIMESTRE',
             'fim 2º trimestre': 'FIM_TRIMESTRE',
+            'fim 2 trimestre': 'FIM_TRIMESTRE',
+            'fim segundo trimestre': 'FIM_TRIMESTRE',
             'fim 3º trimestre': 'FIM_TRIMESTRE',
+            'fim 3 trimestre': 'FIM_TRIMESTRE',
+            'fim terceiro trimestre': 'FIM_TRIMESTRE',
             'periodo eac': 'PERIODO_EAC',
             'período eac': 'PERIODO_EAC',
             'eac': 'PERIODO_EAC',
           };
           
-          const tipoString = String(tipoValue || 'outro').toLowerCase().trim();
-          const tipo = tipoMap[tipoString] || 'OUTRO';
+          const tipoString = String(tipoValue || '').toLowerCase().trim();
+          const tipo = tipoMap[tipoString] || 'FERIADO'; // Default para FERIADO se não reconhecer
+          
+          // SEMPRE usar a descrição do Excel se existir, senão usar o tipo original
+          let descricaoFinal = '';
+          if (descricaoValue && String(descricaoValue).trim()) {
+            // Se tem descrição na coluna de descrição, usar ela
+            descricaoFinal = String(descricaoValue).trim();
+          } else if (tipoValue && String(tipoValue).trim()) {
+            // Se não tem descrição mas tem tipo, usar o tipo
+            descricaoFinal = String(tipoValue).trim();
+          } else {
+            // Fallback
+            descricaoFinal = 'Evento importado';
+          }
+          
+          console.log(`✅ Processado:`, {
+            tipo,
+            descricao: descricaoFinal
+          });
           
           return {
             tipo,
-            descricao: String(descricaoValue || tipoValue || 'Evento importado'),
+            descricao: descricaoFinal,
             dataInicio,
             dataFim: dataInicio, // Por padrão, usa a mesma data
           };
