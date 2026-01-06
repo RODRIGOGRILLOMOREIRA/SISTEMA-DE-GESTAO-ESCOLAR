@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Calendar, BookOpen, TrendingUp, Award } from 'lucide-react'
+import { Calendar, BookOpen, TrendingUp, Award, Users } from 'lucide-react'
 import {
   BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -504,10 +504,10 @@ const Relatorios = () => {
 
     return (
       <div className="dashboard-container">
-        <div className="dashboard-header">
-          <div className="dashboard-title">
-            <h2>Relatório de Frequência - {turmaSelecionada?.nome}</h2>
-            <p>Período: {periodoFrequencia.charAt(0).toUpperCase() + periodoFrequencia.slice(1)}</p>
+        <div className="dashboard-header dashboard-header-frequencia">
+          <div className="dashboard-title" style={{ textAlign: 'center', width: '100%' }}>
+            <h2 style={{ marginBottom: '0.25rem' }}>Relatório de Frequência</h2>
+            <p style={{ fontSize: '1rem', fontWeight: '500' }}>{turmaSelecionada?.nome}</p>
           </div>
           <div className="periodo-filters">
             <button
@@ -567,8 +567,7 @@ const Relatorios = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={(entry: any) => `${entry.name}: ${(entry.percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
+                  outerRadius={70}
                   fill="#8884d8"
                   dataKey="value"
                 >
@@ -577,6 +576,7 @@ const Relatorios = () => {
                   ))}
                 </Pie>
                 <Tooltip />
+                <Legend verticalAlign="top" height={36} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -584,12 +584,11 @@ const Relatorios = () => {
           <div className="chart-card">
             <h3 className="chart-title">Comparativo</h3>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={pieData}>
+              <BarChart data={pieData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Legend />
                 <Bar dataKey="value">
                   {pieData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -646,12 +645,12 @@ const Relatorios = () => {
                 <tbody>
                   {alunosFiltrados.map((aluno) => (
                     <tr key={aluno.alunoId}>
-                      <td>{aluno.alunoNome}</td>
-                      <td>{aluno.totalAulas}</td>
-                      <td>{aluno.presencas}</td>
-                      <td className="faltas-cell">{aluno.faltas}</td>
-                      <td>{aluno.percentualPresenca.toFixed(1)}%</td>
-                      <td>
+                      <td data-label="Aluno">{aluno.alunoNome}</td>
+                      <td data-label="Total de Aulas">{aluno.totalAulas}</td>
+                      <td data-label="Presenças">{aluno.presencas}</td>
+                      <td data-label="Faltas" className="faltas-cell">{aluno.faltas}</td>
+                      <td data-label="% Presença">{aluno.percentualPresenca.toFixed(1)}%</td>
+                      <td data-label="Status">
                         <span className={`status-badge ${aluno.percentualPresenca >= 75 ? 'presente' : 'ausente'}`}>
                           {aluno.percentualPresenca >= 75 ? 'Frequência Adequada' : 'Atenção Necessária'}
                         </span>
@@ -708,10 +707,10 @@ const Relatorios = () => {
 
     return (
       <div className="dashboard-container">
-        <div className="dashboard-header">
-          <div className="dashboard-title">
-            <h2>Relatório de Notas - {turmaSelecionada?.nome}</h2>
-            <p>Período: {periodoNotas === 'final' ? 'Resultado Final' : `Trimestre ${periodoNotas.slice(-1)}`}</p>
+        <div className="dashboard-header dashboard-header-notas">
+          <div className="dashboard-title" style={{ textAlign: 'center', width: '100%' }}>
+            <h2 style={{ marginBottom: '0.25rem' }}>Relatório de Notas</h2>
+            <p style={{ fontSize: '1rem', fontWeight: '500' }}>{turmaSelecionada?.nome}</p>
           </div>
           <div className="periodo-filters">
             <button
@@ -776,8 +775,7 @@ const Relatorios = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={(entry: any) => `${entry.name}: ${(entry.percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
+                  outerRadius={70}
                   fill="#8884d8"
                   dataKey="value"
                 >
@@ -786,6 +784,7 @@ const Relatorios = () => {
                   ))}
                 </Pie>
                 <Tooltip />
+                <Legend verticalAlign="top" height={36} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -793,12 +792,11 @@ const Relatorios = () => {
           <div className="chart-card">
             <h3 className="chart-title">Situação dos Alunos</h3>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={pieData}>
+              <BarChart data={pieData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Legend />
                 <Bar dataKey="value">
                   {pieData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -855,12 +853,12 @@ const Relatorios = () => {
                 <tbody>
                   {alunosFiltrados.map((aluno) => (
                     <tr key={aluno.alunoId}>
-                      <td>{aluno.alunoNome}</td>
-                      <td>{aluno.trim1 !== undefined ? aluno.trim1.toFixed(1) : '-'}</td>
-                      <td>{aluno.trim2 !== undefined ? aluno.trim2.toFixed(1) : '-'}</td>
-                      <td>{aluno.trim3 !== undefined ? aluno.trim3.toFixed(1) : '-'}</td>
-                      <td><strong>{aluno.mediaFinal.toFixed(1)}</strong></td>
-                      <td>
+                      <td data-label="Aluno">{aluno.alunoNome}</td>
+                      <td data-label="1º Trimestre">{aluno.trim1 !== undefined ? aluno.trim1.toFixed(1) : '-'}</td>
+                      <td data-label="2º Trimestre">{aluno.trim2 !== undefined ? aluno.trim2.toFixed(1) : '-'}</td>
+                      <td data-label="3º Trimestre">{aluno.trim3 !== undefined ? aluno.trim3.toFixed(1) : '-'}</td>
+                      <td data-label="Média Final"><strong>{aluno.mediaFinal.toFixed(1)}</strong></td>
+                      <td data-label="Situação">
                         <span className={`status-badge ${
                           aluno.situacao === 'Aprovado' ? 'aprovado' : 
                           aluno.situacao === 'Recuperação' ? 'recuperacao' : 
@@ -887,9 +885,8 @@ const Relatorios = () => {
   return (
     <div className="relatorios-container">
       <BackButton />
-      <div className="relatorios-header">
+      <div className="page-header">
         <h1>Relatórios</h1>
-        <p>Análise completa de frequência e desempenho acadêmico</p>
       </div>
 
       {/* Tipo de Relatório */}
@@ -917,11 +914,8 @@ const Relatorios = () => {
       </div>
 
       {/* Segmento */}
-      <div className="selection-section" style={{ marginBottom: '2rem' }}>
-        <div className="selection-header">
-          <BookOpen size={24} className="selection-icon" />
-          <h2>Selecione o Segmento</h2>
-        </div>
+      <div className="selection-section segmento-section" style={{ marginBottom: '2rem' }}>
+        <h2 style={{ textAlign: 'center', fontSize: '1.2rem', fontWeight: '600', marginBottom: '1rem' }}>Segmento</h2>
         <div className="selection-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', maxWidth: '600px', margin: '0 auto' }}>
           <button
             className={`selection-btn ${segmento === 'iniciais' ? 'active' : ''}`}
@@ -929,7 +923,6 @@ const Relatorios = () => {
           >
             <div className="selection-btn-content">
               <span className="selection-btn-title">Anos Iniciais</span>
-              <span className="selection-btn-subtitle">(1º ao 5º ano)</span>
             </div>
           </button>
           <button
@@ -938,7 +931,6 @@ const Relatorios = () => {
           >
             <div className="selection-btn-content">
               <span className="selection-btn-title">Anos Finais</span>
-              <span className="selection-btn-subtitle">(6º ao 9º ano)</span>
             </div>
           </button>
         </div>
@@ -946,97 +938,38 @@ const Relatorios = () => {
 
       {/* Filtros de Período */}
       <div className="filtros-periodo">
-        <div className="filtros-info">
-          <div className="info-icon">ℹ️</div>
-          <div className="info-text">
-            Selecione o ano letivo e o período desejado. Para "Ano Letivo Completo", 
-            o sistema utilizará as datas do calendário escolar cadastrado.
-          </div>
-        </div>
-        
         <div className="filtros-controles">
-          <div className="filtro-grupo">
-            <label className="filtro-label">Ano Letivo:</label>
-            <select 
-              value={anoLetivo} 
-              onChange={(e) => setAnoLetivo(Number(e.target.value))}
-              className="filtro-select"
-            >
-              {anosDisponiveis.map(ano => (
-                <option key={ano} value={ano}>{ano}</option>
-              ))}
-            </select>
-          </div>
-
-          {tipoRelatorio === 'frequencia' && (
-            <div className="filtro-grupo">
-              <label className="filtro-label">Período:</label>
-              <select 
-                value={periodoFrequencia} 
-                onChange={(e) => {
-                  setPeriodoFrequencia(e.target.value as PeriodoFrequencia)
-                  setUsarDataCustom(false)
+          {/* Seleção de Ano Letivo - Padrão Calendário */}
+          <div className="ano-letivo-section">
+            <h2 style={{ textAlign: 'center', fontSize: '1.2rem', fontWeight: '600', marginBottom: '1rem' }}>Ano Letivo</h2>
+            <div className="ano-selector">
+              <button 
+                className="btn-secondary" 
+                onClick={() => {
+                  const anoAnterior = anoLetivo - 1
+                  if (anosDisponiveis.includes(anoAnterior)) {
+                    setAnoLetivo(anoAnterior)
+                  }
                 }}
-                className="filtro-select"
+                disabled={!anosDisponiveis.includes(anoLetivo - 1)}
               >
-                <option value="dia">Dia Atual</option>
-                <option value="mes">Mês Atual</option>
-                <option value="trimestre">Trimestre Atual</option>
-                <option value="ano">Ano Letivo Completo</option>
-              </select>
-            </div>
-          )}
-
-          {tipoRelatorio === 'notas' && (
-            <div className="filtro-grupo">
-              <label className="filtro-label">Trimestre:</label>
-              <select 
-                value={periodoNotas} 
-                onChange={(e) => setPeriodoNotas(e.target.value as PeriodoNotas)}
-                className="filtro-select"
+                ← {anoLetivo - 1}
+              </button>
+              <h2 className="ano-numero">{anoLetivo}</h2>
+              <button 
+                className="btn-secondary" 
+                onClick={() => {
+                  const anoProximo = anoLetivo + 1
+                  if (anosDisponiveis.includes(anoProximo)) {
+                    setAnoLetivo(anoProximo)
+                  }
+                }}
+                disabled={!anosDisponiveis.includes(anoLetivo + 1)}
               >
-                <option value="trim1">1º Trimestre</option>
-                <option value="trim2">2º Trimestre</option>
-                <option value="trim3">3º Trimestre</option>
-                <option value="final">Notas Finais</option>
-              </select>
+                {anoLetivo + 1} →
+              </button>
             </div>
-          )}
-
-          {tipoRelatorio === 'frequencia' && (
-            <div className="filtro-grupo-custom">
-              <label className="filtro-checkbox">
-                <input 
-                  type="checkbox" 
-                  checked={usarDataCustom}
-                  onChange={(e) => setUsarDataCustom(e.target.checked)}
-                />
-                <span>Período Personalizado</span>
-              </label>
-              {usarDataCustom && (
-                <div className="filtro-datas">
-                  <div className="filtro-data">
-                    <label>Início:</label>
-                    <input 
-                      type="date" 
-                      value={dataInicioCustom}
-                      onChange={(e) => setDataInicioCustom(e.target.value)}
-                      className="filtro-input-date"
-                    />
-                  </div>
-                  <div className="filtro-data">
-                    <label>Fim:</label>
-                    <input 
-                      type="date" 
-                      value={dataFimCustom}
-                      onChange={(e) => setDataFimCustom(e.target.value)}
-                      className="filtro-input-date"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -1056,18 +989,24 @@ const Relatorios = () => {
         </div>
       ) : (
         <>
-          <div className="turmas-grid">
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'row', 
+            flexWrap: 'nowrap', 
+            gap: '1rem', 
+            marginBottom: '2rem'
+          }} className="relatorios-turmas-wrapper">
             {turmas.map((turma) => (
-              <div
+              <button
                 key={turma.id}
-                className={`turma-card ${turmaSelecionada?.id === turma.id ? 'active' : ''}`}
+                className={`selection-btn ${turmaSelecionada?.id === turma.id ? 'active' : ''}`}
                 onClick={() => setTurmaSelecionada(turma)}
+                style={{ flex: '1', minWidth: '150px', boxShadow: 'none', transform: 'none' }}
               >
-                <div className="turma-nome">{turma.nome}</div>
-                <div className="turma-info">
-                  {turma.ano}º Ano - {turma.periodo}
+                <div className="selection-btn-content">
+                  <span className="selection-btn-title">{turma.nome}</span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
 

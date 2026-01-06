@@ -25,8 +25,30 @@ const PORT = process.env.PORT || 3333;
 
 // Middlewares
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://192.168.5.25:5173', 'http://192.168.5.25:5174']
+  origin: (origin, callback) => {
+    // Permite qualquer origem da rede local ou localhost
+    const allowedPatterns = [
+      /^http:\/\/localhost:\d+$/,
+      /^http:\/\/127\.0\.0\.1:\d+$/,
+      /^http:\/\/192\.168\.\d+\.\d+:\d+$/,
+      /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,
+    ];
+    
+    if (!origin || allowedPatterns.some(pattern => pattern.test(origin))) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Permitir todas as origens em desenvolvimento
+    }
+  },
+  credentials: true
 }));
+// Desabilitar cache para garantir sincronização entre dispositivos
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
 // Aumentar limite para aceitar imagens em base64
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
@@ -56,5 +78,5 @@ app.use('/api/reconhecimento-facial', reconhecimentoFacialRouter);
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  console.log(`📱 Acesse de outros dispositivos: http://192.168.5.25:${PORT}`);
+  console.log(`📱 Acesse de outros dispositivos: http://192.168.5.19:${PORT}`);
 });

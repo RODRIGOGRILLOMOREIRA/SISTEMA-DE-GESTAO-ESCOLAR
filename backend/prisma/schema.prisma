@@ -27,6 +27,7 @@ model alunos {
   matriculas       matriculas[]
   notas            notas[]
   presenca_aluno   PresencaAluno[]
+  notas_finais     notas_finais[]   @relation("NotasFinaisToAluno")
 }
 
 model calendario_escolar {
@@ -63,6 +64,7 @@ model disciplinas {
   notas               notas[]
   registro_frequencia registro_frequencia[]
   turmas              turmas[]              @relation("DisciplinaToTurma")
+  notas_finais        notas_finais[]        @relation("NotasFinaisToDisciplina")
 }
 
 model disciplinas_turmas {
@@ -194,17 +196,19 @@ model notas {
 }
 
 model notas_finais {
-  id           String   @id
+  id           String      @id
   alunoId      String
   disciplinaId String
-  anoLetivo    Int      @default(2025)
+  anoLetivo    Int         @default(2025)
   mediaFinal   Float?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime    @default(now())
   updatedAt    DateTime
-  aprovado     Boolean  @default(false)
+  aprovado     Boolean     @default(false)
   trimestre1   Float?
   trimestre2   Float?
   trimestre3   Float?
+  aluno        alunos      @relation("NotasFinaisToAluno", fields: [alunoId], references: [id])
+  disciplina   disciplinas @relation("NotasFinaisToDisciplina", fields: [disciplinaId], references: [id])
 
   @@unique([alunoId, disciplinaId, anoLetivo])
 }

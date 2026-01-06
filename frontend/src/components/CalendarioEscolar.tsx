@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Plus, Edit, Trash2, Calendar as CalendarIcon, X, Save } from 'lucide-react'
-import axios from 'axios'
+import { api } from '../lib/api'
 import './CalendarioEscolar.css'
 import '../pages/CommonPages.css'
 import './Modal.css'
@@ -47,27 +47,25 @@ const CalendarioEscolar = () => {
     dataFim: '',
   })
 
-  const API_URL = 'http://localhost:3333/api/calendario'
-
   useEffect(() => {
     loadCalendario()
   }, [anoSelecionado])
 
   const loadCalendario = async () => {
     try {
-      const response = await axios.get(`${API_URL}/ano/${anoSelecionado}`)
+      const response = await api.get(`/calendario/ano/${anoSelecionado}`)
       if (response.data) {
         setCalendarios([response.data])
       } else {
         // Criar calendário vazio se não existir
-        const novoCalendario = await axios.post(API_URL, { ano: anoSelecionado })
+        const novoCalendario = await api.post('/calendario', { ano: anoSelecionado })
         setCalendarios([novoCalendario.data])
       }
     } catch (error: any) {
       if (error.response?.status === 404) {
         // Criar calendário se não existir
         try {
-          const novoCalendario = await axios.post(API_URL, { ano: anoSelecionado })
+          const novoCalendario = await api.post('/calendario', { ano: anoSelecionado })
           setCalendarios([novoCalendario.data])
         } catch (createError) {
           console.error('Erro ao criar calendário:', createError)
@@ -119,13 +117,16 @@ const CalendarioEscolar = () => {
       }
 
       if (editingEvento) {
-        await axios.put(`${API_URL}/eventos/${editingEvento.id}`, eventoData)
+        await api.put(`/calendario/eventos/${editingEvento.id}`, eventoData)
       } else {
-        await axios.post(`${API_URL}/${calendario.id}/eventos`, eventoData)
+        await api.post(`/calendario/${calendario.id}/eventos`, eventoData)
       }
 
       closeModal()
-      loadCalendario()
+      // Forçar recarregamento
+      setTimeout(() => {
+        loadCalendario()
+      }, 500)
     } catch (error) {
       console.error('Erro ao salvar evento:', error)
       alert('Erro ao salvar evento')
@@ -135,8 +136,11 @@ const CalendarioEscolar = () => {
   const handleDelete = async (eventoId: string) => {
     if (window.confirm('Deseja realmente excluir este evento?')) {
       try {
-        await axios.delete(`${API_URL}/eventos/${eventoId}`)
-        loadCalendario()
+        await api.delete(`/calendario/eventos/${eventoId}`)
+        // Forçar recarregamento
+        setTimeout(() => {
+          loadCalendario()
+        }, 500)
       } catch (error) {
         console.error('Erro ao deletar evento:', error)
       }
@@ -210,20 +214,22 @@ const CalendarioEscolar = () => {
   return (
     <div className="page">
       <div className="page-header">
-        <h1 className="calendario-titulo">Calendário Escolar</h1>
-        <div className="ano-selector">
-          <button className="btn-secondary" onClick={() => setAnoSelecionado(anoSelecionado - 1)}>
-            ← {anoSelecionado - 1}
-          </button>
-          <h2 className="ano-numero">{anoSelecionado}</h2>
-          <button className="btn-secondary" onClick={() => setAnoSelecionado(anoSelecionado + 1)}>
-            {anoSelecionado + 1} →
+        <div style={{ width: '100%', textAlign: 'center' }}>
+          <h1 className="calendario-titulo">Calendário Escolar</h1>
+          <div className="ano-selector">
+            <button className="btn-secondary" onClick={() => setAnoSelecionado(anoSelecionado - 1)}>
+              ← {anoSelecionado - 1}
+            </button>
+            <h2 className="ano-numero">{anoSelecionado}</h2>
+            <button className="btn-secondary" onClick={() => setAnoSelecionado(anoSelecionado + 1)}>
+              {anoSelecionado + 1} →
+            </button>
+          </div>
+          <button className="btn-primary btn-add-evento" onClick={() => openModal()}>
+            <Plus size={20} />
+            Adicionar Evento
           </button>
         </div>
-        <button className="btn-primary" onClick={() => openModal()}>
-          <Plus size={20} />
-          Adicionar Evento
-        </button>
       </div>
 
       {calendario?.eventos_calendario && calendario.eventos_calendario.length > 0 ? (
@@ -294,17 +300,13 @@ const CalendarioEscolar = () => {
           <CalendarIcon size={64} />
           <h3>Nenhum evento cadastrado</h3>
           <p>Adicione eventos para organizar o calendário escolar de {anoSelecionado}</p>
-          <button className="btn-primary" onClick={() => openModal()}>
-            <Plus size={20} />
-            Adicionar Primeiro Evento
-          </button>
         </div>
       )}
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>{editingEvento ? 'Editar Evento' : 'Novo Evento'}</h2>
+            <h2>{editingEvento ? 'Editar Evento' : 'Adicionar Evento'}</h2>
             
             <form onSubmit={handleSubmit}>
               <div className="form-group">

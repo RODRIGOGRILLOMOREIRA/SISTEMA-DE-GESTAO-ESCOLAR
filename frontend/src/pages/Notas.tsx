@@ -222,7 +222,11 @@ const Notas = () => {
   const loadNotas = async () => {
     try {
       const response = await api.get(`/notas/aluno/${selectedAluno}/disciplina/${selectedDisciplina}`, {
-        params: { anoLetivo }
+        params: { anoLetivo },
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
       })
       const { notas: notasBD, notaFinal: notaFinalBD } = response.data
 
@@ -277,24 +281,39 @@ const Notas = () => {
     const t2 = notaFinal?.trimestre2
     const t3 = notaFinal?.trimestre3
 
-    // Se tem trimestre 3, usa a fórmula final
-    if (t3 !== null && t3 !== undefined) {
-      const mediaFinalCalc = t1 && t2 && t3 ? parseFloat(((t1 * 1 + t2 * 2 + t3 * 3) / 6).toFixed(2)) : null
-      return { valor: mediaFinalCalc, texto: 'Média Parcial do Ano' }
+    // Se todos os 3 trimestres foram lançados: Média Final
+    if (t3 !== null && t3 !== undefined && t2 !== null && t2 !== undefined && t1 !== null && t1 !== undefined) {
+      const mediaFinal = parseFloat(((t1 * 3 + t2 * 3 + t3 * 4) / 10).toFixed(2))
+      return { valor: mediaFinal, texto: 'Média Final' }
     }
     
-    // Se tem trimestre 2, usa a fórmula parcial com T1 e T2
-    if (t2 !== null && t2 !== undefined) {
-      const mediaParcial = t1 && t2 ? parseFloat(((t1 * 1 + t2 * 2) / 3).toFixed(2)) : null
-      return { valor: mediaParcial, texto: 'Média Parcial do Ano (T1+T2)' }
+    // Se T1 e T2 foram lançados: Média Parcial proporcional
+    if (t2 !== null && t2 !== undefined && t1 !== null && t1 !== undefined) {
+      const mediaParcial = parseFloat(((t1 * 3 + t2 * 3) / 6).toFixed(2))
+      return { valor: mediaParcial, texto: 'Média Parcial (T1+T2)' }
     }
     
-    // Se tem apenas trimestre 1, usa ele mesmo como nota parcial
+    // Se apenas T1 foi lançado: exibe a nota do T1
     if (t1 !== null && t1 !== undefined) {
-      return { valor: t1, texto: 'Média Parcial do Ano (T1)' }
+      return { valor: t1, texto: 'Média Parcial (T1)' }
     }
     
     return { valor: null, texto: 'Média Parcial do Ano' }
+  }
+
+  // Calcula a média final usando SEMPRE a fórmula completa (T1*3 + T2*3 + T3*4) / 10
+  // mesmo que nem todos os trimestres tenham sido lançados (usa 0 para os não lançados)
+  const calcularMediaFinalAno = (): number | null => {
+    const t1 = notaFinal?.trimestre1 ?? 0
+    const t2 = notaFinal?.trimestre2 ?? 0
+    const t3 = notaFinal?.trimestre3 ?? 0
+    
+    // Se pelo menos um trimestre foi lançado, calcula com a fórmula completa
+    if (notaFinal?.trimestre1 !== null || notaFinal?.trimestre2 !== null || notaFinal?.trimestre3 !== null) {
+      return parseFloat(((t1 * 3 + t2 * 3 + t3 * 4) / 10).toFixed(2))
+    }
+    
+    return null
   }
 
   const getNotaColor = (nota: number | null): string => {
@@ -304,12 +323,37 @@ const Notas = () => {
     return 'nota-vermelha'
   }
   const getStatusNota = (media: number | null) => {
-    if (media === null) return { label: 'Pendente', cor: '#94a3b8', icon: null }
+    if (media === null) return { 
+      label: 'Pendente', 
+      cor: '#94a3b8', 
+      icon: null,
+      mensagem: 'Aguardando lançamento de notas'
+    }
     
-    if (media >= 8.0) return { label: 'Aprovado Excelente', cor: '#059669', icon: <CheckCircle size={32} /> } // verde escuro
-    if (media >= 6.0) return { label: 'Aprovado - Pode Evoluir', cor: '#10b981', icon: <CheckCircle size={32} /> } // verde claro
-    if (media >= 4.0) return { label: 'Reprovado - Pode Evoluir', cor: '#f59e0b', icon: <XCircle size={32} /> } // amarelo
-    return { label: 'Reprovado - Intervenção Urgente', cor: '#ef4444', icon: <XCircle size={32} /> } // vermelho
+    if (media >= 8.0) return { 
+      label: 'Aprovado Excelente', 
+      cor: '#059669', 
+      icon: <CheckCircle size={32} />,
+      mensagem: 'Parabéns! Continue assim!'
+    }
+    if (media >= 6.0) return { 
+      label: 'Aprovado', 
+      cor: '#10b981', 
+      icon: <CheckCircle size={32} />,
+      mensagem: 'Bom trabalho! Pode melhorar ainda mais'
+    }
+    if (media >= 4.0) return { 
+      label: 'Reprovado', 
+      cor: '#f59e0b', 
+      icon: <XCircle size={32} />,
+      mensagem: 'Atenção! Precisa se esforçar mais'
+    }
+    return { 
+      label: 'Reprovado', 
+      cor: '#ef4444', 
+      icon: <XCircle size={32} />,
+      mensagem: 'Urgente! Busque ajuda imediatamente'
+    }
   }
   const openModal = (trimestre: number) => {
     const nota = notas.find(n => n.trimestre === trimestre) || {
@@ -386,6 +430,11 @@ const Notas = () => {
       setNotas(notasAtualizadas)
       setNotaFinal(notaFinalAtualizada)
       
+      // Forçar recarregamento para garantir sincronização entre dispositivos
+      setTimeout(() => {
+        loadNotas()
+      }, 500)
+      
       closeModal()
       alert('Notas salvas com sucesso!')
     } catch (error) {
@@ -420,28 +469,47 @@ const Notas = () => {
           </svg>
           <h2>1. Selecione o Ano Letivo</h2>
         </div>
-        <div className="selection-grid">
-          {anosDisponiveis.length === 0 ? (
-            <p className="empty-message">Nenhum ano letivo disponível. Cadastre na aba "Calendário Escolar".</p>
-          ) : (
-            anosDisponiveis.map(ano => (
-              <button
-                key={ano}
-                className={`selection-btn ${anoLetivo === ano ? 'active' : ''}`}
+        {anosDisponiveis.length === 0 ? (
+          <p className="empty-message">Nenhum ano letivo disponível. Cadastre na aba "Calendário Escolar".</p>
+        ) : (
+          <div className="ano-letivo-selector-wrapper">
+            <div className="ano-selector">
+              <button 
+                className="btn-secondary" 
                 onClick={() => {
-                  setAnoLetivo(ano)
-                  setSelectedTurma('')
-                  setSelectedAluno('')
-                  setSelectedDisciplina('')
+                  const indexAtual = anosDisponiveis.indexOf(anoLetivo)
+                  if (indexAtual < anosDisponiveis.length - 1) {
+                    const novoAno = anosDisponiveis[indexAtual + 1]
+                    setAnoLetivo(novoAno)
+                    setSelectedTurma('')
+                    setSelectedAluno('')
+                    setSelectedDisciplina('')
+                  }
                 }}
+                disabled={anosDisponiveis.indexOf(anoLetivo) === anosDisponiveis.length - 1}
               >
-                <div className="selection-btn-content">
-                  <span className="selection-btn-title">{ano}</span>
-                </div>
+                ← {anosDisponiveis[anosDisponiveis.indexOf(anoLetivo) + 1] || '---'}
               </button>
-            ))
-          )}
-        </div>
+              <h2 className="ano-numero">{anoLetivo}</h2>
+              <button 
+                className="btn-secondary" 
+                onClick={() => {
+                  const indexAtual = anosDisponiveis.indexOf(anoLetivo)
+                  if (indexAtual > 0) {
+                    const novoAno = anosDisponiveis[indexAtual - 1]
+                    setAnoLetivo(novoAno)
+                    setSelectedTurma('')
+                    setSelectedAluno('')
+                    setSelectedDisciplina('')
+                  }
+                }}
+                disabled={anosDisponiveis.indexOf(anoLetivo) === 0}
+              >
+                {anosDisponiveis[anosDisponiveis.indexOf(anoLetivo) - 1] || '---'} →
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Seleção de Turma */}
@@ -618,7 +686,7 @@ const Notas = () => {
               </div>
 
               <div className="momento-section">
-                <h4>Fórmula: (T1×1 + T2×2 + T3×3) ÷ 6</h4>
+                <h4>Fórmula: (T1×3 + T2×3 + T3×4) ÷ 10</h4>
                 <div className="notas-grid">
                   <div className="nota-item">
                     <span className="nota-label">1º Trimestre:</span>
@@ -638,6 +706,12 @@ const Notas = () => {
                       {notaFinal?.trimestre3?.toFixed(2) || '-'}
                     </span>
                   </div>
+                </div>
+              </div>
+
+              {/* Média Parcial + Status Parcial */}
+              <div className="momento-section">
+                <div className="notas-grid">
                   <div className="nota-item media-parcial-ano">
                     <span className="nota-label" style={{ 
                       fontSize: '0.95rem', 
@@ -657,32 +731,132 @@ const Notas = () => {
                       {calcularMediaParcialAno().valor?.toFixed(2) || '-'}
                     </span>
                   </div>
+                </div>
+              </div>
+
+              <div className="momento-section status-section">
+                <h4 style={{ color: '#2563eb', marginBottom: '16px' }}>Status Parcial</h4>
+                {calcularMediaParcialAno().valor !== null ? (
+                  <div 
+                    className="status-badge"
+                    style={{ 
+                      backgroundColor: getStatusNota(calcularMediaParcialAno().valor).cor,
+                      color: 'white',
+                      border: 'none',
+                      flexDirection: 'column',
+                      gap: '12px',
+                      padding: '20px',
+                      borderRadius: '16px',
+                      boxShadow: `0 8px 24px ${getStatusNota(calcularMediaParcialAno().valor).cor}40`
+                    }}
+                  >
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '12px',
+                      fontSize: 'clamp(1rem, 2.8vw, 1.3rem)',
+                      fontWeight: '800',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px'
+                    }}>
+                      {getStatusNota(calcularMediaParcialAno().valor).icon}
+                      <span>{getStatusNota(calcularMediaParcialAno().valor).label}</span>
+                    </div>
+                    <div style={{ 
+                      fontSize: 'clamp(0.85rem, 2.2vw, 1rem)',
+                      fontWeight: '500',
+                      textAlign: 'center',
+                      lineHeight: '1.4',
+                      opacity: '0.95',
+                      fontStyle: 'italic'
+                    }}>
+                      {getStatusNota(calcularMediaParcialAno().valor).mensagem}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="status-badge pendente" style={{
+                    flexDirection: 'column',
+                    gap: '8px',
+                    padding: '20px',
+                    borderRadius: '16px'
+                  }}>
+                    <span style={{ fontSize: 'clamp(0.9rem, 2.3vw, 1.1rem)', fontWeight: '600' }}>Pendente</span>
+                    <span style={{ fontSize: 'clamp(0.8rem, 2vw, 0.95rem)', fontStyle: 'italic' }}>{getStatusNota(null).mensagem}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Média Final + Status Final */}
+              <div className="momento-section">
+                <div className="notas-grid">
                   <div className="nota-item media-final">
-                    <span className="nota-label">Média Final:</span>
-                    <span className={`nota-valor ${getNotaColor(notaFinal?.mediaFinal || null)}`}>
-                      {notaFinal?.mediaFinal?.toFixed(2) || '-'}
+                    <span className="nota-label" style={{ 
+                      fontSize: '0.95rem', 
+                      fontWeight: '600',
+                      color: '#dc2626'
+                    }}>Média Final do Ano:</span>
+                    <span className={`nota-valor ${getNotaColor(calcularMediaFinalAno())}`} style={{ 
+                      fontSize: '1.1rem', 
+                      fontWeight: '700',
+                      padding: '6px 12px',
+                      backgroundColor: '#fef2f2',
+                      borderRadius: '6px',
+                      border: '2px solid #ef4444'
+                    }}>
+                      {calcularMediaFinalAno()?.toFixed(2) || '-'}
                     </span>
                   </div>
                 </div>
               </div>
 
               <div className="momento-section status-section">
-                <h4>Status Final</h4>
-                {notaFinal?.mediaFinal !== null && notaFinal?.mediaFinal !== undefined ? (
+                <h4 style={{ color: '#dc2626', marginBottom: '16px' }}>Status Final</h4>
+                {calcularMediaFinalAno() !== null ? (
                   <div 
                     className="status-badge"
                     style={{ 
-                      backgroundColor: getStatusNota(notaFinal.mediaFinal).cor,
+                      backgroundColor: getStatusNota(calcularMediaFinalAno()).cor,
                       color: 'white',
-                      border: 'none'
+                      border: 'none',
+                      flexDirection: 'column',
+                      gap: '12px',
+                      padding: '20px',
+                      borderRadius: '16px',
+                      boxShadow: `0 8px 24px ${getStatusNota(calcularMediaFinalAno()).cor}40`
                     }}
                   >
-                    {getStatusNota(notaFinal.mediaFinal).icon}
-                    <span>{getStatusNota(notaFinal.mediaFinal).label}</span>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '12px',
+                      fontSize: 'clamp(1rem, 2.8vw, 1.3rem)',
+                      fontWeight: '800',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px'
+                    }}>
+                      {getStatusNota(calcularMediaFinalAno()).icon}
+                      <span>{getStatusNota(calcularMediaFinalAno()).label}</span>
+                    </div>
+                    <div style={{ 
+                      fontSize: 'clamp(0.85rem, 2.2vw, 1rem)',
+                      fontWeight: '500',
+                      textAlign: 'center',
+                      lineHeight: '1.4',
+                      opacity: '0.95',
+                      fontStyle: 'italic'
+                    }}>
+                      {getStatusNota(calcularMediaFinalAno()).mensagem}
+                    </div>
                   </div>
                 ) : (
-                  <div className="status-badge pendente">
-                    <span>Aguardando lançamento de notas</span>
+                  <div className="status-badge pendente" style={{
+                    flexDirection: 'column',
+                    gap: '8px',
+                    padding: '20px',
+                    borderRadius: '16px'
+                  }}>
+                    <span style={{ fontSize: 'clamp(0.9rem, 2.3vw, 1.1rem)', fontWeight: '600' }}>Pendente</span>
+                    <span style={{ fontSize: 'clamp(0.8rem, 2vw, 0.95rem)', fontStyle: 'italic' }}>{getStatusNota(null).mensagem}</span>
                   </div>
                 )}
               </div>

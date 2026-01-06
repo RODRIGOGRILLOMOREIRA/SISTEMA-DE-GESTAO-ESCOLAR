@@ -36,13 +36,26 @@ function calcularNotaFinalTrimestre(mediaM1: number | null, avaliacaoEAC: number
 }
 
 // Função para calcular a média final anual
+// Lógica proporcional: usa apenas os trimestres lançados
 function calcularMediaFinal(t1: number | null | undefined, t2: number | null | undefined, t3: number | null | undefined): number | null {
+  // Se todos os 3 trimestres foram lançados: Média Final
   if (t1 !== null && t1 !== undefined && t2 !== null && t2 !== undefined && t3 !== null && t3 !== undefined) {
-    // Fórmula: (T1*3 + T2*3 + T3*4) / 10
-    const mediaFinal = (t1 * 3 + t2 * 3 + t3 * 4) / 10;
-    return parseFloat(mediaFinal.toFixed(2));
+    const mediaFinal = (t1 * 3 + t2 * 3 + t3 * 4) / 10
+    return parseFloat(mediaFinal.toFixed(2))
   }
-  return null;
+  
+  // Se T1 e T2 foram lançados: Média Parcial proporcional
+  if (t1 !== null && t1 !== undefined && t2 !== null && t2 !== undefined) {
+    const mediaParcial = (t1 * 3 + t2 * 3) / 6
+    return parseFloat(mediaParcial.toFixed(2))
+  }
+  
+  // Se apenas T1 foi lançado: retorna T1
+  if (t1 !== null && t1 !== undefined) {
+    return parseFloat(t1.toFixed(2))
+  }
+  
+  return null
 }
 
 // Função para determinar status de aprovação
@@ -161,6 +174,50 @@ notasRouter.get('/final/aluno/:alunoId', async (req, res) => {
     res.json(notasFinais);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao buscar notas finais' });
+  }
+});
+
+// GET todas as notas finais de um aluno (para boletim)
+notasRouter.get('/aluno/:alunoId', async (req, res) => {
+  try {
+    const { alunoId } = req.params;
+    const anoLetivo = req.query.anoLetivo ? parseInt(req.query.anoLetivo as string) : new Date().getFullYear();
+    
+    console.log('📊 GET /notas/aluno/:alunoId', { alunoId, anoLetivo });
+
+    // Buscar todas as notas finais do aluno para o ano letivo específico
+    const notasFinais = await prisma.notas_finais.findMany({
+      where: {
+        alunoId,
+        anoLetivo
+      }
+    });
+
+    console.log('✅ Notas finais encontradas:', notasFinais.length);
+
+    // Buscar disciplinas manualmente
+    const disciplinasIds = [...new Set(notasFinais.map(nf => nf.disciplinaId))];
+    const disciplinas = await prisma.disciplinas.findMany({
+      where: {
+        id: { in: disciplinasIds }
+      }
+    });
+
+    // Juntar dados
+    const notasComDisciplinas = notasFinais.map(nf => {
+      const disciplina = disciplinas.find(d => d.id === nf.disciplinaId);
+      return {
+        ...nf,
+        disciplina: disciplina || null
+      };
+    });
+
+    console.log('✅ Dados com disciplinas:', notasComDisciplinas.length);
+
+    res.json(notasComDisciplinas);
+  } catch (error) {
+    console.error('❌ Erro ao buscar notas do aluno:', error);
+    res.status(500).json({ error: 'Erro ao buscar notas do aluno' });
   }
 });
 

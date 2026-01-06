@@ -1344,10 +1344,22 @@
 
 /* Desktop padrão */
 .turmas-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  display: flex !important;
+  flex-wrap: nowrap !important;
   gap: 1rem;
   width: 100%;
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  overflow-x: auto;
+}
+
+.turmas-grid > * {
+  flex: 1 1 auto;
+  min-width: 150px;
+  max-width: 200px;
 }
 
 .turma-card,
@@ -1357,10 +1369,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 1rem;
   border: 2px solid #00BCD4;
   border-radius: 12px;
-  background: var(--card-bg);
+  background: white;
   cursor: pointer;
   transition: all 0.3s ease;
   min-height: 120px;
@@ -1375,6 +1387,20 @@
   border-color: #00ACC1;
 }
 
+.selection-btn-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.selection-btn-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: center;
+}
+
 .turma-card.active,
 .turma-btn.active {
   background: linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%);
@@ -1382,15 +1408,40 @@
   border-color: #00BCD4;
 }
 
+/* Desktop - Layout horizontal */
+@media (min-width: 641px) {
+  .turmas-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding: 1.5rem !important;
+  }
+
+  .turmas-grid > * {
+    flex: 1 1 auto !important;
+    min-width: 150px !important;
+    max-width: 200px !important;
+  }
+}
+
 /* Mobile - Uma coluna */
 @media (max-width: 640px) {
   .turmas-grid {
     display: grid !important;
     grid-template-columns: 1fr !important;
+    flex-wrap: initial !important;
     gap: 0.75rem;
     width: 100%;
-    padding: 0;
+    padding: 0 !important;
     margin: 0;
+    overflow-x: visible !important;
+  }
+
+  .turmas-grid > * {
+    min-width: auto !important;
+    max-width: 100% !important;
+    flex: none !important;
   }
 
   .turma-card,
@@ -1451,4 +1502,44 @@
     margin: 0 !important;
     text-align: left !important;
   }
+
+  /* Dark Mode MOBILE */
+  [data-theme="dark"] .turma-card,
+  [data-theme="dark"] .turma-btn,
+  [data-theme="dark"] .selection-btn {
+    background: #1e3a8a !important;
+    border-color: #22d3ee !important;
+    color: #22d3ee !important;
+  }
+
+  [data-theme="dark"] .turma-card:hover,
+  [data-theme="dark"] .turma-btn:hover,
+  [data-theme="dark"] .selection-btn:hover {
+    background: #1e40af !important;
+    border-color: #06b6d4 !important;
+    box-shadow: 0 6px 20px rgba(34, 211, 238, 0.4) !important;
+  }
+
+  [data-theme="dark"] .selection-btn-title {
+    color: #22d3ee !important;
+  }
+}
+
+/* Dark Mode DESKTOP - mantém fundo branco */
+[data-theme="dark"] .turma-card,
+[data-theme="dark"] .turma-btn,
+[data-theme="dark"] .selection-btn {
+  background: white;
+  border-color: #00BCD4;
+}
+
+[data-theme="dark"] .selection-btn-title {
+  color: #1e293b;
+}
+
+[data-theme="dark"] .turma-card:hover,
+[data-theme="dark"] .turma-btn:hover,
+[data-theme="dark"] .selection-btn:hover {
+  background: white;
+  border-color: #00ACC1;
 }

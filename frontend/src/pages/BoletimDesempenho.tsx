@@ -141,6 +141,8 @@ const BoletimDesempenho = () => {
   const loadDadosBoletim = async () => {
     setLoading(true)
     try {
+      console.log('🔍 Carregando dados do boletim para aluno:', selectedAluno, 'Ano:', anoLetivo)
+      
       // Buscar dados do aluno e turma
       const [alunoRes, turmaRes] = await Promise.all([
         api.get(`/alunos/${selectedAluno}`),
@@ -150,15 +152,29 @@ const BoletimDesempenho = () => {
       const aluno = alunoRes.data
       const turma = turmaRes.data
 
-      // Buscar notas finais de todas as disciplinas
+      console.log('✅ Aluno e turma carregados:', { aluno: aluno.nome, turma: turma.nome })
+
+      // Buscar notas finais de todas as disciplinas com cache-busting
       const notasRes = await api.get(`/notas/aluno/${selectedAluno}`, {
-        params: { anoLetivo }
+        params: { anoLetivo },
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
       })
 
-      // Buscar frequências de todas as disciplinas
+      console.log('📊 Notas recebidas:', notasRes.data)
+
+      // Buscar frequências de todas as disciplinas com cache-busting
       const frequenciasRes = await api.get(`/frequencias/aluno/${selectedAluno}`, {
-        params: { anoLetivo }
+        params: { anoLetivo },
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
       })
+
+      console.log('📅 Frequências recebidas:', frequenciasRes.data)
 
       const notas: NotaBoletim[] = notasRes.data.map((nf: any) => ({
         disciplina: nf.disciplina?.nome || 'Disciplina não encontrada',
@@ -194,9 +210,15 @@ const BoletimDesempenho = () => {
         }
       })
 
+      console.log('✅ Dados processados:', { 
+        notasCount: notas.length, 
+        frequenciasCount: frequencias.length 
+      })
+
       setDadosBoletim({ aluno, turma, notas, frequencias })
     } catch (error) {
-      console.error('Erro ao carregar dados do boletim:', error)
+      console.error('❌ Erro ao carregar dados do boletim:', error)
+      alert('Erro ao carregar dados do boletim. Verifique se o aluno possui notas cadastradas.')
     } finally {
       setLoading(false)
     }
@@ -335,7 +357,10 @@ const BoletimDesempenho = () => {
 
     doc.setFontSize(8)
     doc.setTextColor(100)
-    doc.text(`Documento gerado em ${new Date().toLocaleString('pt-BR')} | Fórmula: (T1×3 + T2×3 + T3×4)÷10 | Frequência mínima: 75%`, 
+    doc.text(`Documento gerado em ${new Date().toLocaleString('pt-BR')} | Fórmula Final: (T1×3 + T2×3 + T3×4)÷10 | Frequência mínima: 75%`, 
+      pageWidth / 2, doc.internal.pageSize.getHeight() - 15, { align: 'center' })
+    doc.setFontSize(7)
+    doc.text(`Médias parciais: Apenas T1 = T1 | T1+T2 = (T1×3+T2×3)÷6 (proporcional) | T1+T2+T3 = Média Final`, 
       pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' })
 
     // Salvar PDF
@@ -357,184 +382,201 @@ const BoletimDesempenho = () => {
     return todasAprovadas && todasFrequencias
   }
 
-  const getStatusNota = (media: number | null) => {
-    if (media === null) return { label: 'Pendente', cor: '#94a3b8' }
+  // Calcula média parcial proporcional (T1, T1+T2, ou T1+T2+T3)
+  const calcularMediaParcial = (t1: number | null, t2: number | null, t3: number | null): number | null => {
+    // Se todos os 3 trimestres foram lançados
+    if (t3 !== null && t3 !== undefined && t2 !== null && t2 !== undefined && t1 !== null && t1 !== undefined) {
+      return parseFloat(((t1 * 3 + t2 * 3 + t3 * 4) / 10).toFixed(2))
+    }
     
-    if (media >= 8.0) return { label: 'Aprovado Excelente', cor: '#059669' } // verde escuro
-    if (media >= 6.0) return { label: 'Aprovado - Pode Evoluir', cor: '#10b981' } // verde claro
-    if (media >= 4.0) return { label: 'Reprovado - Pode Evoluir', cor: '#f59e0b' } // amarelo
-    return { label: 'Reprovado - Intervenção Urgente', cor: '#ef4444' } // vermelho
+    // Se T1 e T2 foram lançados
+    if (t2 !== null && t2 !== undefined && t1 !== null && t1 !== undefined) {
+      return parseFloat(((t1 * 3 + t2 * 3) / 6).toFixed(2))
+    }
+    
+    // Se apenas T1 foi lançado
+    if (t1 !== null && t1 !== undefined) {
+      return t1
+    }
+    
+    return null
+  }
+
+  // Calcula média final usando SEMPRE a fórmula completa (T1*3 + T2*3 + T3*4) / 10
+  const calcularMediaFinal = (t1: number | null, t2: number | null, t3: number | null): number | null => {
+    const trimestre1 = t1 ?? 0
+    const trimestre2 = t2 ?? 0
+    const trimestre3 = t3 ?? 0
+    
+    // Se pelo menos um trimestre foi lançado
+    if (t1 !== null || t2 !== null || t3 !== null) {
+      return parseFloat(((trimestre1 * 3 + trimestre2 * 3 + trimestre3 * 4) / 10).toFixed(2))
+    }
+    
+    return null
+  }
+
+  const getStatusNota = (media: number | null) => {
+    if (media === null) return { 
+      label: 'Pendente', 
+      cor: '#94a3b8',
+      mensagem: 'Aguardando lançamento de notas'
+    }
+    
+    if (media >= 8.0) return { 
+      label: 'Aprovado Excelente', 
+      cor: '#059669',
+      mensagem: 'Parabéns! Continue assim!'
+    }
+    if (media >= 6.0) return { 
+      label: 'Aprovado', 
+      cor: '#10b981',
+      mensagem: 'Bom trabalho! Pode melhorar ainda mais'
+    }
+    if (media >= 4.0) return { 
+      label: 'Reprovado', 
+      cor: '#f59e0b',
+      mensagem: 'Atenção! Precisa se esforçar mais'
+    }
+    return { 
+      label: 'Reprovado', 
+      cor: '#ef4444',
+      mensagem: 'Urgente! Busque ajuda imediatamente'
+    }
   }
 
   return (
     <div className="page">
       <BackButton />
-      {/* Cabeçalho Moderno com Logo */}
-      <div style={{
-        background: 'linear-gradient(135deg, #00BCD4 0%, #00ACC1 50%, #0097A7 100%)',
-        borderRadius: '20px',
-        padding: '2rem',
-        marginBottom: '2rem',
-        boxShadow: '0 8px 32px rgba(0, 188, 212, 0.4)',
-        border: '3px solid rgba(255, 255, 255, 0.3)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '1.5rem'
-        }}>
-          {/* Logo e Nome da Escola */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: '1', minWidth: '250px' }}>
-            {config?.logoUrl && (
-              <div style={{
-                width: '80px',
-                height: '80px',
-                background: 'rgba(255, 255, 255, 0.95)',
-                borderRadius: '15px',
-                padding: '8px',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <img 
-                  src={config.logoUrl} 
-                  alt="Logo da Escola" 
-                  style={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    objectFit: 'contain',
-                    borderRadius: '10px'
-                  }} 
-                />
+      <div className="page-header">
+        <h1>Boletim de Desempenho</h1>
+      </div>
+
+      {/* Seleção de Ano Letivo */}
+      <div className="selection-section">
+        <div className="selection-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="selection-icon">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <h2>1. Selecione o Ano Letivo</h2>
+        </div>
+        <div className="selection-grid">
+          {[2023, 2024, 2025, 2026].map(ano => (
+            <button
+              key={ano}
+              className={`selection-btn ${anoLetivo === ano ? 'active' : ''}`}
+              onClick={() => {
+                setAnoLetivo(ano)
+                setSelectedTurma('')
+                setSelectedAluno('')
+              }}
+            >
+              <div className="selection-btn-content">
+                <span className="selection-btn-title">{ano}</span>
               </div>
-            )}
-            <div>
-              <h1 style={{
-                color: 'white',
-                fontSize: 'clamp(1.5rem, 4vw, 2rem)',
-                fontWeight: '800',
-                margin: '0 0 0.5rem 0',
-                textShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
-                letterSpacing: '0.5px'
-              }}>
-                {config?.nomeEscola || 'Sistema de Gestão Escolar'}
-              </h1>
-              <p style={{
-                color: 'rgba(255, 255, 255, 0.95)',
-                fontSize: 'clamp(1.1rem, 3vw, 1.4rem)',
-                fontWeight: '600',
-                margin: '0',
-                textShadow: '0 1px 5px rgba(0, 0, 0, 0.2)'
-              }}>
-                {trimestre === 3 ? 'Boletim Anual' : 'Boletim de Desempenho'}
-              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Seleção de Período */}
+      <div className="selection-section">
+        <div className="selection-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="selection-icon">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <h2>2. Selecione o Período</h2>
+        </div>
+        <div className="selection-grid">
+          <button
+            className={`selection-btn ${trimestre === 1 ? 'active' : ''}`}
+            onClick={() => setTrimestre(1)}
+          >
+            <div className="selection-btn-content">
+              <span className="selection-btn-title">1º Trimestre</span>
             </div>
-          </div>
-
-          {/* Ano Letivo Badge */}
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.2)',
-            backdropFilter: 'blur(10px)',
-            borderRadius: '15px',
-            padding: '1rem 1.5rem',
-            border: '2px solid rgba(255, 255, 255, 0.3)',
-            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
-          }}>
-            <p style={{ 
-              color: 'white', 
-              fontSize: '0.9rem', 
-              margin: '0 0 0.3rem 0',
-              fontWeight: '500',
-              opacity: '0.9'
-            }}>
-              Ano Letivo
-            </p>
-            <p style={{ 
-              color: 'white', 
-              fontSize: '1.8rem', 
-              fontWeight: '800',
-              margin: '0',
-              textShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
-            }}>
-              {anoLetivo}
-            </p>
-          </div>
+          </button>
+          <button
+            className={`selection-btn ${trimestre === 2 ? 'active' : ''}`}
+            onClick={() => setTrimestre(2)}
+          >
+            <div className="selection-btn-content">
+              <span className="selection-btn-title">2º Trimestre</span>
+            </div>
+          </button>
+          <button
+            className={`selection-btn ${trimestre === 3 ? 'active' : ''}`}
+            onClick={() => setTrimestre(3)}
+          >
+            <div className="selection-btn-content">
+              <span className="selection-btn-title">Anual (3º Trimestre)</span>
+            </div>
+          </button>
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="filters-section" style={{
-        background: 'white',
-        borderRadius: '15px',
-        padding: '1.5rem',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-        border: '2px solid #e2e8f0',
-        marginBottom: '1.5rem'
-      }}>
-        <div className="form-group">
-          <label style={{ fontWeight: '600', color: '#334155', marginBottom: '0.5rem' }}>Ano:</label>
-          <input
-            type="number"
-            value={anoLetivo}
-            onChange={(e) => setAnoLetivo(Number(e.target.value))}
-            min="2000"
-            max="2099"
-            placeholder="Digite o ano"
-            style={{ border: '2px solid #10b981' }}
-          />
+      {/* Seleção de Turma */}
+      <div className="selection-section">
+        <div className="selection-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="selection-icon">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <h2>3. Selecione a Turma</h2>
         </div>
-
-        <div className="form-group">
-          <label style={{ fontWeight: '600', color: '#334155', marginBottom: '0.5rem' }}>Período:</label>
-          <select 
-            value={trimestre} 
-            onChange={(e) => setTrimestre(Number(e.target.value))}
-            style={{ border: '2px solid #10b981' }}
-          >
-            <option value={1}>1º Trimestre</option>
-            <option value={2}>2º Trimestre</option>
-            <option value={3}>Anual (3º Trimestre)</option>
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label style={{ fontWeight: '600', color: '#334155', marginBottom: '0.5rem' }}>Turma:</label>
-          <select 
-            value={selectedTurma} 
-            onChange={(e) => setSelectedTurma(e.target.value)}
-            style={{ border: '2px solid #10b981' }}
-          >
-            <option value="">Selecione uma turma...</option>
-            {turmas.map(turma => (
-              <option key={turma.id} value={turma.id}>
-                {turma.nome}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label style={{ fontWeight: '600', color: '#334155', marginBottom: '0.5rem' }}>Aluno:</label>
-          <select 
-            value={selectedAluno} 
-            onChange={(e) => setSelectedAluno(e.target.value)}
-            disabled={!selectedTurma}
-            style={{ border: '2px solid #10b981' }}
-          >
-            <option value="">Selecione um aluno...</option>
-            {alunos.map(aluno => (
-              <option key={aluno.id} value={aluno.id}>
-                {aluno.nome}
-              </option>
-            ))}
-          </select>
+        <div className="selection-grid">
+          {turmas.map(turma => (
+            <button
+              key={turma.id}
+              className={`selection-btn ${selectedTurma === turma.id ? 'active' : ''}`}
+              onClick={() => {
+                setSelectedTurma(turma.id)
+                setSelectedAluno('')
+              }}
+            >
+              <div className="selection-btn-content">
+                <span className="selection-btn-title">{turma.nome}</span>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
+
+      {/* Seleção de Aluno */}
+      {selectedTurma && (
+        <div className="selection-section">
+          <div className="selection-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="selection-icon">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+            </svg>
+            <h2>4. Selecione o Aluno</h2>
+          </div>
+          <div className="selection-grid">
+            {alunos.length === 0 ? (
+              <p className="empty-message">Nenhum aluno encontrado nesta turma</p>
+            ) : (
+              alunos.map(aluno => (
+                <button
+                  key={aluno.id}
+                  className={`selection-btn ${selectedAluno === aluno.id ? 'active' : ''}`}
+                  onClick={() => setSelectedAluno(aluno.id)}
+                >
+                  <div className="selection-btn-content">
+                    <span className="selection-btn-title">{aluno.nome}</span>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="content-box">
@@ -669,79 +711,144 @@ const BoletimDesempenho = () => {
             <div className="table-container" style={{ overflowX: 'auto' }}>
               <table className="data-table" style={{ minWidth: '100%' }}>
                 <thead>
-                  <tr style={{ background: 'linear-gradient(135deg, #00BCD4, #0097A7)' }}>
+                  <tr style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
                     <th style={{ color: 'white', padding: '1rem', fontSize: 'clamp(0.85rem, 2vw, 0.95rem)' }}>Disciplina</th>
                     <th style={{ color: 'white', padding: '1rem', fontSize: 'clamp(0.85rem, 2vw, 0.95rem)' }}>1º Trimestre</th>
                     <th style={{ color: 'white', padding: '1rem', fontSize: 'clamp(0.85rem, 2vw, 0.95rem)' }}>2º Trimestre</th>
                     <th style={{ color: 'white', padding: '1rem', fontSize: 'clamp(0.85rem, 2vw, 0.95rem)' }}>3º Trimestre</th>
-                    <th style={{ color: 'white', padding: '1rem', fontSize: 'clamp(0.85rem, 2vw, 0.95rem)' }}>Média Final</th>
-                    <th style={{ color: 'white', padding: '1rem', fontSize: 'clamp(0.85rem, 2vw, 0.95rem)' }}>Situação</th>
+                    <th style={{ color: 'white', padding: '1rem', fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', backgroundColor: '#2563eb' }}>Média Parcial</th>
+                    <th style={{ color: 'white', padding: '1rem', fontSize: 'clamp(0.8rem, 1.8vw, 0.9rem)', backgroundColor: '#2563eb' }}>Status Parcial</th>
+                    <th style={{ color: 'white', padding: '1rem', fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', backgroundColor: '#dc2626' }}>Média Final</th>
+                    <th style={{ color: 'white', padding: '1rem', fontSize: 'clamp(0.8rem, 1.8vw, 0.9rem)', backgroundColor: '#dc2626' }}>Status Final</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {dadosBoletim.notas.map((nota, index) => (
-                    <tr key={index} style={{ 
-                      background: index % 2 === 0 ? '#f8fafc' : 'white',
-                      transition: 'all 0.2s ease'
-                    }}>
-                      <td style={{ 
-                        fontWeight: '600',
-                        padding: '1rem',
-                        fontSize: 'clamp(0.85rem, 2vw, 0.95rem)',
-                        color: '#1e293b'
+                  {dadosBoletim.notas.map((nota, index) => {
+                    const mediaParcial = calcularMediaParcial(nota.trimestre1, nota.trimestre2, nota.trimestre3)
+                    const mediaFinal = calcularMediaFinal(nota.trimestre1, nota.trimestre2, nota.trimestre3)
+                    
+                    return (
+                      <tr key={index} style={{ 
+                        background: index % 2 === 0 ? '#f8fafc' : 'white',
+                        transition: 'all 0.2s ease'
                       }}>
-                        {nota.disciplina}
-                      </td>
-                      <td style={{ 
-                        textAlign: 'center',
-                        padding: '1rem',
-                        fontSize: 'clamp(0.9rem, 2vw, 1rem)',
-                        fontWeight: '500'
-                      }}>
-                        {nota.trimestre1 !== null ? nota.trimestre1.toFixed(1) : '-'}
-                      </td>
-                      <td style={{ 
-                        textAlign: 'center',
-                        padding: '1rem',
-                        fontSize: 'clamp(0.9rem, 2vw, 1rem)',
-                        fontWeight: '500'
-                      }}>
-                        {nota.trimestre2 !== null ? nota.trimestre2.toFixed(1) : '-'}
-                      </td>
-                      <td style={{ 
-                        textAlign: 'center',
-                        padding: '1rem',
-                        fontSize: 'clamp(0.9rem, 2vw, 1rem)',
-                        fontWeight: '500'
-                      }}>
-                        {nota.trimestre3 !== null ? nota.trimestre3.toFixed(1) : '-'}
-                      </td>
-                      <td style={{ 
-                        textAlign: 'center', 
-                        fontWeight: 'bold', 
-                        fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
-                        padding: '1rem',
-                        color: getStatusNota(nota.mediaFinal).cor
-                      }}>
-                        {nota.mediaFinal !== null ? nota.mediaFinal.toFixed(1) : '-'}
-                      </td>
-                      <td style={{ textAlign: 'center', padding: '1rem' }}>
-                        <span style={{ 
-                          display: 'inline-block',
-                          padding: 'clamp(0.4rem, 1.5vw, 0.5rem) clamp(0.8rem, 2vw, 1rem)',
-                          borderRadius: '8px',
-                          fontWeight: 'bold',
-                          fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
-                          color: 'white',
-                          backgroundColor: getStatusNota(nota.mediaFinal).cor,
-                          whiteSpace: 'nowrap',
-                          boxShadow: `0 2px 8px ${getStatusNota(nota.mediaFinal).cor}40`
+                        <td style={{ 
+                          fontWeight: '600',
+                          padding: '1rem',
+                          fontSize: 'clamp(0.85rem, 2vw, 0.95rem)',
+                          color: '#1e293b'
                         }}>
-                          {getStatusNota(nota.mediaFinal).label}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                          {nota.disciplina}
+                        </td>
+                        <td style={{ 
+                          textAlign: 'center',
+                          padding: '1rem',
+                          fontSize: 'clamp(0.9rem, 2vw, 1rem)',
+                          fontWeight: '500'
+                        }}>
+                          {nota.trimestre1 !== null ? nota.trimestre1.toFixed(1) : '-'}
+                        </td>
+                        <td style={{ 
+                          textAlign: 'center',
+                          padding: '1rem',
+                          fontSize: 'clamp(0.9rem, 2vw, 1rem)',
+                          fontWeight: '500'
+                        }}>
+                          {nota.trimestre2 !== null ? nota.trimestre2.toFixed(1) : '-'}
+                        </td>
+                        <td style={{ 
+                          textAlign: 'center',
+                          padding: '1rem',
+                          fontSize: 'clamp(0.9rem, 2vw, 1rem)',
+                          fontWeight: '500'
+                        }}>
+                          {nota.trimestre3 !== null ? nota.trimestre3.toFixed(1) : '-'}
+                        </td>
+                        <td style={{ 
+                          textAlign: 'center', 
+                          fontWeight: 'bold', 
+                          fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
+                          padding: '1rem',
+                          backgroundColor: '#eff6ff',
+                          color: getStatusNota(mediaParcial).cor
+                        }}>
+                          {mediaParcial !== null ? mediaParcial.toFixed(2) : '-'}
+                        </td>
+                        <td style={{ textAlign: 'center', padding: '0.8rem', backgroundColor: '#eff6ff' }}>
+                          <div style={{ 
+                            display: 'inline-flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: 'clamp(0.5rem, 1.8vw, 0.7rem) clamp(0.7rem, 2vw, 1rem)',
+                            borderRadius: '10px',
+                            fontWeight: 'bold',
+                            fontSize: 'clamp(0.75rem, 1.9vw, 0.85rem)',
+                            color: 'white',
+                            backgroundColor: getStatusNota(mediaParcial).cor,
+                            boxShadow: `0 4px 12px ${getStatusNota(mediaParcial).cor}50`,
+                            lineHeight: '1.3',
+                            minWidth: 'clamp(100px, 15vw, 140px)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                          }}>
+                            <span style={{ fontWeight: '800' }}>{getStatusNota(mediaParcial).label}</span>
+                            <span style={{ 
+                              fontSize: 'clamp(0.65rem, 1.6vw, 0.75rem)',
+                              fontWeight: '500',
+                              fontStyle: 'italic',
+                              opacity: '0.95',
+                              textTransform: 'none',
+                              letterSpacing: '0px'
+                            }}>
+                              {getStatusNota(mediaParcial).mensagem}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ 
+                          textAlign: 'center', 
+                          fontWeight: 'bold', 
+                          fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
+                          padding: '1rem',
+                          backgroundColor: '#fef2f2',
+                          color: getStatusNota(mediaFinal).cor
+                        }}>
+                          {mediaFinal !== null ? mediaFinal.toFixed(2) : '-'}
+                        </td>
+                        <td style={{ textAlign: 'center', padding: '0.8rem', backgroundColor: '#fef2f2' }}>
+                          <div style={{ 
+                            display: 'inline-flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: 'clamp(0.5rem, 1.8vw, 0.7rem) clamp(0.7rem, 2vw, 1rem)',
+                            borderRadius: '10px',
+                            fontWeight: 'bold',
+                            fontSize: 'clamp(0.75rem, 1.9vw, 0.85rem)',
+                            color: 'white',
+                            backgroundColor: getStatusNota(mediaFinal).cor,
+                            boxShadow: `0 4px 12px ${getStatusNota(mediaFinal).cor}50`,
+                            lineHeight: '1.3',
+                            minWidth: 'clamp(100px, 15vw, 140px)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                          }}>
+                            <span style={{ fontWeight: '800' }}>{getStatusNota(mediaFinal).label}</span>
+                            <span style={{ 
+                              fontSize: 'clamp(0.65rem, 1.6vw, 0.75rem)',
+                              fontWeight: '500',
+                              fontStyle: 'italic',
+                              opacity: '0.95',
+                              textTransform: 'none',
+                              letterSpacing: '0px'
+                            }}>
+                              {getStatusNota(mediaFinal).mensagem}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -916,7 +1023,10 @@ const BoletimDesempenho = () => {
                 color: '#0369a1'
               }}>
                 <p style={{ margin: '0 0 0.5rem 0', fontWeight: '600' }}>
-                  📐 <strong>Fórmula:</strong> (1º Trim × 3 + 2º Trim × 3 + 3º Trim × 4) ÷ 10
+                  📐 <strong>Fórmula Final:</strong> (1º Trim × 3 + 2º Trim × 3 + 3º Trim × 4) ÷ 10
+                </p>
+                <p style={{ margin: '0 0 0.5rem 0', fontSize: 'clamp(0.75rem, 1.8vw, 0.85rem)', color: '#0891b2' }}>
+                  ⚠️ <strong>Médias Parciais:</strong> Apenas T1 = T1 | T1+T2 = (T1×3+T2×3)÷6 (média proporcional)
                 </p>
                 <p style={{ margin: '0', fontWeight: '600' }}>
                   📊 <strong>Frequência Mínima:</strong> 75% | Aprovação requer notas E frequência adequadas

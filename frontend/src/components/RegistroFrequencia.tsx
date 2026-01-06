@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Save, X, Calendar, TrendingUp, ArrowLeft } from 'lucide-react'
-import axios from 'axios'
+import { api } from '../lib/api'
 import './RegistroFrequencia.css'
 import '../components/Modal.css'
 import '../pages/CommonPages.css'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.5.25:3333/api'
 
 interface Aluno {
   id: string
@@ -113,14 +111,14 @@ const RegistroFrequencia = () => {
 
       console.log('💾 Salvando registro...')
 
-      const response = await axios.post(`${API_URL}/registro-frequencia`, registroData)
+      const response = await api.post('/registro-frequencia', registroData)
       
       console.log('✅ Registro salvo!')
       
       alert('Registro salvo com sucesso!')
       
       // Recarregar as frequências do dia após salvar
-      await loadFrequenciasDoDia()
+      setTimeout(() => loadFrequenciasDoDia(), 500)
       
       // Limpar campos do formulário DEPOIS de recarregar
       setDisciplinaSelecionada('')
@@ -137,7 +135,7 @@ const RegistroFrequencia = () => {
 
   const loadTurmas = async () => {
     try {
-      const response = await axios.get(`${API_URL}/turmas`)
+      const response = await api.get('/turmas')
       console.log('FREQUENCIA - Turmas carregadas:', response.data.length, response.data)
       setTurmas(response.data)
     } catch (error) {
@@ -155,7 +153,7 @@ const RegistroFrequencia = () => {
       const diaSemanaAtual = getDiaSemanaFromData(dataSelecionada)
       console.log('diaSemanaAtual:', diaSemanaAtual)
       
-      const response = await axios.get(`${API_URL}/grade-horaria/turma/${turmaId}`)
+      const response = await api.get(`/grade-horaria/turma/${turmaId}`)
       console.log('Grade horária:', response.data)
       
       if (response.data) {
@@ -233,8 +231,8 @@ const RegistroFrequencia = () => {
     }
 
     try {
-      const response = await axios.get(
-        `${API_URL}/registro-frequencia/dia/${turmaId}`,
+      const response = await api.get(
+        `/registro-frequencia/dia/${turmaId}`,
         {
           params: {
             data: dataSelecionada,
@@ -289,8 +287,8 @@ const RegistroFrequencia = () => {
         data: dataSelecionada,
         periodo: periodoAtivo
       })
-      const response = await axios.get(
-        `${API_URL}/registro-frequencia/turma/${turmaId}/dia`,
+      const response = await api.get(
+        `/registro-frequencia/turma/${turmaId}/dia`,
         {
           params: {
             data: dataSelecionada,
@@ -768,12 +766,12 @@ const RegistroFrequencia = () => {
                                     className={`btn-presenca-mini ${presente ? 'active' : ''}`}
                                     onClick={async () => {
                                       try {
-                                        await axios.patch(`${API_URL}/registro-frequencia/${freq.id}/presenca`, {
+                                        await api.patch(`/registro-frequencia/${freq.id}/presenca`, {
                                           alunoId: aluno.id,
                                           aulaIndex: aulaIdx,
                                           presente: true
                                         })
-                                        await loadFrequenciasDoDia()
+                                        setTimeout(() => loadFrequenciasDoDia(), 500)
                                       } catch (error) {
                                         console.error('Erro ao atualizar presença:', error)
                                         alert('Erro ao atualizar presença')
@@ -787,12 +785,12 @@ const RegistroFrequencia = () => {
                                     className={`btn-falta-mini ${!presente ? 'active' : ''}`}
                                     onClick={async () => {
                                       try {
-                                        await axios.patch(`${API_URL}/registro-frequencia/${freq.id}/presenca`, {
+                                        await api.patch(`/registro-frequencia/${freq.id}/presenca`, {
                                           alunoId: aluno.id,
                                           aulaIndex: aulaIdx,
                                           presente: false
                                         })
-                                        await loadFrequenciasDoDia()
+                                        setTimeout(() => loadFrequenciasDoDia(), 500)
                                       } catch (error) {
                                         console.error('Erro ao atualizar presença:', error)
                                         alert('Erro ao atualizar presença')
@@ -1054,12 +1052,12 @@ const RegistroFrequencia = () => {
                                   onClick={async () => {
                                     // Atualizar presença via API
                                     try {
-                                      await axios.patch(`${API_URL}/registro-frequencia/${freq.id}/presenca`, {
+                                      await api.patch(`/registro-frequencia/${freq.id}/presenca`, {
                                         alunoId: aluno.id,
                                         aulaIndex: aulaIdx,
                                         presente: true
                                       })
-                                      await loadFrequenciasDoDia()
+                                      setTimeout(() => loadFrequenciasDoDia(), 500)
                                     } catch (error) {
                                       console.error('Erro ao atualizar presença:', error)
                                       alert('Erro ao atualizar presença')
@@ -1074,12 +1072,12 @@ const RegistroFrequencia = () => {
                                   onClick={async () => {
                                     // Atualizar presença via API
                                     try {
-                                      await axios.patch(`${API_URL}/registro-frequencia/${freq.id}/presenca`, {
+                                      await api.patch(`/registro-frequencia/${freq.id}/presenca`, {
                                         alunoId: aluno.id,
                                         aulaIndex: aulaIdx,
                                         presente: false
                                       })
-                                      await loadFrequenciasDoDia()
+                                      setTimeout(() => loadFrequenciasDoDia(), 500)
                                     } catch (error) {
                                       console.error('Erro ao atualizar presença:', error)
                                       alert('Erro ao atualizar presença')

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Plus, Edit, Save, X, Calendar, ArrowLeft } from 'lucide-react'
-import axios from 'axios'
+import { api } from '../lib/api'
 import './GradeHoraria.css'
 import '../components/Modal.css'
 import '../pages/CommonPages.css'
@@ -84,8 +84,6 @@ const GradeHoraria = () => {
   const [selectedDisciplina, setSelectedDisciplina] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.5.25:3333/api'
-
   useEffect(() => {
     loadTurmas()
   }, [])
@@ -98,7 +96,7 @@ const GradeHoraria = () => {
 
   const loadTurmas = async () => {
     try {
-      const response = await axios.get(`${API_URL}/turmas`)
+      const response = await api.get('/turmas')
       console.log('TURMAS CARREGADAS:', response.data.length, response.data)
       setTurmas(response.data)
     } catch (error) {
@@ -109,7 +107,7 @@ const GradeHoraria = () => {
   const loadGradeHoraria = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`${API_URL}/grade-horaria/turma/${turmaId}`)
+      const response = await api.get(`/grade-horaria/turma/${turmaId}`)
       console.log('Grade horária recebida:', response.data)
       console.log('Horários aula:', response.data.horarios_aula)
       setGradeHoraria(response.data)
@@ -211,11 +209,11 @@ const GradeHoraria = () => {
 
       horariosAtualizados.push(novoHorario)
 
-      await axios.put(`${API_URL}/grade-horaria/turma/${turmaId}`, {
+      await api.put(`/grade-horaria/turma/${turmaId}`, {
         horarios: horariosAtualizados
       })
 
-      await loadGradeHoraria()
+      setTimeout(() => loadGradeHoraria(), 500)
       closeModal()
     } catch (error: any) {
       console.error('Erro ao salvar horário:', error)
@@ -232,11 +230,11 @@ const GradeHoraria = () => {
         h => !(h.diaSemana === dia && h.ordem === ordem && h.periodo === periodoAtivo)
       ) || []
 
-      await axios.put(`${API_URL}/grade-horaria/turma/${turmaId}`, {
+      await api.put(`/grade-horaria/turma/${turmaId}`, {
         horarios: horariosAtualizados
       })
 
-      await loadGradeHoraria()
+      setTimeout(() => loadGradeHoraria(), 500)
     } catch (error) {
       console.error('Erro ao remover horário:', error)
     }
