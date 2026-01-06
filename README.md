@@ -19,6 +19,13 @@ Solução full-stack integrada que automatiza e simplifica todos os processos ad
 - **Disciplinas**: Cadastro e vinculação com turmas e professores
 - **Grade Horária**: Montagem interativa de horários semanais
 - **Calendário Escolar**: Planejamento de eventos, feriados e períodos letivos
+  - **📊 Importação via Excel**: Importe centenas de eventos de uma só vez a partir de arquivos .xlsx ou .xls
+  - Reconhecimento automático de colunas (data, tipo, descrição)
+  - Suporte a múltiplos formatos de data do Excel
+  - Opção de substituir ou adicionar aos eventos existentes
+  - Mapeamento inteligente de tipos de eventos
+  - [📖 Guia de Importação](./GUIA-IMPORTACAO-EXCEL-CALENDARIO.md)
+  - [📋 Template Excel 2026](./TEMPLATE-EXCEL-CALENDARIO-2026.md)
 
 ### 📊 Avaliação e Acompanhamento
 - **Sistema de Notas**: Registro por trimestre com múltiplas avaliações
