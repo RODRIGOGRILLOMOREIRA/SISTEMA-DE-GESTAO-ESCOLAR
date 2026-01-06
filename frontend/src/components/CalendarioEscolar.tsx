@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Plus, Edit, Trash2, Calendar as CalendarIcon, X, Save } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
+import { Plus, Edit, Trash2, Calendar as CalendarIcon, X, Save, Upload, FileSpreadsheet } from 'lucide-react'
 import { api } from '../lib/api'
 import './CalendarioEscolar.css'
 import '../pages/CommonPages.css'
@@ -39,7 +39,11 @@ const CalendarioEscolar = () => {
   const [anoSelecionado, setAnoSelecionado] = useState<number>(new Date().getFullYear())
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   const [editingEvento, setEditingEvento] = useState<EventoCalendario | null>(null)
+  const [importando, setImportando] = useState(false)
+  const [substituirEventos, setSubstituirEventos] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [formData, setFormData] = useState({
     tipo: 'DIA_LETIVO',
     descricao: '',
@@ -102,6 +106,56 @@ const CalendarioEscolar = () => {
   const closeModal = () => {
     setShowModal(false)
     setEditingEvento(null)
+  }
+
+  const handleImportExcel = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validar tipo de arquivo
+    const validTypes = [
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ]
+    
+    if (!validTypes.includes(file.type)) {
+      alert('Por favor, selecione um arquivo Excel (.xls ou .xlsx)')
+      return
+    }
+
+    setImportando(true)
+    
+    try {
+      const formData = new FormData()
+      formData.append('arquivo', file)
+      formData.append('ano', String(anoSelecionado))
+      formData.append('substituir', String(substituirEventos))
+
+      const response = await api.post('/calendario/importar-excel', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      alert(`✅ ${response.data.message}\n\n📊 Total de eventos: ${response.data.eventosTotal}`)
+      setShowImportModal(false)
+      setSubstituirEventos(false)
+      
+      // Recarregar calendário
+      setTimeout(() => {
+        loadCalendario()
+      }, 500)
+      
+    } catch (error: any) {
+      console.error('Erro ao importar Excel:', error)
+      const mensagemErro = error.response?.data?.detalhes || error.response?.data?.error || 'Erro ao importar arquivo'
+      alert(`❌ Erro ao importar Excel:\n\n${mensagemErro}`)
+    } finally {
+      setImportando(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -225,10 +279,16 @@ const CalendarioEscolar = () => {
               {anoSelecionado + 1} →
             </button>
           </div>
-          <button className="btn-primary btn-add-evento" onClick={() => openModal()}>
-            <Plus size={20} />
-            Adicionar Evento
-          </button>
+          <div className="calendario-acoes">
+            <button className="btn-success" onClick={() => setShowImportModal(true)}>
+              <Upload size={20} />
+              Importar Excel
+            </button>
+            <button className="btn-primary btn-add-evento" onClick={() => openModal()}>
+              <Plus size={20} />
+              Adicionar Evento
+            </button>
+          </div>
         </div>
       </div>
 
@@ -365,6 +425,103 @@ const CalendarioEscolar = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Importação Excel */}
+      {showImportModal && (
+        <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>
+              <FileSpreadsheet size={24} />
+              Importar Eventos do Excel
+            </h2>
+            
+            <div className="import-info">
+              <p><strong>📊 Formato esperado do Excel:</strong></p>
+              <ul style={{ textAlign: 'left', marginLeft: '20px' }}>
+                <li><strong>Coluna 1:</strong> Data (formato: DD/MM/YYYY ou numérico do Excel)</li>
+                <li><strong>Coluna 2:</strong> Tipo do Evento (ex: Feriado, Recesso, Dia Letivo, etc.)</li>
+                <li><strong>Coluna 3:</strong> Descrição (opcional)</li>
+              </ul>
+              
+              <div className="import-tipos-aceitos">
+                <p><strong>📝 Tipos aceitos:</strong></p>
+                <div style={{ fontSize: '0.85em', lineHeight: '1.6' }}>
+                  Início Ano Letivo, Fim Ano Letivo, Dia Letivo, Dia Não Letivo,
+                  Parada Pedagógica, Recesso, Férias, Sábado Letivo, Feriado,
+                  Início Trimestre, Fim Trimestre, Período EAC, ou qualquer outro texto
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '20px' }}>
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={substituirEventos}
+                    onChange={(e) => setSubstituirEventos(e.target.checked)}
+                  />
+                  <span>Substituir eventos existentes do ano {anoSelecionado}</span>
+                </label>
+                <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
+                  Se desmarcado, os eventos serão adicionados aos existentes
+                </small>
+              </div>
+            </div>
+
+            <div className="upload-area">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xls,.xlsx"
+                onChange={handleImportExcel}
+                style={{ display: 'none' }}
+                disabled={importando}
+              />
+              
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importando}
+                style={{ 
+                  width: '100%', 
+                  padding: '20px',
+                  fontSize: '1.1em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px'
+                }}
+              >
+                {importando ? (
+                  <>
+                    <div className="spinner"></div>
+                    Importando...
+                  </>
+                ) : (
+                  <>
+                    <Upload size={24} />
+                    Selecionar Arquivo Excel
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div className="modal-actions" style={{ marginTop: '20px' }}>
+              <button 
+                type="button" 
+                className="btn-secondary" 
+                onClick={() => {
+                  setShowImportModal(false)
+                  setSubstituirEventos(false)
+                }}
+                disabled={importando}
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}

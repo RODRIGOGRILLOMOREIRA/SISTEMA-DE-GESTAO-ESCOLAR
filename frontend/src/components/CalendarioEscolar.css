@@ -539,10 +539,120 @@
   display: inline-flex;
 }
 
+/* Container de ações do calendário */
+.calendario-acoes {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+/* Estilos do Modal de Importação */
+.import-info {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.import-info p {
+  margin: 0 0 10px 0;
+  font-weight: 600;
+}
+
+.import-info ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.import-info li {
+  margin: 5px 0;
+  line-height: 1.6;
+}
+
+.import-tipos-aceitos {
+  margin-top: 15px;
+  padding: 15px;
+  background: white;
+  border-radius: 6px;
+  border-left: 4px solid #10b981;
+}
+
+.upload-area {
+  margin: 20px 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.checkbox-label span {
+  font-weight: 500;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* No mobile: esconde o botão dentro da caixa verde, já está no header móvel */
 @media (max-width: 768px) {
   .btn-add-evento {
     display: none;
   }
+  
+  .calendario-acoes {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .calendario-acoes button {
+    width: 100%;
+  }
 }
-

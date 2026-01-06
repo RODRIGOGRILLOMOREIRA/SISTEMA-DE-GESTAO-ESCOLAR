@@ -2,8 +2,28 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
+import multer from 'multer';
+import * as XLSX from 'xlsx';
 
 export const calendarioRouter = Router();
+
+// Configuração do Multer para upload de arquivos
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage,
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Apenas arquivos Excel (.xls, .xlsx) são permitidos'));
+    }
+  },
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+});
 
 const eventoSchema = z.object({
   tipo: z.enum([
@@ -262,6 +282,199 @@ calendarioRouter.delete('/:id', async (req, res) => {
   } catch (error) {
     console.error('Erro ao deletar calendário:', error);
     res.status(500).json({ error: 'Erro ao deletar calendário' });
+  }
+});
+
+// POST importar eventos do Excel
+calendarioRouter.post('/importar-excel', upload.single('arquivo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo foi enviado' });
+    }
+
+    const { ano, substituir } = req.body;
+    
+    if (!ano) {
+      return res.status(400).json({ error: 'Ano é obrigatório' });
+    }
+
+    const anoInt = parseInt(ano);
+    
+    // Ler o arquivo Excel
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    
+    // Converter para JSON
+    const data: any[] = XLSX.utils.sheet_to_json(worksheet);
+    
+    console.log('📊 Dados importados do Excel:', data.length, 'linhas');
+    
+    // Mapear colunas do Excel para o formato do banco
+    // Espera-se colunas: data, tipo, descricao (ou similares)
+    const eventos = data
+      .map((row, index) => {
+        try {
+          // Tentar identificar as colunas automaticamente (case-insensitive)
+          const keys = Object.keys(row).map(k => k.toLowerCase());
+          
+          const dataKey = keys.find(k => k.includes('data') || k.includes('dia') || k.includes('date')) || keys[0];
+          const tipoKey = keys.find(k => k.includes('tipo') || k.includes('type') || k.includes('evento')) || keys[1];
+          const descricaoKey = keys.find(k => k.includes('descr') || k.includes('obs') || k.includes('desc')) || keys[2];
+          
+          let dataInicio: Date;
+          const dataValue = row[Object.keys(row).find(k => k.toLowerCase() === dataKey) || ''];
+          
+          // Se for número (serial date do Excel)
+          if (typeof dataValue === 'number') {
+            // Converter serial date do Excel para Date
+            const excelEpoch = new Date(1899, 11, 30);
+            dataInicio = new Date(excelEpoch.getTime() + dataValue * 86400000);
+          } else if (typeof dataValue === 'string') {
+            // Tentar parsear string de data
+            dataInicio = new Date(dataValue);
+          } else {
+            throw new Error('Formato de data inválido');
+          }
+          
+          if (isNaN(dataInicio.getTime())) {
+            throw new Error('Data inválida');
+          }
+          
+          const tipoValue = row[Object.keys(row).find(k => k.toLowerCase() === tipoKey) || ''];
+          const descricaoValue = row[Object.keys(row).find(k => k.toLowerCase() === descricaoKey) || ''] || '';
+          
+          // Mapear tipo para enum
+          const tipoMap: Record<string, string> = {
+            'inicio ano letivo': 'INICIO_ANO_LETIVO',
+            'início ano letivo': 'INICIO_ANO_LETIVO',
+            'inicio do ano': 'INICIO_ANO_LETIVO',
+            'fim ano letivo': 'FIM_ANO_LETIVO',
+            'fim do ano': 'FIM_ANO_LETIVO',
+            'dia letivo': 'DIA_LETIVO',
+            'aula': 'DIA_LETIVO',
+            'letivo': 'DIA_LETIVO',
+            'dia não letivo': 'DIA_NAO_LETIVO',
+            'dia nao letivo': 'DIA_NAO_LETIVO',
+            'não letivo': 'DIA_NAO_LETIVO',
+            'nao letivo': 'DIA_NAO_LETIVO',
+            'parada pedagógica': 'PARADA_PEDAGOGICA',
+            'parada pedagogica': 'PARADA_PEDAGOGICA',
+            'parada': 'PARADA_PEDAGOGICA',
+            'recesso': 'RECESSO',
+            'férias': 'RECESSO',
+            'ferias': 'RECESSO',
+            'sábado letivo': 'SABADO_LETIVO',
+            'sabado letivo': 'SABADO_LETIVO',
+            'feriado': 'FERIADO',
+            'inicio trimestre': 'INICIO_TRIMESTRE',
+            'início trimestre': 'INICIO_TRIMESTRE',
+            'inicio 1º trimestre': 'INICIO_TRIMESTRE',
+            'inicio 2º trimestre': 'INICIO_TRIMESTRE',
+            'inicio 3º trimestre': 'INICIO_TRIMESTRE',
+            'fim trimestre': 'FIM_TRIMESTRE',
+            'fim 1º trimestre': 'FIM_TRIMESTRE',
+            'fim 2º trimestre': 'FIM_TRIMESTRE',
+            'fim 3º trimestre': 'FIM_TRIMESTRE',
+            'periodo eac': 'PERIODO_EAC',
+            'período eac': 'PERIODO_EAC',
+            'eac': 'PERIODO_EAC',
+          };
+          
+          const tipoString = String(tipoValue || 'outro').toLowerCase().trim();
+          const tipo = tipoMap[tipoString] || 'OUTRO';
+          
+          return {
+            tipo,
+            descricao: String(descricaoValue || tipoValue || 'Evento importado'),
+            dataInicio,
+            dataFim: dataInicio, // Por padrão, usa a mesma data
+          };
+        } catch (err) {
+          console.warn(`⚠️ Erro ao processar linha ${index + 1}:`, err);
+          return null;
+        }
+      })
+      .filter(e => e !== null) as Array<{
+        tipo: string;
+        descricao: string;
+        dataInicio: Date;
+        dataFim: Date;
+      }>;
+    
+    console.log('✅ Eventos processados:', eventos.length);
+    
+    if (eventos.length === 0) {
+      return res.status(400).json({ 
+        error: 'Nenhum evento válido foi encontrado no arquivo',
+        detalhes: 'Verifique se as colunas do Excel estão corretas (data, tipo, descrição)'
+      });
+    }
+    
+    // Verificar se já existe calendário para o ano
+    let calendario = await prisma.calendario_escolar.findUnique({
+      where: { ano: anoInt }
+    });
+    
+    if (calendario) {
+      if (substituir === 'true') {
+        // Deletar eventos existentes
+        await prisma.eventos_calendario.deleteMany({
+          where: { calendarioId: calendario.id }
+        });
+        console.log('🗑️ Eventos existentes removidos');
+      }
+    } else {
+      // Criar novo calendário
+      calendario = await prisma.calendario_escolar.create({
+        data: {
+          id: crypto.randomUUID(),
+          ano: anoInt,
+          updatedAt: new Date(),
+        }
+      });
+      console.log('📅 Novo calendário criado para', anoInt);
+    }
+    
+    // Inserir eventos
+    const eventosInseridos = await prisma.eventos_calendario.createMany({
+      data: eventos.map(evento => ({
+        id: crypto.randomUUID(),
+        calendarioId: calendario!.id,
+        tipo: evento.tipo,
+        descricao: evento.descricao,
+        dataInicio: evento.dataInicio,
+        dataFim: evento.dataFim,
+        updatedAt: new Date(),
+      }))
+    });
+    
+    console.log('✨ Importação concluída:', eventosInseridos.count, 'eventos');
+    
+    // Buscar calendário completo para retornar
+    const calendarioCompleto = await prisma.calendario_escolar.findUnique({
+      where: { id: calendario.id },
+      include: {
+        eventos_calendario: {
+          orderBy: { dataInicio: 'asc' }
+        }
+      }
+    });
+    
+    res.json({
+      success: true,
+      message: `${eventosInseridos.count} eventos importados com sucesso`,
+      calendario: calendarioCompleto,
+      eventosImportados: eventosInseridos.count,
+      eventosTotal: calendarioCompleto?.eventos_calendario.length || 0
+    });
+    
+  } catch (error) {
+    console.error('❌ Erro ao importar Excel:', error);
+    res.status(500).json({ 
+      error: 'Erro ao importar arquivo Excel',
+      detalhes: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
   }
 });
 
