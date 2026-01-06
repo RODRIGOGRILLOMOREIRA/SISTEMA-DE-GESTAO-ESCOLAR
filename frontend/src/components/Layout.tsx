@@ -75,10 +75,12 @@ const Layout = () => {
 
   const loadConfig = async () => {
     try {
+      console.log('🔍 Carregando configurações...')
       const response = await configuracoesAPI.get()
+      console.log('✅ Configurações recebidas:', response.data)
       setConfig(response.data)
     } catch (error) {
-      console.error('Erro ao carregar configurações:', error)
+      console.error('❌ Erro ao carregar configurações:', error)
     }
   }
 

@@ -18,23 +18,31 @@ const configuracaoSchema = z.object({
 // GET configurações
 configuracoesRouter.get('/', async (req, res) => {
   try {
+    console.log('🔍 Buscando configurações...');
     let config = await prisma.configuracoes.findFirst();
+    console.log('📋 Configurações encontradas:', config);
     
     // Se não existe, cria uma configuração padrão
     if (!config) {
+      console.log('⚠️ Nenhuma configuração encontrada. Criando padrão...');
       config = await prisma.configuracoes.create({
         data: {
           id: crypto.randomUUID(),
-          nomeEscola: 'Escola Municipal',
-          endereco: '',
+          nomeEscola: 'Sistema de Gestão Escolar',
+          redeEscolar: 'Rede Municipal',
+          endereco: 'Rua Exemplo, 123 - Centro',
+          telefone: '(00) 0000-0000',
+          email: 'contato@escola.com',
           temaModo: 'light',
           updatedAt: new Date(),
         }
       });
+      console.log('✅ Configuração padrão criada:', config);
     }
     
     res.json(config);
   } catch (error) {
+    console.error('❌ Erro ao buscar configurações:', error);
     res.status(500).json({ error: 'Erro ao buscar configurações' });
   }
 });
