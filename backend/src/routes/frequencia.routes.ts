@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
+import eventsService from '../services/events.service';
 
 export const frequenciaRouter = Router();
 
@@ -277,6 +278,55 @@ frequenciaRouter.post('/', async (req, res) => {
       numeroAulas: registro.numeroAulas,
       totalPresencas: registro.presenca_aluno?.length
     });
+
+    // 🔔 DISPARAR EVENTOS DE NOTIFICAÇÃO PARA CADA ALUNO
+    try {
+      for (const presencaAluno of data.presencas) {
+        // Buscar dados do aluno
+        const aluno = await prisma.alunos.findUnique({ where: { id: presencaAluno.alunoId } });
+        
+        if (aluno) {
+          // Contar total de presenças/faltas do aluno nesta disciplina
+          const todasPresencas = await prisma.presenca_aluno.findMany({
+            where: {
+              alunoId: aluno.id,
+              registro_frequencia: {
+                disciplinaId: disciplinaSelecionada.disciplinaId,
+                turmaId: data.turmaId
+              }
+            }
+          });
+
+          const totalAulas = todasPresencas.length;
+          const totalFaltas = todasPresencas.filter(p => !p.presente).length;
+          const percentualFrequencia = totalAulas > 0 ? ((totalAulas - totalFaltas) / totalAulas) * 100 : 100;
+
+          // Emitir evento para cada aula registrada
+          presencaAluno.presencas.forEach((presente, aulaIndex) => {
+            eventsService.emitirFrequenciaRegistrada({
+              alunoId: aluno.id,
+              alunoNome: aluno.nome,
+              disciplinaId: disciplinaSelecionada.disciplinaId,
+              disciplinaNome: disciplinaSelecionada.disciplinas?.nome || 'Disciplina',
+              turmaId: data.turmaId,
+              turmaNome: registro.turmas?.nome || 'Turma',
+              data: new Date(data.data),
+              presente,
+              periodo: data.periodo,
+              professorId: disciplinaSelecionada.professorId || '',
+              professorNome: disciplinaSelecionada.professores?.nome || 'Professor',
+              totalAulas,
+              totalFaltas,
+              percentualFrequencia,
+              limiteMinimo: 75
+            });
+          });
+        }
+      }
+    } catch (notifError) {
+      console.error('⚠️ Erro ao disparar eventos de frequência:', notifError);
+      // Não falha a requisição se notificação falhar
+    }
     
     res.status(201).json(registro);
   } catch (error) {

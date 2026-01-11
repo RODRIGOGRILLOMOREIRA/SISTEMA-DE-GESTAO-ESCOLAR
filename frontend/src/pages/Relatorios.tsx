@@ -6,6 +6,7 @@ import {
 } from 'recharts'
 import { turmasAPI, registroFrequenciaAPI, notasAPI, alunosAPI, api, Turma as TurmaAPI } from '../lib/api'
 import BackButton from '../components/BackButton'
+import { useAnoLetivo } from '../contexts/AnoLetivoContext'
 import './ModernPages.css'
 import './Relatorios.css'
 
@@ -58,6 +59,7 @@ type PeriodoFrequencia = 'dia' | 'mes' | 'trimestre' | 'ano'
 type PeriodoNotas = 'trim1' | 'trim2' | 'trim3' | 'final'
 
 const Relatorios = () => {
+  const { anoLetivo } = useAnoLetivo()
   const [tipoRelatorio, setTipoRelatorio] = useState<TipoRelatorio>('frequencia')
   const [segmento, setSegmento] = useState<Segmento>('iniciais')
   const [turmas, setTurmas] = useState<Turma[]>([])
@@ -71,15 +73,12 @@ const Relatorios = () => {
   const [notasAlunos, setNotasAlunos] = useState<NotaAluno[]>([])
   const [buscaAluno, setBuscaAluno] = useState('')
   const [alunoSelecionado, setAlunoSelecionado] = useState<string | null>(null)
-  const [anoLetivo, setAnoLetivo] = useState<number>(new Date().getFullYear())
-  const [anosDisponiveis, setAnosDisponiveis] = useState<number[]>([])
   const [dataInicioCustom, setDataInicioCustom] = useState('')
   const [dataFimCustom, setDataFimCustom] = useState('')
   const [usarDataCustom, setUsarDataCustom] = useState(false)
 
   useEffect(() => {
     loadTurmas()
-    loadAnosDisponiveis()
   }, [segmento])
 
   useEffect(() => {
@@ -942,33 +941,10 @@ const Relatorios = () => {
           {/* Seleção de Ano Letivo - Padrão Calendário */}
           <div className="ano-letivo-section">
             <h2 style={{ textAlign: 'center', fontSize: '1.2rem', fontWeight: '600', marginBottom: '1rem' }}>Ano Letivo</h2>
-            <div className="ano-selector">
-              <button 
-                className="btn-secondary" 
-                onClick={() => {
-                  const anoAnterior = anoLetivo - 1
-                  if (anosDisponiveis.includes(anoAnterior)) {
-                    setAnoLetivo(anoAnterior)
-                  }
-                }}
-                disabled={!anosDisponiveis.includes(anoLetivo - 1)}
-              >
-                ← {anoLetivo - 1}
-              </button>
-              <h2 className="ano-numero">{anoLetivo}</h2>
-              <button 
-                className="btn-secondary" 
-                onClick={() => {
-                  const anoProximo = anoLetivo + 1
-                  if (anosDisponiveis.includes(anoProximo)) {
-                    setAnoLetivo(anoProximo)
-                  }
-                }}
-                disabled={!anosDisponiveis.includes(anoLetivo + 1)}
-              >
-                {anoLetivo + 1} →
-              </button>
-            </div>
+            <SeletorAnoLetivo
+              anoSelecionado={anoLetivo}
+              onAnoChange={setAnoLetivo}
+            />
           </div>
         </div>
       </div>

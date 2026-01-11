@@ -20,10 +20,14 @@ import {
   ChevronRight,
   FolderOpen,
   Menu,
-  X
+  X,
+  Bell
 } from 'lucide-react'
 import { configuracoesAPI, Configuracao } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
+import { useAnoLetivo } from '../contexts/AnoLetivoContext'
+import Topbar from './Topbar'
+import BottomNav from './BottomNav'
 import './Layout.css'
 
 interface MenuItem {
@@ -37,6 +41,7 @@ const Layout = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const { anoLetivo } = useAnoLetivo()
   const [config, setConfig] = useState<Configuracao | null>(null)
   const [openDropdowns, setOpenDropdowns] = useState<string[]>([])
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -92,6 +97,17 @@ const Layout = () => {
     )
   }
 
+  const handleOpenDrawer = (type: 'gestao' | 'registros') => {
+    // Quando o usuário clica em Gestão ou Registros no bottom nav
+    // Abre o menu lateral com a seção apropriada expandida
+    setOpenDropdowns([type === 'gestao' ? 'Gestão' : 'Registros'])
+    setMobileMenuOpen(true)
+  }
+
+  const handleNotificationClick = () => {
+    navigate('/notificacoes')
+  }
+
   const menuItems: MenuItem[] = [
     { path: '/dashboard', icon: LayoutDashboard, label: config?.nomeEscola ? `SGE - ${config.nomeEscola}` : 'SGE' },
     { 
@@ -121,11 +137,18 @@ const Layout = () => {
         { path: '/relatorios-administrativos', icon: FileBarChart, label: 'Relatórios Administrativos' },
       ]
     },
+    { path: '/notificacoes', icon: Bell, label: 'Notificações' },
     { path: '/configuracoes', icon: Settings, label: 'Configurações' },
   ]
 
   return (
     <div className="layout">
+      {/* Topbar - Desktop e Tablet */}
+      <Topbar 
+        onNotificationClick={handleNotificationClick}
+        notificationCount={0}
+      />
+
       {/* Botão Hambúrguer para Mobile */}
       <button 
         className="mobile-menu-toggle"
@@ -260,8 +283,25 @@ const Layout = () => {
       </button>
 
       <main className={`content ${desktopMenuCollapsed ? 'expanded' : ''}`}>
+        {/* Indicador de Ano Letivo - Apenas Mobile */}
+        <div className="ano-letivo-indicator">
+          <Calendar size={16} />
+          <span>Ano Letivo: <strong>{anoLetivo}</strong></span>
+          <button 
+            className="btn-alterar-ano"
+            onClick={() => navigate('/configuracoes')}
+            title="Alterar ano letivo em Configurações"
+          >
+            <Settings size={14} />
+            Alterar
+          </button>
+        </div>
+        
         <Outlet />
       </main>
+
+      {/* Bottom Navigation - Mobile Only */}
+      <BottomNav onOpenDrawer={handleOpenDrawer} />
     </div>
   )
 }

@@ -1,6 +1,30 @@
+/**
+ * ========================================
+ * SISTEMA DE GESTÃO ESCOLAR (SGE)
+ * Frontend Application
+ * ========================================
+ * 
+ * @copyright Copyright (c) 2026 Rodrigo Grillo Moreira
+ * @license PROPRIETARY - Todos os direitos reservados
+ * 
+ * CONFIDENCIAL E PROPRIETÁRIO
+ * 
+ * Este código é propriedade exclusiva e contém informações
+ * confidenciais. Uso não autorizado, cópia, modificação ou
+ * distribuição são estritamente proibidos e sujeitos a
+ * ações legais.
+ * 
+ * Licenciado para: [Cliente/Instituição]
+ * 
+ * @author Rodrigo Grillo Moreira
+ * @version 1.0.0
+ * @since 2026-01-10
+ */
+
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { AuthProvider } from './contexts/AuthContext'
+import { AnoLetivoProvider } from './contexts/AnoLetivoContext'
 import PrivateRoute from './components/PrivateRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -24,18 +48,20 @@ import RelatoriosAdministrativos from './pages/RelatoriosAdministrativos'
 import Habilidades from './pages/Habilidades'
 import Configuracoes from './pages/Configuracoes'
 import BoletimDesempenho from './pages/BoletimDesempenho'
+import NotificacoesConfig from './pages/NotificacoesConfig'
 
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Rotas públicas */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/user-management" element={<UserManagement />} />
+        <AnoLetivoProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Rotas públicas */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/user-management" element={<UserManagement />} />
 
             {/* Rotas privadas */}
             <Route path="/" element={
@@ -61,9 +87,11 @@ function App() {
               <Route path="relatorios" element={<Relatorios />} />
               <Route path="relatorios-administrativos" element={<RelatoriosAdministrativos />} />
               <Route path="configuracoes" element={<Configuracoes />} />
+              <Route path="notificacoes" element={<NotificacoesConfig />} />
             </Route>
           </Routes>
         </BrowserRouter>
+        </AnoLetivoProvider>
       </AuthProvider>
     </ThemeProvider>
   )

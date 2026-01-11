@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, turmasAPI, Turma, Aluno } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
+import { useAnoLetivo } from '../contexts/AnoLetivoContext'
 import { isAdmin, isProfessor } from '../lib/permissions'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -35,13 +36,13 @@ interface DadosBoletim {
 
 const BoletimDesempenho = () => {
   const { user } = useAuth()
+  const { anoLetivo } = useAnoLetivo()
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [alunos, setAlunos] = useState<Aluno[]>([])
   const [selectedTurma, setSelectedTurma] = useState<string>('')
   const [selectedAluno, setSelectedAluno] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [dadosBoletim, setDadosBoletim] = useState<DadosBoletim | null>(null)
-  const [anoLetivo, setAnoLetivo] = useState<number>(new Date().getFullYear())
   const [config, setConfig] = useState<any>(null)
   const [professorTurmas, setProfessorTurmas] = useState<string[]>([])
   const [trimestre, setTrimestre] = useState<number>(1)
@@ -452,36 +453,6 @@ const BoletimDesempenho = () => {
         <h1>Boletim de Desempenho</h1>
       </div>
 
-      {/* Seleção de Ano Letivo */}
-      <div className="selection-section">
-        <div className="selection-header">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="selection-icon">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-          <h2>1. Selecione o Ano Letivo</h2>
-        </div>
-        <div className="selection-grid">
-          {[2023, 2024, 2025, 2026].map(ano => (
-            <button
-              key={ano}
-              className={`selection-btn ${anoLetivo === ano ? 'active' : ''}`}
-              onClick={() => {
-                setAnoLetivo(ano)
-                setSelectedTurma('')
-                setSelectedAluno('')
-              }}
-            >
-              <div className="selection-btn-content">
-                <span className="selection-btn-title">{ano}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Seleção de Período */}
       <div className="selection-section">
         <div className="selection-header">
@@ -489,7 +460,7 @@ const BoletimDesempenho = () => {
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
-          <h2>2. Selecione o Período</h2>
+          <h2>1. Selecione o Período</h2>
         </div>
         <div className="selection-grid">
           <button
@@ -528,7 +499,7 @@ const BoletimDesempenho = () => {
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
           </svg>
-          <h2>3. Selecione a Turma</h2>
+          <h2>2. Selecione a Turma</h2>
         </div>
         <div className="selection-grid">
           {turmas.map(turma => (
@@ -556,7 +527,7 @@ const BoletimDesempenho = () => {
               <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
               <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
             </svg>
-            <h2>4. Selecione o Aluno</h2>
+            <h2>3. Selecione o Aluno</h2>
           </div>
           <div className="selection-grid">
             {alunos.length === 0 ? (

@@ -1,43 +1,166 @@
-# Dependencies
-node_modules/
-.pnp
-.pnp.js
+# ========================================
+# SISTEMA DE GESTÃO ESCOLAR (SGE)
+# .gitignore - Proteção de Arquivos Sensíveis
+# Copyright (c) 2026 - PROPRIETARY
+# ========================================
 
-# Testing
-coverage/
-
-# Production
-build/
-dist/
-
-# Misc
-.DS_Store
+# ===================
+# CRÍTICO - SEGREDOS
+# ===================
 .env
 .env.local
+.env.development
 .env.development.local
-.env.test.local
+.env.production
 .env.production.local
+.env.test
+.env.test.local
+*.key
+*.pem
+*.p12
+*.cert
+*.crt
+secrets/
+config/secrets.json
+credentials.json
 
-# Logs
+# ===================
+# BACKEND
+# ===================
+backend/.env
+backend/.env.*
+backend/node_modules/
+backend/dist/
+backend/build/
+backend/uploads/reconhecimento-facial/*
+!backend/uploads/reconhecimento-facial/.gitkeep
+backend/uploads/registro-ponto/*
+!backend/uploads/registro-ponto/.gitkeep
+backend/.cache/
+backend/temp/
+
+# Prisma
+backend/prisma/.env
+backend/prisma/dev.db
+backend/prisma/migrations/*.sql
+prisma/migrations/
+
+# ===================
+# FRONTEND
+# ===================
+frontend/.env
+frontend/.env.*
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.cache/
+frontend/temp/
+frontend/uploads/
+
+# ===================
+# BANCO DE DADOS
+# ===================
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+backup/
+dump/
+migrations/backup/
+
+# ===================
+# LOGS
+# ===================
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
-# Editor
+# ===================
+# DEPENDÊNCIAS
+# ===================
+node_modules/
+.pnp
+.pnp.js
+bower_components/
+
+# ===================
+# BUILD / DIST
+# ===================
+dist/
+dist-ssr/
+build/
+out/
+*.tsbuildinfo
+
+# ===================
+# TESTING
+# ===================
+coverage/
+*.lcov
+.nyc_output
+lib-cov
+
+# ===================
+# SISTEMA OPERACIONAL
+# ===================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ===================
+# IDEs E EDITORES
+# ===================
+# VSCode
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
+.history/
+*.code-workspace
+
+# JetBrains
 .idea
+.idea/
+*.iml
+
+# Vim/Emacs
 *.swp
 *.swo
 *~
 
-# Prisma
-prisma/migrations/
+# ===================
+# CACHE
+# ===================
+.cache/
+.parcel-cache/
+.vite/
+.eslintcache
 
-# TypeScript
-*.tsbuildinfo
-
-# OS
-Thumbs.db
+# ===================
+# TEMPORÁRIOS
+# ===================
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup

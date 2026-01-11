@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
+import eventsService from '../services/events.service';
 
 export const notasRouter = Router();
 
@@ -281,6 +282,59 @@ notasRouter.post('/salvar', async (req, res) => {
 
     // Atualizar nota final anual
     const notaFinal = await atualizarNotaFinal(data.alunoId, data.disciplinaId, anoLetivo);
+
+    // 🔔 DISPARAR EVENTO DE NOTIFICAÇÃO
+    try {
+      // Buscar dados completos para notificação
+      const aluno = await prisma.alunos.findUnique({ where: { id: data.alunoId } });
+      const disciplina = await prisma.disciplinas.findUnique({
+        where: { id: data.disciplinaId },
+        include: { professores: true }
+      });
+      const turma = aluno?.turmaId ? await prisma.turmas.findUnique({ where: { id: aluno.turmaId } }) : null;
+
+      // Determinar qual avaliação foi lançada
+      let tipoAvaliacao = 'Avaliação';
+      let notaLancada = 0;
+      let peso = undefined;
+      
+      if (data.avaliacaoEAC !== null && data.avaliacaoEAC !== undefined) {
+        tipoAvaliacao = 'Avaliação EAC';
+        notaLancada = data.avaliacaoEAC;
+      } else if (data.avaliacao03 !== null && data.avaliacao03 !== undefined) {
+        tipoAvaliacao = 'Avaliação 03';
+        notaLancada = data.avaliacao03;
+      } else if (data.avaliacao02 !== null && data.avaliacao02 !== undefined) {
+        tipoAvaliacao = 'Avaliação 02';
+        notaLancada = data.avaliacao02;
+      } else if (data.avaliacao01 !== null && data.avaliacao01 !== undefined) {
+        tipoAvaliacao = 'Avaliação 01';
+        notaLancada = data.avaliacao01;
+      }
+
+      if (aluno && disciplina) {
+        eventsService.emitirNotaLancada({
+          alunoId: aluno.id,
+          alunoNome: aluno.nome,
+          disciplinaId: disciplina.id,
+          disciplinaNome: disciplina.nome,
+          trimestre: data.trimestre,
+          tipoAvaliacao,
+          nota: notaLancada,
+          peso,
+          mediaAtual: notaFinal?.mediaFinal || undefined,
+          mediaMinima: 6.0,
+          anoLetivo,
+          professorId: disciplina.professorId || '',
+          professorNome: disciplina.professores?.nome || 'Professor',
+          turmaId: turma?.id || '',
+          turmaNome: turma?.nome || 'Turma'
+        });
+      }
+    } catch (notifError) {
+      console.error('⚠️ Erro ao disparar evento de nota:', notifError);
+      // Não falha a requisição se notificação falhar
+    }
 
     res.json({ nota, notaFinal });
   } catch (error) {

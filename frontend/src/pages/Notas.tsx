@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Edit, X, Save, Users, GraduationCap, BookOpen, CheckCircle, XCircle } from 'lucide-react'
 import { alunosAPI, disciplinasAPI, turmasAPI, Aluno, Disciplina, Turma, api } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
+import { useAnoLetivo } from '../contexts/AnoLetivoContext'
 import { isAdmin, isProfessor } from '../lib/permissions'
 import BackButton from '../components/BackButton'
 import './ModernPages.css'
@@ -35,6 +36,7 @@ interface NotaFinal {
 
 const Notas = () => {
   const { user } = useAuth()
+  const { anoLetivo } = useAnoLetivo()
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [alunos, setAlunos] = useState<Aluno[]>([])
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([])
@@ -48,25 +50,11 @@ const Notas = () => {
   const [notaFinal, setNotaFinal] = useState<NotaFinal | null>(null)
   const [editingNota, setEditingNota] = useState<NotaData | null>(null)
   const [saving, setSaving] = useState(false)
-  const [anoLetivo, setAnoLetivo] = useState<number>(new Date().getFullYear())
-  const [anosDisponiveis, setAnosDisponiveis] = useState<number[]>([])
   const [professorDisciplinas, setProfessorDisciplinas] = useState<string[]>([])
   const [professorTurmas, setProfessorTurmas] = useState<string[]>([])
 
   useEffect(() => {
     loadData()
-    loadAnosDisponiveis()
-    
-    // Adicionar listener para recarregar quando a janela ganhar foco
-    const handleFocus = () => {
-      loadAnosDisponiveis()
-    }
-    
-    window.addEventListener('focus', handleFocus)
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus)
-    }
   }, [])
 
   useEffect(() => {
@@ -100,23 +88,6 @@ const Notas = () => {
       loadNotas()
     }
   }, [selectedAluno, selectedDisciplina, anoLetivo])
-
-  const loadAnosDisponiveis = async () => {
-    try {
-      const response = await api.get('/calendario-escolar')
-      const anos = response.data.map((cal: any) => cal.ano)
-      const anosUnicos = [...new Set(anos)].sort((a: number, b: number) => b - a)
-      setAnosDisponiveis(anosUnicos)
-      
-      if (anosUnicos.length > 0) {
-        const anoInicial = anosUnicos.includes(anoLetivo) ? anoLetivo : anosUnicos[0]
-        setAnoLetivo(anoInicial)
-      }
-    } catch (error) {
-      console.error('Erro ao carregar anos disponíveis:', error)
-      setAnosDisponiveis([])
-    }
-  }
 
   const loadProfessorDisciplinas = async () => {
     if (!user?.email) return
@@ -458,65 +429,11 @@ const Notas = () => {
         <h1>Notas e Avaliações</h1>
       </div>
 
-      {/* Seleção de Ano Letivo */}
-      <div className="selection-section">
-        <div className="selection-header">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="selection-icon">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-          <h2>1. Selecione o Ano Letivo</h2>
-        </div>
-        {anosDisponiveis.length === 0 ? (
-          <p className="empty-message">Nenhum ano letivo disponível. Cadastre na aba "Calendário Escolar".</p>
-        ) : (
-          <div className="ano-letivo-selector-wrapper">
-            <div className="ano-selector">
-              <button 
-                className="btn-secondary" 
-                onClick={() => {
-                  const indexAtual = anosDisponiveis.indexOf(anoLetivo)
-                  if (indexAtual < anosDisponiveis.length - 1) {
-                    const novoAno = anosDisponiveis[indexAtual + 1]
-                    setAnoLetivo(novoAno)
-                    setSelectedTurma('')
-                    setSelectedAluno('')
-                    setSelectedDisciplina('')
-                  }
-                }}
-                disabled={anosDisponiveis.indexOf(anoLetivo) === anosDisponiveis.length - 1}
-              >
-                ← {anosDisponiveis[anosDisponiveis.indexOf(anoLetivo) + 1] || '---'}
-              </button>
-              <h2 className="ano-numero">{anoLetivo}</h2>
-              <button 
-                className="btn-secondary" 
-                onClick={() => {
-                  const indexAtual = anosDisponiveis.indexOf(anoLetivo)
-                  if (indexAtual > 0) {
-                    const novoAno = anosDisponiveis[indexAtual - 1]
-                    setAnoLetivo(novoAno)
-                    setSelectedTurma('')
-                    setSelectedAluno('')
-                    setSelectedDisciplina('')
-                  }
-                }}
-                disabled={anosDisponiveis.indexOf(anoLetivo) === 0}
-              >
-                {anosDisponiveis[anosDisponiveis.indexOf(anoLetivo) - 1] || '---'} →
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* Seleção de Turma */}
       <div className="selection-section">
         <div className="selection-header">
           <Users size={24} className="selection-icon" />
-          <h2>2. Selecione a Turma</h2>
+          <h2>1. Selecione a Turma</h2>
         </div>
         <div className="selection-grid">
           {turmas.map(turma => (
@@ -542,7 +459,7 @@ const Notas = () => {
         <div className="selection-section">
           <div className="selection-header">
             <GraduationCap size={24} className="selection-icon" />
-            <h2>3. Selecione o Aluno</h2>
+            <h2>2. Selecione o Aluno</h2>
           </div>
           <div className="selection-grid">
             {alunos.length === 0 ? (
@@ -573,7 +490,7 @@ const Notas = () => {
         <div className="selection-section">
           <div className="selection-header">
             <BookOpen size={24} className="selection-icon" />
-            <h2>4. Selecione a Disciplina</h2>
+            <h2>3. Selecione a Disciplina</h2>
           </div>
           <div className="selection-grid">
             {disciplinasDaTurma.length === 0 ? (

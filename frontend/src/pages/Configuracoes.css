@@ -35,6 +35,58 @@
   color: var(--text-primary);
   margin-bottom: 24px;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Seção Ano Letivo */
+.ano-letivo-section-config {
+  background: linear-gradient(135deg, rgba(0, 188, 212, 0.05), rgba(0, 188, 212, 0.02));
+  padding: 24px;
+  border-radius: 12px;
+  border: 2px solid rgba(0, 188, 212, 0.3);
+}
+
+.section-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.ano-letivo-selector-wrapper {
+  margin: 24px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.ano-letivo-info {
+  margin-top: 24px;
+  padding: 16px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  border-left: 4px solid #00BCD4;
+}
+
+.info-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #00BCD4, #0097A7);
+  color: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.info-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 12px 0 0 0;
 }
 
 /* Logo Upload */

@@ -369,61 +369,100 @@ calendarioRouter.post('/importar-excel', upload.single('arquivo'), async (req, r
             descricaoOriginal: descricaoValue
           });
           
-          // Mapear tipo para enum (mantendo descrição original)
+          // IMPORTANTE: Todas as chaves devem estar SEM ACENTOS (já normalizadas)
+          // pois a função normalizarTipo remove acentos antes de buscar no mapa
           const tipoMap: Record<string, string> = {
+            // Inicio Ano Letivo (SEM acentos)
             'inicio ano letivo': 'INICIO_ANO_LETIVO',
-            'início ano letivo': 'INICIO_ANO_LETIVO',
+            'inicio do ano letivo': 'INICIO_ANO_LETIVO',
             'inicio do ano': 'INICIO_ANO_LETIVO',
             'inicio das aulas': 'INICIO_ANO_LETIVO',
+            
+            // Fim Ano Letivo
             'fim ano letivo': 'FIM_ANO_LETIVO',
+            'fim do ano letivo': 'FIM_ANO_LETIVO',
             'fim do ano': 'FIM_ANO_LETIVO',
             'encerramento': 'FIM_ANO_LETIVO',
+            'encerramento do ano': 'FIM_ANO_LETIVO',
+            
+            // Dia Letivo
             'dia letivo': 'DIA_LETIVO',
             'aula': 'DIA_LETIVO',
             'letivo': 'DIA_LETIVO',
-            'dia não letivo': 'DIA_NAO_LETIVO',
+            
+            // Dia Não Letivo
             'dia nao letivo': 'DIA_NAO_LETIVO',
-            'não letivo': 'DIA_NAO_LETIVO',
             'nao letivo': 'DIA_NAO_LETIVO',
-            'parada pedagógica': 'PARADA_PEDAGOGICA',
+            
+            // Parada Pedagógica e Jornada (SEM acentos!)
             'parada pedagogica': 'PARADA_PEDAGOGICA',
             'parada': 'PARADA_PEDAGOGICA',
-            'formação': 'PARADA_PEDAGOGICA',
             'formacao': 'PARADA_PEDAGOGICA',
+            'jornada pedagogica': 'PARADA_PEDAGOGICA',
+            'jornada': 'PARADA_PEDAGOGICA',
+            'planejamento': 'PARADA_PEDAGOGICA',
+            
+            // Recesso
             'recesso': 'RECESSO',
-            'férias': 'RECESSO',
             'ferias': 'RECESSO',
-            'sábado letivo': 'SABADO_LETIVO',
+            
+            // Sábado Letivo (SEM acento!)
             'sabado letivo': 'SABADO_LETIVO',
+            
+            // Feriado
             'feriado': 'FERIADO',
+            
+            // Início Trimestre (SEM acentos!)
             'inicio trimestre': 'INICIO_TRIMESTRE',
-            'início trimestre': 'INICIO_TRIMESTRE',
-            'inicio 1º trimestre': 'INICIO_TRIMESTRE',
+            'inicio de trimestre': 'INICIO_TRIMESTRE',
+            'inicio 1o trimestre': 'INICIO_TRIMESTRE',
             'inicio 1 trimestre': 'INICIO_TRIMESTRE',
             'inicio primeiro trimestre': 'INICIO_TRIMESTRE',
-            'inicio 2º trimestre': 'INICIO_TRIMESTRE',
+            'inicio 2o trimestre': 'INICIO_TRIMESTRE',
             'inicio 2 trimestre': 'INICIO_TRIMESTRE',
             'inicio segundo trimestre': 'INICIO_TRIMESTRE',
-            'inicio 3º trimestre': 'INICIO_TRIMESTRE',
+            'inicio 3o trimestre': 'INICIO_TRIMESTRE',
             'inicio 3 trimestre': 'INICIO_TRIMESTRE',
             'inicio terceiro trimestre': 'INICIO_TRIMESTRE',
+            
+            // Fim Trimestre
             'fim trimestre': 'FIM_TRIMESTRE',
-            'fim 1º trimestre': 'FIM_TRIMESTRE',
+            'fim de trimestre': 'FIM_TRIMESTRE',
+            'fim 1o trimestre': 'FIM_TRIMESTRE',
             'fim 1 trimestre': 'FIM_TRIMESTRE',
             'fim primeiro trimestre': 'FIM_TRIMESTRE',
-            'fim 2º trimestre': 'FIM_TRIMESTRE',
+            'fim 2o trimestre': 'FIM_TRIMESTRE',
             'fim 2 trimestre': 'FIM_TRIMESTRE',
             'fim segundo trimestre': 'FIM_TRIMESTRE',
-            'fim 3º trimestre': 'FIM_TRIMESTRE',
+            'fim 3o trimestre': 'FIM_TRIMESTRE',
             'fim 3 trimestre': 'FIM_TRIMESTRE',
             'fim terceiro trimestre': 'FIM_TRIMESTRE',
+            
+            // Conselho de Classe / EAC (SEM acentos!)
+            'conselho de classe': 'PERIODO_EAC',
+            'conselho': 'PERIODO_EAC',
+            'conselho extraordinario': 'PERIODO_EAC',
             'periodo eac': 'PERIODO_EAC',
-            'período eac': 'PERIODO_EAC',
             'eac': 'PERIODO_EAC',
           };
           
-          const tipoString = String(tipoValue || '').toLowerCase().trim();
-          const tipo = tipoMap[tipoString] || 'FERIADO'; // Default para FERIADO se não reconhecer
+          // Normalizar o tipo: lowercase, remover acentos, trim
+          const normalizarTipo = (str: string) => {
+            return String(str || '')
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+              .trim();
+          };
+          
+          const tipoString = normalizarTipo(tipoValue);
+          const tipo = tipoMap[tipoString] || 'FERIADO';
+          
+          console.log(`🔍 Mapeamento:`, {
+            original: tipoValue,
+            normalizado: tipoString,
+            tipoFinal: tipo
+          });
           
           // SEMPRE usar a descrição do Excel se existir, senão usar o tipo original
           let descricaoFinal = '';

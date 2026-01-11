@@ -1,3 +1,26 @@
+/**
+ * ========================================
+ * SISTEMA DE GESTÃO ESCOLAR (SGE)
+ * Backend API Server
+ * ========================================
+ * 
+ * @copyright Copyright (c) 2026 Rodrigo Grillo Moreira
+ * @license PROPRIETARY - Todos os direitos reservados
+ * 
+ * CONFIDENCIAL E PROPRIETÁRIO
+ * 
+ * Este código é propriedade exclusiva e contém informações
+ * confidenciais. Uso não autorizado, cópia, modificação ou
+ * distribuição são estritamente proibidos e sujeitos a
+ * ações legais.
+ * 
+ * Licenciado para: [Cliente/Instituição]
+ * 
+ * @author Rodrigo Grillo Moreira
+ * @version 1.0.0
+ * @since 2026-01-10
+ */
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -17,6 +40,8 @@ import { gradeHorariaRouter } from './routes/grade-horaria.routes';
 import { frequenciaRouter } from './routes/frequencia.routes';
 import { pontoRouter } from './routes/ponto.routes';
 import reconhecimentoFacialRouter from './routes/reconhecimento-facial.routes';
+import { notificacoesRouter } from './routes/notificacoes.routes';
+import './services/notification.service'; // Inicializar listeners de notificações
 
 dotenv.config();
 
@@ -74,6 +99,7 @@ app.use('/api/grade-horaria', gradeHorariaRouter);
 app.use('/api/registro-frequencia', frequenciaRouter);
 app.use('/api/ponto', pontoRouter);
 app.use('/api/reconhecimento-facial', reconhecimentoFacialRouter);
+app.use('/api/notificacoes', notificacoesRouter);
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {

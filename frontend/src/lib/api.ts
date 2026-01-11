@@ -289,3 +289,107 @@ export const registroFrequenciaAPI = {
       params: { dataInicio, dataFim }
     }),
 };
+
+// Notificações Types
+export interface ConfiguracaoNotificacao {
+  id?: string;
+  usuarioId: number;
+  tipo: 'RESPONSAVEL' | 'PROFESSOR' | 'GESTAO';
+  canal: 'WHATSAPP' | 'TELEGRAM' | 'SMS';
+  telefone: string;
+  telegramChatId?: string;
+  notificarFrequencia: boolean;
+  notificarNotas: boolean;
+  notificarAlertas: boolean;
+  horarioInicio: string;
+  horarioFim: string;
+  diasSemana: string[];
+  resumoDiario: boolean;
+  frequenciaMensagens: 'TODAS' | 'ALERTAS' | 'RESUMO';
+  ativo: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface HistoricoNotificacao {
+  id: string;
+  usuarioId: number;
+  tipo: 'FREQUENCIA' | 'NOTA' | 'ALERTA' | 'CHAT' | 'RESUMO';
+  canal: 'WHATSAPP' | 'TELEGRAM' | 'SMS';
+  telefone: string;
+  mensagem: string;
+  status: 'PENDENTE' | 'ENVIADA' | 'ENTREGUE' | 'LIDA' | 'FALHA';
+  tentativas: number;
+  metadata?: any;
+  enviadoEm?: string;
+  entreguEm?: string;
+  lidoEm?: string;
+  erroMensagem?: string;
+  createdAt: string;
+}
+
+export interface TesteNotificacao {
+  telefone: string;
+  canal: 'WHATSAPP' | 'TELEGRAM' | 'SMS';
+  mensagem: string;
+}
+
+export interface StatusSistema {
+  notificacoesAtivas: boolean;
+  modoTeste: boolean;
+  canaisDisponiveis: {
+    whatsapp: boolean;
+    telegram: boolean;
+    sms: boolean;
+  };
+  iaDisponivel: boolean;
+  webhooksConfigurados: {
+    whatsapp: boolean;
+    telegram: boolean;
+  };
+  filaAtiva: boolean;
+  ultimaExecucao?: string;
+}
+
+export const notificacoesAPI = {
+  // Configuração
+  getConfig: (usuarioId: number) => 
+    api.get<{ success: boolean; configuracao: ConfiguracaoNotificacao }>(`/notificacoes/configuracao/${usuarioId}`),
+  
+  saveConfig: (data: ConfiguracaoNotificacao) => 
+    api.post<{ success: boolean; configuracao: ConfiguracaoNotificacao }>('/notificacoes/configuracao', data),
+  
+  deleteConfig: (usuarioId: number) => 
+    api.delete<{ success: boolean; message: string }>(`/notificacoes/configuracao/${usuarioId}`),
+  
+  // Teste
+  testNotification: (data: TesteNotificacao) => 
+    api.post<{ success: boolean; message: string; resultado: any }>('/notificacoes/teste', data),
+  
+  // Histórico
+  getHistorico: (params?: { 
+    usuarioId?: number; 
+    tipo?: string; 
+    canal?: string; 
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }) => 
+    api.get<{ success: boolean; total: number; historico: HistoricoNotificacao[] }>('/notificacoes/historico', { params }),
+  
+  // Estatísticas
+  getEstatisticas: (params: { 
+    dataInicio: string; 
+    dataFim: string; 
+    usuarioId?: number;
+  }) => 
+    api.get<{ success: boolean; periodo: any; estatisticas: any }>('/notificacoes/estatisticas', { params }),
+  
+  // Status do sistema
+  getStatus: () => 
+    api.get<{ success: boolean; status: StatusSistema }>('/notificacoes/status'),
+  
+  // Chat IA
+  chat: (data: { usuarioId: number; mensagem: string; contexto?: any }) => 
+    api.post<{ success: boolean; resposta: string; timestamp: string }>('/notificacoes/chat', data),
+};

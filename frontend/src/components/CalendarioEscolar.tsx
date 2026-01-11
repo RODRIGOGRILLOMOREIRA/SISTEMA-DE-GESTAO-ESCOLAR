@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { Plus, Edit, Trash2, Calendar as CalendarIcon, X, Save, Upload, FileSpreadsheet } from 'lucide-react'
 import { api } from '../lib/api'
+import { useAnoLetivo } from '../contexts/AnoLetivoContext'
+import SeletorAnoLetivo from './SeletorAnoLetivo'
 import './CalendarioEscolar.css'
 import '../pages/CommonPages.css'
 import './Modal.css'
@@ -35,8 +37,9 @@ const tiposEvento = [
 ]
 
 const CalendarioEscolar = () => {
+  const { anoLetivo: anoLetivoGlobal } = useAnoLetivo()
   const [calendarios, setCalendarios] = useState<Calendario[]>([])
-  const [anoSelecionado, setAnoSelecionado] = useState<number>(new Date().getFullYear())
+  const [anoSelecionado, setAnoSelecionado] = useState<number>(anoLetivoGlobal)
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
@@ -131,11 +134,17 @@ const CalendarioEscolar = () => {
       formData.append('ano', String(anoSelecionado))
       formData.append('substituir', String(substituirEventos))
 
+      console.log('📤 Enviando arquivo:', file.name, 'Ano:', anoSelecionado, 'Substituir:', substituirEventos)
+
       const response = await api.post('/calendario/importar-excel', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       })
+
+      console.log('📥 Resposta da importação:', response.data)
+      console.log('📊 Total importado:', response.data.eventosImportados, 'eventos')
+      console.log('📋 Calendário completo:', response.data.calendario)
 
       alert(`✅ ${response.data.message}\n\n📊 Total de eventos: ${response.data.eventosTotal}`)
       setShowImportModal(false)
@@ -147,7 +156,8 @@ const CalendarioEscolar = () => {
       }, 500)
       
     } catch (error: any) {
-      console.error('Erro ao importar Excel:', error)
+      console.error('❌ Erro ao importar Excel:', error)
+      console.error('📋 Detalhes do erro:', error.response?.data)
       const mensagemErro = error.response?.data?.detalhes || error.response?.data?.error || 'Erro ao importar arquivo'
       alert(`❌ Erro ao importar Excel:\n\n${mensagemErro}`)
     } finally {
@@ -270,20 +280,15 @@ const CalendarioEscolar = () => {
       <div className="page-header">
         <div style={{ width: '100%', textAlign: 'center' }}>
           <h1 className="calendario-titulo">Calendário Escolar</h1>
-          <div className="ano-selector">
-            <button className="btn-secondary" onClick={() => setAnoSelecionado(anoSelecionado - 1)}>
-              ← {anoSelecionado - 1}
-            </button>
-            <h2 className="ano-numero">{anoSelecionado}</h2>
-            <button className="btn-secondary" onClick={() => setAnoSelecionado(anoSelecionado + 1)}>
-              {anoSelecionado + 1} →
-            </button>
-          </div>
+          
+          <SeletorAnoLetivo
+            anoSelecionado={anoSelecionado}
+            onAnoChange={setAnoSelecionado}
+            showImportButton={true}
+            onImport={() => setShowImportModal(true)}
+          />
+          
           <div className="calendario-acoes">
-            <button className="btn-success" onClick={() => setShowImportModal(true)}>
-              <Upload size={20} />
-              Importar Excel
-            </button>
             <button className="btn-primary btn-add-evento" onClick={() => openModal()}>
               <Plus size={20} />
               Adicionar Evento
@@ -311,8 +316,8 @@ const CalendarioEscolar = () => {
                         <div 
                           className="evento-tipo-badge"
                           style={{ backgroundColor: getTipoColor(evento.tipo) }}
+                          title={getTipoLabel(evento.tipo)}
                         >
-                          {getTipoLabel(evento.tipo)}
                         </div>
                         <div className="evento-acoes">
                           <button 
@@ -332,9 +337,9 @@ const CalendarioEscolar = () => {
                         </div>
                       </div>
                       
-                      {evento.descricao && (
-                        <div className="evento-descricao">{evento.descricao}</div>
-                      )}
+                      <div className="evento-titulo">
+                        {evento.descricao || getTipoLabel(evento.tipo)}
+                      </div>
                       
                       <div className="evento-datas">
                         <div className="data-item">

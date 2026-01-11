@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { 
   Users, GraduationCap, School, BookOpen, 
   Briefcase, GraduationCapIcon, Calendar, 
-  Grid, FileText, UserCog, ClipboardList, Award, ArrowLeft
+  Grid, FileText, UserCog, ClipboardList, Award, ArrowLeft, Bell
 } from 'lucide-react'
 import { alunosAPI, professoresAPI, turmasAPI, disciplinasAPI, configuracoesAPI } from '../lib/api'
 import './Dashboard.css'
@@ -80,6 +80,7 @@ const Dashboard = () => {
   const administrativaCards = [
     { title: 'Calendário Escolar', route: '/calendario-escolar', icon: Calendar, color: '#06b6d4', description: 'Eventos e datas' },
     { title: 'Grade de Horários', route: '/grade-horaria', icon: Grid, color: '#ec4899', description: 'Horários das aulas' },
+    { title: 'Notificações', route: '/notificacoes', icon: Bell, color: '#3b82f6', description: 'Sistema de comunicação' },
     { title: 'Relatórios Administrativos', route: '/relatorios-administrativos', icon: FileText, color: '#f59e0b', description: 'Documentos administrativos' },
     { title: 'Relatórios Pedagógicos', route: '/relatorios', icon: ClipboardList, color: '#8b5cf6', description: 'Relatórios de ensino' },
   ]

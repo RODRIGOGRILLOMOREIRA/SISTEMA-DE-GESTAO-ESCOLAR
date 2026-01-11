@@ -406,3 +406,102 @@ model reconhecimento_facial {
   @@index([pessoaId])
   @@index([tipoPessoa])
 }
+
+// Sistema de Notificações Inteligentes
+model configuracao_notificacao {
+  id                    String                 @id @default(uuid())
+  usuarioId             String                 @unique
+  tipoPerfil            TipoPerfilNotificacao  
+  whatsappAtivo         Boolean                @default(true)
+  smsAtivo              Boolean                @default(false)
+  notificarFrequencia   Boolean                @default(true)
+  notificarNotas        Boolean                @default(true)
+  notificarAlertas      Boolean                @default(true)
+  resumoDiario          Boolean                @default(false)
+  horarioInicio         String?                @default("08:00")
+  horarioFim            String?                @default("20:00")
+  frequenciaMensagens   FrequenciaMensagens    @default(TODAS)
+  // Filtros específicos (JSON)
+  disciplinasIds        String?                // JSON array para professores
+  turmasIds             String?                // JSON array para professores
+  alunosIds             String?                // JSON array para responsáveis
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@index([usuarioId])
+  @@index([tipoPerfil])
+}
+
+model log_notificacao {
+  id                String                 @id @default(uuid())
+  destinatarioId    String
+  tipoPerfil        TipoPerfilNotificacao
+  canal             CanalNotificacao
+  tipoEvento        TipoEventoNotificacao
+  conteudo          String                 // Conteúdo da mensagem
+  metadata          String?                // JSON com dados extras (alunoId, disciplinaId, etc)
+  status            StatusNotificacao      @default(PENDENTE)
+  tentativas        Int                    @default(0)
+  erroMsg           String?
+  enviadoEm         DateTime?
+  confirmarRecebido Boolean                @default(false)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  @@index([destinatarioId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model webhook_message {
+  id                String   @id @default(uuid())
+  origem            String   // whatsapp, telegram, sms
+  remetenteId       String   // Número ou ID do remetente
+  destinatarioId    String?  // ID do usuário no sistema
+  mensagem          String
+  metadata          String?  // JSON com dados extras
+  processado        Boolean  @default(false)
+  respostaIA        String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([remetenteId])
+  @@index([processado])
+  @@index([createdAt])
+}
+
+enum TipoPerfilNotificacao {
+  GESTAO
+  PROFESSOR
+  RESPONSAVEL
+}
+
+enum FrequenciaMensagens {
+  TODAS           // Cada evento em tempo real
+  ALERTAS         // Apenas alertas importantes
+  RESUMO          // Resumo diário
+}
+
+enum CanalNotificacao {
+  WHATSAPP
+  SMS
+  TELEGRAM
+  EMAIL
+}
+
+enum TipoEventoNotificacao {
+  NOTA_LANCADA
+  FREQUENCIA_FALTA
+  FREQUENCIA_PRESENCA
+  ALERTA_MEDIA_BAIXA
+  ALERTA_FREQUENCIA_BAIXA
+  RESUMO_DIARIO
+  MENSAGEM_IA
+}
+
+enum StatusNotificacao {
+  PENDENTE
+  ENVIADO
+  FALHA
+  ENTREGUE
+}
