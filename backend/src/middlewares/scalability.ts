@@ -124,9 +124,10 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
  * Middleware de Compressão de Resposta
  */
 import compression from 'compression';
+import { Request, Response } from 'express';
 
 export const compressionMiddleware = compression({
-  filter: (req, res) => {
+  filter: (req: Request, res: Response) => {
     if (req.headers['x-no-compression']) {
       return false;
     }

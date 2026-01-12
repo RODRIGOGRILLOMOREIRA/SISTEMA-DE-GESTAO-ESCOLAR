@@ -41,7 +41,17 @@ import { frequenciaRouter } from './routes/frequencia.routes';
 import { pontoRouter } from './routes/ponto.routes';
 import reconhecimentoFacialRouter from './routes/reconhecimento-facial.routes';
 import { notificacoesRouter } from './routes/notificacoes.routes';
+import { queuesRouter } from './routes/queues.routes';
+import auditRouter from './routes/audit.routes';
+import backupRouter from './routes/backup.routes';
+import maintenanceRouter from './routes/maintenance.routes';
 import './services/notification.service'; // Inicializar listeners de notificações
+import { backupService } from './services/backup.service'; // Serviço de backup
+import { maintenanceMiddleware } from './middlewares/maintenance'; // Middleware de manutenção
+
+// Inicializar workers de filas em background
+import './workers/notification.worker';
+import './workers/report.worker';
 
 dotenv.config();
 
@@ -78,6 +88,9 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
+// Middleware de modo de manutenção (aplicado globalmente)
+app.use(maintenanceMiddleware);
+
 // Routes
 app.get('/', (req, res) => {
   res.json({ message: 'API Sistema de Gestão Escolar' });
@@ -100,9 +113,23 @@ app.use('/api/registro-frequencia', frequenciaRouter);
 app.use('/api/ponto', pontoRouter);
 app.use('/api/reconhecimento-facial', reconhecimentoFacialRouter);
 app.use('/api/notificacoes', notificacoesRouter);
+app.use('/api/queues', queuesRouter); // Dashboard de filas
+app.use('/api/audit', auditRouter); // Logs de auditoria
+app.use('/api/backup', backupRouter); // Backup automático
+app.use('/api/maintenance', maintenanceRouter); // Modo de manutenção
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`📱 Acesse de outros dispositivos: http://192.168.5.19:${PORT}`);
+  console.log(`📊 Bull Queue workers ativos`);
+  console.log(`   - Notifications Worker: 10 jobs concorrentes`);
+  console.log(`   - Reports Worker: 3 jobs concorrentes`);
+  
+  // Inicializar serviço de backup automático
+  try {
+    await backupService.initialize();
+  } catch (error) {
+    console.error('❌ Erro ao inicializar serviço de backup:', error);
+  }
 });

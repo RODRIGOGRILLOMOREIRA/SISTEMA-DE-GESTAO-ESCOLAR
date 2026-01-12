@@ -3,6 +3,8 @@
  * Breakpoints padronizados para toda a aplicação
  */
 
+import React, { ReactNode } from 'react';
+
 export const breakpoints = {
   mobile: {
     min: 0,

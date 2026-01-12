@@ -28,6 +28,13 @@ model alunos {
   notas            notas[]
   presenca_aluno   PresencaAluno[]
   notas_finais     notas_finais[]   @relation("NotasFinaisToAluno")
+
+  // Índices para otimização de performance
+  @@index([turmaId])
+  @@index([statusMatricula])
+  @@index([turmaId, statusMatricula])
+  @@index([nome])
+  @@index([createdAt])
 }
 
 model calendario_escolar {
@@ -118,6 +125,14 @@ model frequencias {
   updatedAt  DateTime
   alunos     alunos   @relation(fields: [alunoId], references: [id])
   turmas     turmas   @relation(fields: [turmaId], references: [id])
+
+  // Índices para otimização de performance
+  @@index([alunoId])
+  @@index([turmaId])
+  @@index([data])
+  @@index([alunoId, data])
+  @@index([turmaId, data])
+  @@index([presente])
 }
 
 model funcionarios {
@@ -192,6 +207,14 @@ model notas {
   alunos             alunos      @relation(fields: [alunoId], references: [id])
   disciplinas        disciplinas @relation(fields: [disciplinaId], references: [id])
 
+  // Índices para otimização de performance
+  @@index([alunoId])
+  @@index([disciplinaId])
+  @@index([trimestre])
+  @@index([alunoId, trimestre])
+  @@index([disciplinaId, trimestre])
+  @@index([alunoId, disciplinaId, trimestre])
+  @@index([createdAt])
   @@unique([alunoId, disciplinaId, trimestre, anoLetivo])
 }
 
@@ -286,6 +309,12 @@ model turmas {
   registro_frequencia registro_frequencia[]
   professores         professores?          @relation(fields: [professorId], references: [id])
   disciplinas         disciplinas[]         @relation("DisciplinaToTurma")
+
+  // Índices para otimização de performance
+  @@index([professorId])
+  @@index([anoLetivo])
+  @@index([nome])
+  @@index([ano, periodo])
 }
 
 model usuarios {
@@ -448,9 +477,13 @@ model log_notificacao {
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
 
+  // Índices para otimização de performance
   @@index([destinatarioId])
   @@index([status])
   @@index([createdAt])
+  @@index([destinatarioId, status])
+  @@index([tipoEvento])
+  @@index([canal])
 }
 
 model webhook_message {
@@ -504,4 +537,23 @@ enum StatusNotificacao {
   ENVIADO
   FALHA
   ENTREGUE
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  userName   String
+  action     String   // CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+  resource   String   // ALUNO, TURMA, NOTA, FREQUENCIA, etc
+  resourceId String?
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

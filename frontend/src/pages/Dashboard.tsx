@@ -6,7 +6,10 @@ import {
   Grid, FileText, UserCog, ClipboardList, Award, ArrowLeft, Bell
 } from 'lucide-react'
 import { alunosAPI, professoresAPI, turmasAPI, disciplinasAPI, configuracoesAPI } from '../lib/api'
+import { StatsChart } from '../components/charts'
+import { LineChartComponent, BarChartComponent, PieChartComponent } from '../components/Charts'
 import './Dashboard.css'
+import '../components/Charts.css'
 
 type ViewType = 'indicators' | 'equipe' | 'administrativa' | 'pedagogica' | 'registros-pedagogicos'
 
@@ -61,6 +64,35 @@ const Dashboard = () => {
     { title: 'Turmas', value: stats.turmas, icon: School, color: '#10b981' },
     { title: 'Alunos', value: stats.alunos, icon: Users, color: '#3b82f6' },
   ]
+
+  // Dados de exemplo para os gráficos (mês a mês)
+  const chartData = {
+    matriculas: [
+      { name: 'Jan', value: Math.floor(stats.alunos * 0.7) },
+      { name: 'Fev', value: Math.floor(stats.alunos * 0.75) },
+      { name: 'Mar', value: Math.floor(stats.alunos * 0.85) },
+      { name: 'Abr', value: Math.floor(stats.alunos * 0.90) },
+      { name: 'Mai', value: Math.floor(stats.alunos * 0.95) },
+      { name: 'Jun', value: stats.alunos },
+    ],
+    distribuicao: [
+      { name: 'Disciplinas', value: stats.disciplinas },
+      { name: 'Professores', value: stats.professores },
+      { name: 'Turmas', value: stats.turmas },
+    ],
+    frequencia: [
+      { name: 'Turma A', value: 92 },
+      { name: 'Turma B', value: 88 },
+      { name: 'Turma C', value: 95 },
+      { name: 'Turma D', value: 90 },
+    ],
+    desempenho: [
+      { name: 'Excelente', value: Math.floor(stats.alunos * 0.25) },
+      { name: 'Bom', value: Math.floor(stats.alunos * 0.45) },
+      { name: 'Regular', value: Math.floor(stats.alunos * 0.20) },
+      { name: 'Precisa Melhorar', value: Math.floor(stats.alunos * 0.10) },
+    ]
+  }
 
   // Nível 1: Botões principais (4 botões)
   const mainButtons = [
@@ -129,6 +161,62 @@ const Dashboard = () => {
       {/* Botões Principais (Tela Inicial) */}
       {activeView === 'indicators' && (
         <>
+          {/* Cards de Estatísticas */}
+          <div className="stats-cards">
+            {statsCards.map((card) => {
+              const Icon = card.icon
+              return (
+                <div key={card.title} className="stat-card" style={{ borderTopColor: card.color }}>
+                  <div className="stat-icon" style={{ backgroundColor: `${card.color}20` }}>
+                    <Icon size={32} color={card.color} />
+                  </div>
+                  <div className="stat-info">
+                    <h3 className="stat-value">{card.value}</h3>
+                    <p className="stat-label">{card.title}</p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Gráficos */}
+          <div className="charts-grid">
+            <div className="chart-card">
+              <StatsChart 
+                type="line" 
+                data={chartData.matriculas} 
+                dataKey="value" 
+                xAxisKey="name"
+                title="Evolução de Matrículas"
+              />
+            </div>
+            <div className="chart-card">
+              <StatsChart 
+                type="bar" 
+                data={chartData.frequencia} 
+                dataKey="value" 
+                xAxisKey="name"
+                title="Taxa de Frequência por Turma (%)"
+              />
+            </div>
+            <div className="chart-card">
+              <StatsChart 
+                type="pie" 
+                data={chartData.distribuicao} 
+                dataKey="value"
+                title="Distribuição de Recursos"
+              />
+            </div>
+            <div className="chart-card">
+              <PieChartComponent 
+                data={chartData.desempenho} 
+                title="Desempenho dos Alunos"
+                height={300}
+              />
+            </div>
+          </div>
+
+          {/* Botões de Ação */}
           <div className="action-cards-grid main-buttons">
             {mainButtons.map((button) => {
               const Icon = button.icon

@@ -166,6 +166,23 @@
   border-color: rgba(248, 250, 252, 0.9);
 }
 
+/* Connection Indicator */
+.connection-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 50%;
+  border: 2px solid rgba(15, 23, 42, 0.9);
+  animation: pulse 2s infinite;
+}
+
+[data-theme="light"] .connection-indicator {
+  border-color: rgba(248, 250, 252, 0.9);
+}
+
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); }

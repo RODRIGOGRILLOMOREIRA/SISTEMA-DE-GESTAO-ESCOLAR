@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
+import { paginationMiddleware } from '../middlewares/pagination';
+import { audit } from '../middlewares/audit';
+import * as turmasController from '../controllers/turmas.controller';
 
 export const turmasRouter = Router();
 
@@ -13,6 +16,15 @@ const turmaSchema = z.object({
   professorId: z.string().nullable().optional(),
 });
 
+// === ROTAS COM CONTROLLER (NOVAS - COM CACHE E AUDITORIA) ===
+turmasRouter.get('/v2', paginationMiddleware, turmasController.listarTurmas);
+turmasRouter.get('/v2/:id', turmasController.buscarTurmaPorId);
+turmasRouter.get('/v2/:id/estatisticas', turmasController.estatisticasTurma);
+turmasRouter.post('/v2', audit.create('TURMA'), turmasController.criarTurma);
+turmasRouter.put('/v2/:id', audit.update('TURMA'), turmasController.atualizarTurma);
+turmasRouter.delete('/v2/:id', audit.delete('TURMA'), turmasController.deletarTurma);
+
+// === ROTAS ANTIGAS (MANTIDAS PARA COMPATIBILIDADE) ===
 // GET todas as turmas
 turmasRouter.get('/', async (req, res) => {
   try {

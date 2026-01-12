@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
+import { paginationMiddleware } from '../middlewares/pagination';
+import * as frequenciasController from '../controllers/frequencias.controller';
 
 export const frequenciasRouter = Router();
 
@@ -13,6 +15,16 @@ const frequenciaSchema = z.object({
   observacao: z.string().optional(),
 });
 
+// === ROTAS COM CONTROLLER (NOVAS - COM CACHE) ===
+frequenciasRouter.get('/v2', paginationMiddleware, frequenciasController.listarFrequencias);
+frequenciasRouter.get('/v2/aluno/:alunoId', frequenciasController.buscarFrequenciasAluno);
+frequenciasRouter.get('/v2/turma/:turmaId/dia', frequenciasController.buscarFrequenciasTurmaDia);
+frequenciasRouter.get('/v2/relatorio', frequenciasController.relatorioFrequencias);
+frequenciasRouter.post('/v2', frequenciasController.registrarFrequencia);
+frequenciasRouter.post('/v2/lote', frequenciasController.registrarFrequenciaLote);
+frequenciasRouter.delete('/v2/:id', frequenciasController.deletarFrequencia);
+
+// === ROTAS ANTIGAS (MANTIDAS PARA COMPATIBILIDADE) ===
 // GET todas as frequências
 frequenciasRouter.get('/', async (req, res) => {
   try {

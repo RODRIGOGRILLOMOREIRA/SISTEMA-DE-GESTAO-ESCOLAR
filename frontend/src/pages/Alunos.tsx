@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Edit, X, Save, BookOpen, ArrowLeft } from 'lucide-react'
+import { Plus, Trash2, Edit, X, Save, BookOpen, ArrowLeft, Download } from 'lucide-react'
 import { alunosAPI, turmasAPI, Aluno, Turma } from '../lib/api'
 import BackButton from '../components/BackButton'
+import { VirtualizedTable } from '../components/VirtualizedTable'
+import { TableSkeleton } from '../components/skeletons/TableSkeleton'
+import { exportToExcel, formatAlunosForExport } from '../utils/exportExcel'
+import toast from 'react-hot-toast'
 import './CommonPages.css'
 import '../components/Modal.css'
 import './Notas.css'
@@ -53,8 +57,10 @@ const Alunos = () => {
     try {
       const response = await alunosAPI.getAll()
       setAlunos(response.data)
+      toast.success(`${response.data.length} alunos carregados`)
     } catch (error) {
       console.error('Erro ao carregar alunos:', error)
+      toast.error('Erro ao carregar alunos')
     } finally {
       setLoading(false)
     }
@@ -153,6 +159,8 @@ const Alunos = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const loadingToast = toast.loading(editingId ? 'Atualizando aluno...' : 'Cadastrando aluno...')
+    
     try {
       const data = {
         ...formData,
@@ -164,30 +172,80 @@ const Alunos = () => {
 
       if (editingId) {
         await alunosAPI.update(editingId, data)
+        toast.success('Aluno atualizado com sucesso!', { id: loadingToast })
       } else {
         await alunosAPI.create(data)
+        toast.success('Aluno cadastrado com sucesso!', { id: loadingToast })
       }
       
       loadAlunos()
       closeModal()
     } catch (error) {
       console.error('Erro ao salvar aluno:', error)
-      alert('Erro ao salvar aluno. Verifique os dados e tente novamente.')
+      toast.error('Erro ao salvar aluno. Verifique os dados e tente novamente.', { id: loadingToast })
     }
   }
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Deseja realmente excluir este aluno?')) {
+      const loadingToast = toast.loading('Excluindo aluno...')
       try {
         await alunosAPI.delete(id)
+        toast.success('Aluno excluído com sucesso!', { id: loadingToast })
         loadAlunos()
       } catch (error) {
         console.error('Erro ao deletar aluno:', error)
+        toast.error('Erro ao excluir aluno', { id: loadingToast })
       }
     }
   }
 
-  if (loading) return <div className="loading">Carregando...</div>
+  const handleExport = () => {
+    const dataToExport = turmaSelecionada 
+      ? alunosDaTurma 
+      : alunos;
+    
+    if (dataToExport.length === 0) {
+      toast.error('Não há dados para exportar');
+      return;
+    }
+
+    const formattedData = formatAlunosForExport(dataToExport);
+    const success = exportToExcel({
+      filename: `alunos-${turmaSelecionada?.nome || 'todos'}-${new Date().toISOString().split('T')[0]}`,
+      sheetName: 'Alunos',
+      data: formattedData,
+      columns: [
+        { header: 'Matrícula', key: 'Matrícula', width: 15 },
+        { header: 'Nome', key: 'Nome', width: 30 },
+        { header: 'CPF', key: 'CPF', width: 15 },
+        { header: 'Data Nascimento', key: 'Data Nascimento', width: 18 },
+        { header: 'Email', key: 'Email', width: 30 },
+        { header: 'Telefone', key: 'Telefone', width: 15 },
+        { header: 'Responsável', key: 'Responsável', width: 30 },
+        { header: 'Tel. Responsável', key: 'Tel. Responsável', width: 15 },
+        { header: 'Turma', key: 'Turma', width: 20 },
+        { header: 'Status', key: 'Status', width: 12 },
+      ],
+    });
+
+    if (success) {
+      toast.success('Planilha exportada com sucesso!');
+    } else {
+      toast.error('Erro ao exportar planilha');
+    }
+  };
+
+
+  if (loading) return (
+    <div className="page">
+      <BackButton />
+      <div className="page-header">
+        <h1>Alunos</h1>
+      </div>
+      <TableSkeleton rows={8} columns={4} />
+    </div>
+  )
 
   const turmasFiltradas = getTurmasPorCategoria()
   const alunosDaTurma = getAlunosDaTurma()
@@ -209,6 +267,14 @@ const Alunos = () => {
               <button className="btn-voltar" onClick={voltarParaTurmas}>
                 <ArrowLeft size={16} />
                 Voltar
+              </button>
+              <button 
+                className="btn-secondary" 
+                onClick={handleExport}
+                disabled={alunosDaTurma.length === 0}
+              >
+                <Download size={20} />
+                Exportar Excel
               </button>
               <button className="btn-primary" onClick={() => openModal()}>
                 <Plus size={20} />
@@ -284,49 +350,63 @@ const Alunos = () => {
               <p>Nenhum aluno cadastrado nesta turma.</p>
             </div>
           ) : (
-            <div className="table-container">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Nome</th>
-                    <th>Número de Matrícula</th>
-                    <th>Status da Matrícula</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {alunosDaTurma.map((aluno) => (
-                    <tr key={aluno.id}>
-                      <td>{aluno.nome}</td>
-                      <td>{aluno.numeroMatricula || '-'}</td>
-                      <td>
-                        <span className={`status-badge ${aluno.statusMatricula?.toLowerCase()}`}>
-                          {aluno.statusMatricula || 'ATIVO'}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button 
-                            className="btn-icon" 
-                            title="Editar"
-                            onClick={() => openModal(aluno)}
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button 
-                            className="btn-icon btn-danger" 
-                            title="Excluir"
-                            onClick={() => handleDelete(aluno.id)}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <VirtualizedTable
+              data={alunosDaTurma}
+              columns={[
+                {
+                  key: 'nome',
+                  label: 'Nome',
+                  render: (aluno: Aluno) => aluno.nome
+                },
+                {
+                  key: 'numeroMatricula',
+                  label: 'Número de Matrícula',
+                  render: (aluno: Aluno) => aluno.numeroMatricula || '-'
+                },
+                {
+                  key: 'statusMatricula',
+                  label: 'Status da Matrícula',
+                  render: (aluno: Aluno) => (
+                    <span className={`status-badge ${aluno.statusMatricula?.toLowerCase()}`}>
+                      {aluno.statusMatricula || 'ATIVO'}
+                    </span>
+                  )
+                },
+                {
+                  key: 'actions',
+                  label: 'Ações',
+                  sortable: false,
+                  render: (aluno: Aluno) => (
+                    <div className="action-buttons">
+                      <button 
+                        className="btn-icon" 
+                        title="Editar"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          openModal(aluno)
+                        }}
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        className="btn-icon btn-danger" 
+                        title="Excluir"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(aluno.id)
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  )
+                }
+              ]}
+              searchable={true}
+              searchKeys={['nome', 'numeroMatricula']}
+              emptyMessage="Nenhum aluno encontrado"
+              onRowClick={(aluno) => openModal(aluno)}
+            />
           )}
         </>
       )}

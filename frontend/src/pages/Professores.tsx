@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Edit, X, Save } from 'lucide-react'
+import { Plus, Trash2, Edit, X, Save, Download } from 'lucide-react'
 import { professoresAPI, turmasAPI, disciplinasAPI, Professor, Turma, Disciplina } from '../lib/api'
 import BackButton from '../components/BackButton'
+import { exportToExcel } from '../utils/exportExcel'
+import toast from 'react-hot-toast'
 import './CommonPages.css'
 import '../components/Modal.css'
 
@@ -137,12 +139,52 @@ const Professores = () => {
     if (window.confirm('Deseja realmente excluir este professor?')) {
       try {
         await professoresAPI.delete(id)
+        toast.success('Professor excluído com sucesso!')
         loadProfessores()
       } catch (error) {
         console.error('Erro ao deletar professor:', error)
+        toast.error('Erro ao excluir professor')
       }
     }
   }
+
+  const handleExport = () => {
+    if (professores.length === 0) {
+      toast.error('Não há dados para exportar');
+      return;
+    }
+
+    const formattedData = professores.map(prof => ({
+      'Nome': prof.nome,
+      'CPF': prof.cpf,
+      'Email': prof.email,
+      'Telefone': prof.telefone || 'N/A',
+      'Área': prof.area || 'N/A',
+      'Componentes': prof.componentes || 'N/A',
+      'Turmas Vinculadas': prof.turmasVinculadas || 'N/A',
+    }));
+
+    const success = exportToExcel({
+      filename: `professores-${new Date().toISOString().split('T')[0]}`,
+      sheetName: 'Professores',
+      data: formattedData,
+      columns: [
+        { header: 'Nome', key: 'Nome', width: 30 },
+        { header: 'CPF', key: 'CPF', width: 15 },
+        { header: 'Email', key: 'Email', width: 30 },
+        { header: 'Telefone', key: 'Telefone', width: 15 },
+        { header: 'Área', key: 'Área', width: 20 },
+        { header: 'Componentes', key: 'Componentes', width: 30 },
+        { header: 'Turmas Vinculadas', key: 'Turmas Vinculadas', width: 30 },
+      ],
+    });
+
+    if (success) {
+      toast.success('Planilha exportada com sucesso!');
+    } else {
+      toast.error('Erro ao exportar planilha');
+    }
+  };
 
   if (loading) return <div className="loading">Carregando...</div>
 
@@ -151,10 +193,20 @@ const Professores = () => {
       <BackButton />
       <div className="page-header">
         <h1>Professores</h1>
-        <button className="btn-primary" onClick={() => openModal()}>
-          <Plus size={20} />
-          Novo Professor
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            className="btn-secondary" 
+            onClick={handleExport}
+            disabled={professores.length === 0}
+          >
+            <Download size={20} />
+            Exportar Excel
+          </button>
+          <button className="btn-primary" onClick={() => openModal()}>
+            <Plus size={20} />
+            Novo Professor
+          </button>
+        </div>
       </div>
 
       <div className="table-container">

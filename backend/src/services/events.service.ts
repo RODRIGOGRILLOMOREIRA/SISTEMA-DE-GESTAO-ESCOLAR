@@ -103,6 +103,11 @@ class EventsService extends EventEmitter {
     this.emit('frequencia:registrada', evento);
   }
 
+  emitirFaltaRegistrada(evento: { alunoId: string; alunoNome: string; turmaId: string; turmaNome: string; data: Date; observacao?: string }) {
+    console.log(`❌ [EVENTO] Falta registrada: ${evento.alunoNome} - ${evento.turmaNome}`);
+    this.emit('falta:registrada', evento);
+  }
+
   // Eventos de Alerta
   emitirAlertaMediaBaixa(evento: EventoAlertaMediaBaixa) {
     console.log(`⚠️ [EVENTO] Alerta de média baixa: ${evento.alunoNome} - ${evento.disciplinaNome} (${evento.mediaAtual})`);

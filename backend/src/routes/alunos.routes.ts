@@ -1,53 +1,24 @@
 import { Router } from 'express';
-import { prisma } from '../lib/prisma';
-import { z } from 'zod';
-import crypto from 'crypto';
+import { paginationMiddleware } from '../middlewares/pagination';
+import { audit } from '../middlewares/audit';
+import * as alunosController from '../controllers/alunos.controller';
 
 export const alunosRouter = Router();
 
-const alunoSchema = z.object({
-  nome: z.string().min(3),
-  cpf: z.string().min(11).max(14),
-  dataNascimento: z.string(),
-  email: z.string().email(),
-  telefone: z.string().nullable().optional(),
-  endereco: z.string().nullable().optional(),
-  responsavel: z.string(),
-  telefoneResp: z.string(),
-  turmaId: z.string().nullable().optional(),
-});
+// Rotas com paginação, cache e auditoria
+alunosRouter.get('/', paginationMiddleware, alunosController.listarAlunos);
+alunosRouter.get('/stats/geral', alunosController.estatisticasAlunos);
+alunosRouter.get('/turma/:turmaId', alunosController.listarAlunosPorTurma);
+alunosRouter.get('/:id', alunosController.buscarAlunoPorId);
+alunosRouter.post('/', audit.create('ALUNO'), alunosController.criarAluno);
+alunosRouter.put('/:id', audit.update('ALUNO'), alunosController.atualizarAluno);
+alunosRouter.delete('/:id', audit.delete('ALUNO'), alunosController.deletarAluno);
 
-// GET todos os alunos
-alunosRouter.get('/', async (req, res) => {
-  try {
-    const alunos = await prisma.alunos.findMany({
-      include: { turmas: true }
-    });
-    res.json(alunos);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao buscar alunos' });
-  }
-});
+// Manter rotas antigas para compatibilidade (deprecadas)
+// TODO: Remover após migração completa
 
-// GET alunos por turma
-alunosRouter.get('/turma/:turmaId', async (req, res) => {
-  try {
-    const { turmaId } = req.params;
-    
-    const alunos = await prisma.alunos.findMany({
-      where: { turmaId },
-      include: { turmas: true },
-      orderBy: { nome: 'asc' }
-    });
-    
-    res.json(alunos);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao buscar alunos da turma' });
-  }
-});
-
-// GET aluno por ID
-alunosRouter.get('/:id', async (req, res) => {
+// GET aluno por ID (rota antiga - deprecada)
+alunosRouter.get('/old/:id', async (req, res) => {
   try {
     const aluno = await prisma.alunos.findUnique({
       where: { id: req.params.id },

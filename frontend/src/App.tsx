@@ -25,6 +25,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { AuthProvider } from './contexts/AuthContext'
 import { AnoLetivoProvider } from './contexts/AnoLetivoContext'
+import { WebSocketProvider } from './contexts/WebSocketContext'
+import { Toaster } from './components/Toaster'
 import PrivateRoute from './components/PrivateRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -49,48 +51,53 @@ import Habilidades from './pages/Habilidades'
 import Configuracoes from './pages/Configuracoes'
 import BoletimDesempenho from './pages/BoletimDesempenho'
 import NotificacoesConfig from './pages/NotificacoesConfig'
+import AuditLogs from './pages/AuditLogs'
 
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <AnoLetivoProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Rotas públicas */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/user-management" element={<UserManagement />} />
+          <WebSocketProvider>
+            <BrowserRouter>
+              <Toaster />
+              <Routes>
+                {/* Rotas públicas */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/user-management" element={<UserManagement />} />
 
-            {/* Rotas privadas */}
-            <Route path="/" element={
-              <PrivateRoute>
-                <Layout />
-              </PrivateRoute>
-            }>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="equipe-diretiva" element={<EquipeDiretivaPage />} />
-              <Route path="funcionarios" element={<FuncionariosPage />} />
-              <Route path="alunos" element={<Alunos />} />
-              <Route path="professores" element={<Professores />} />
-              <Route path="registro-ponto" element={<RegistroPontoIntegrado />} />
-              <Route path="turmas" element={<Turmas />} />
-              <Route path="disciplinas" element={<Disciplinas />} />
-              <Route path="calendario-escolar" element={<CalendarioEscolarPage />} />
-              <Route path="grade-horaria" element={<GradeHorariaPage />} />
-              <Route path="notas" element={<Notas />} />
-              <Route path="frequencia" element={<FrequenciaPage />} />
-              <Route path="habilidades" element={<Habilidades />} />
-              <Route path="boletim" element={<BoletimDesempenho />} />
-              <Route path="relatorios" element={<Relatorios />} />
-              <Route path="relatorios-administrativos" element={<RelatoriosAdministrativos />} />
-              <Route path="configuracoes" element={<Configuracoes />} />
-              <Route path="notificacoes" element={<NotificacoesConfig />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+              {/* Rotas privadas */}
+              <Route path="/" element={
+                <PrivateRoute>
+                  <Layout />
+                </PrivateRoute>
+              }>
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="equipe-diretiva" element={<EquipeDiretivaPage />} />
+                <Route path="funcionarios" element={<FuncionariosPage />} />
+                <Route path="alunos" element={<Alunos />} />
+                <Route path="professores" element={<Professores />} />
+                <Route path="registro-ponto" element={<RegistroPontoIntegrado />} />
+                <Route path="turmas" element={<Turmas />} />
+                <Route path="disciplinas" element={<Disciplinas />} />
+                <Route path="calendario-escolar" element={<CalendarioEscolarPage />} />
+                <Route path="grade-horaria" element={<GradeHorariaPage />} />
+                <Route path="notas" element={<Notas />} />
+                <Route path="frequencia" element={<FrequenciaPage />} />
+                <Route path="habilidades" element={<Habilidades />} />
+                <Route path="boletim" element={<BoletimDesempenho />} />
+                <Route path="relatorios" element={<Relatorios />} />
+                <Route path="relatorios-administrativos" element={<RelatoriosAdministrativos />} />
+                <Route path="configuracoes" element={<Configuracoes />} />
+                <Route path="notificacoes" element={<NotificacoesConfig />} />
+                <Route path="auditoria" element={<AuditLogs />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+          </WebSocketProvider>
         </AnoLetivoProvider>
       </AuthProvider>
     </ThemeProvider>

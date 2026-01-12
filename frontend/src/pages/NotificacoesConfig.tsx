@@ -40,7 +40,7 @@ const NotificacoesConfig = () => {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   
   const [config, setConfig] = useState<ConfiguracaoNotificacao>({
-    usuarioId: user?.id || 0,
+    usuarioId: Number(user?.id) || 0,
     tipo: 'RESPONSAVEL',
     canal: 'WHATSAPP',
     telefone: '',
@@ -62,7 +62,7 @@ const NotificacoesConfig = () => {
   const loadConfig = async () => {
     try {
       setLoading(true);
-      const response = await notificacoesAPI.getConfig(user?.id || 0);
+      const response = await notificacoesAPI.getConfig(Number(user?.id) || 0);
       if (response.data.configuracao) {
         setConfig(response.data.configuracao);
       }

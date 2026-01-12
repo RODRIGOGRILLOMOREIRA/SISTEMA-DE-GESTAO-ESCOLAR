@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Edit, X, Save, BookOpen, GraduationCap, ArrowLeft } from 'lucide-react'
+import { Plus, Trash2, Edit, X, Save, BookOpen, GraduationCap, ArrowLeft, Download } from 'lucide-react'
 import { turmasAPI, professoresAPI, Turma, Professor } from '../lib/api'
 import BackButton from '../components/BackButton'
+import { VirtualizedTable } from '../components/VirtualizedTable'
+import { TableSkeleton } from '../components/skeletons/TableSkeleton'
+import { exportToExcel, formatTurmasForExport } from '../utils/exportExcel'
+import toast from 'react-hot-toast'
 import './CommonPages.css'
 import '../components/Modal.css'
 import './Notas.css'
@@ -40,8 +44,10 @@ const Turmas = () => {
     try {
       const response = await turmasAPI.getAll()
       setTurmas(response.data)
+      toast.success(`${response.data.length} turmas carregadas`)
     } catch (error) {
       console.error('Erro ao carregar turmas:', error)
+      toast.error('Erro ao carregar turmas')
     } finally {
       setLoading(false)
     }
@@ -111,6 +117,8 @@ const Turmas = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const loadingToast = toast.loading(editingId ? 'Atualizando turma...' : 'Criando turma...')
+    
     try {
       const data = {
         nome: formData.nome,
@@ -122,30 +130,74 @@ const Turmas = () => {
 
       if (editingId) {
         await turmasAPI.update(editingId, data)
+        toast.success('Turma atualizada com sucesso!', { id: loadingToast })
       } else {
         await turmasAPI.create(data)
+        toast.success('Turma criada com sucesso!', { id: loadingToast })
       }
       
       loadTurmas()
       closeModal()
     } catch (error) {
       console.error('Erro ao salvar turma:', error)
-      alert('Erro ao salvar turma. Verifique os dados e tente novamente.')
+      toast.error('Erro ao salvar turma. Verifique os dados e tente novamente.', { id: loadingToast })
     }
   }
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Deseja realmente excluir esta turma?')) {
+      const loadingToast = toast.loading('Excluindo turma...')
       try {
         await turmasAPI.delete(id)
+        toast.success('Turma excluída com sucesso!', { id: loadingToast })
         loadTurmas()
       } catch (error) {
         console.error('Erro ao deletar turma:', error)
+        toast.error('Erro ao excluir turma', { id: loadingToast })
       }
     }
   }
 
-  if (loading) return <div className="loading">Carregando...</div>
+  const handleExport = () => {
+    const dataToExport = categoriaAtiva ? turmasFiltradas : turmas;
+    
+    if (dataToExport.length === 0) {
+      toast.error('Não há dados para exportar');
+      return;
+    }
+
+    const formattedData = formatTurmasForExport(dataToExport);
+    const success = exportToExcel({
+      filename: `turmas-${categoriaAtiva || 'todas'}-${new Date().toISOString().split('T')[0]}`,
+      sheetName: 'Turmas',
+      data: formattedData,
+      columns: [
+        { header: 'Nome', key: 'Nome', width: 20 },
+        { header: 'Ano', key: 'Ano', width: 10 },
+        { header: 'Ano Letivo', key: 'Ano Letivo', width: 12 },
+        { header: 'Período', key: 'Período', width: 15 },
+        { header: 'Professor', key: 'Professor', width: 30 },
+        { header: 'Total Alunos', key: 'Total Alunos', width: 15 },
+        { header: 'Total Disciplinas', key: 'Total Disciplinas', width: 18 },
+      ],
+    });
+
+    if (success) {
+      toast.success('Planilha exportada com sucesso!');
+    } else {
+      toast.error('Erro ao exportar planilha');
+    }
+  };
+
+  if (loading) return (
+    <div className="page">
+      <BackButton />
+      <div className="page-header">
+        <h1>Turmas</h1>
+      </div>
+      <TableSkeleton rows={6} columns={7} />
+    </div>
+  )
 
   const turmasFiltradas = getTurmasPorCategoria()
 
@@ -159,6 +211,14 @@ const Turmas = () => {
             <button className="btn-voltar" onClick={voltarParaCategorias}>
               <ArrowLeft size={16} />
               Voltar
+            </button>
+            <button 
+              className="btn-secondary" 
+              onClick={handleExport}
+              disabled={turmasFiltradas.length === 0}
+            >
+              <Download size={20} />
+              Exportar Excel
             </button>
             <button className="btn-primary" onClick={() => openModal()}>
               <Plus size={20} />
@@ -201,51 +261,74 @@ const Turmas = () => {
               <p>Nenhuma turma cadastrada nesta categoria.</p>
             </div>
           ) : (
-            <div className="table-container">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Nome</th>
-                    <th>Ano</th>
-                    <th>Ano Letivo</th>
-                    <th>Período</th>
-                    <th>Professor</th>
-                    <th>Qtd. Alunos</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {turmasFiltradas.map((turma) => (
-                    <tr key={turma.id}>
-                      <td>{turma.nome}</td>
-                      <td>{turma.ano}</td>
-                      <td>{turma.anoLetivo}</td>
-                      <td>{turma.periodo}</td>
-                      <td>{turma.professor?.nome || '-'}</td>
-                      <td>{turma.alunos?.length || 0}</td>
-                      <td>
-                        <div className="action-buttons">
-                          <button 
-                            className="btn-icon" 
-                            title="Editar"
-                            onClick={() => openModal(turma)}
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button 
-                            className="btn-icon btn-danger" 
-                            title="Excluir"
-                            onClick={() => handleDelete(turma.id)}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <VirtualizedTable
+              data={turmasFiltradas}
+              columns={[
+                {
+                  key: 'nome',
+                  label: 'Nome',
+                  render: (turma: Turma) => turma.nome
+                },
+                {
+                  key: 'ano',
+                  label: 'Ano',
+                  render: (turma: Turma) => turma.ano
+                },
+                {
+                  key: 'anoLetivo',
+                  label: 'Ano Letivo',
+                  render: (turma: Turma) => turma.anoLetivo
+                },
+                {
+                  key: 'periodo',
+                  label: 'Período',
+                  render: (turma: Turma) => turma.periodo
+                },
+                {
+                  key: 'professor',
+                  label: 'Professor',
+                  render: (turma: Turma) => turma.professor?.nome || '-'
+                },
+                {
+                  key: 'alunos',
+                  label: 'Qtd. Alunos',
+                  render: (turma: Turma) => turma.alunos?.length || 0
+                },
+                {
+                  key: 'actions',
+                  label: 'Ações',
+                  sortable: false,
+                  render: (turma: Turma) => (
+                    <div className="action-buttons">
+                      <button 
+                        className="btn-icon" 
+                        title="Editar"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          openModal(turma)
+                        }}
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        className="btn-icon btn-danger" 
+                        title="Excluir"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(turma.id)
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  )
+                }
+              ]}
+              searchable={true}
+              searchKeys={['nome', 'periodo']}
+              emptyMessage="Nenhuma turma encontrada"
+              onRowClick={(turma) => openModal(turma)}
+            />
           )}
         </>
       )}

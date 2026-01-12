@@ -2,6 +2,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { Bell, Search, Settings, User, Calendar, ChevronRight } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useAnoLetivo } from '../contexts/AnoLetivoContext'
+import { useWebSocket } from '../contexts/WebSocketContext'
+import { ThemeToggle } from './ThemeToggle'
 import { useState, useEffect } from 'react'
 import './Topbar.css'
 
@@ -10,14 +12,22 @@ interface TopbarProps {
   notificationCount?: number
 }
 
-const Topbar = ({ onNotificationClick, notificationCount = 0 }: TopbarProps) => {
+const Topbar = ({ onNotificationClick }: TopbarProps) => {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
   const { anoLetivo } = useAnoLetivo()
+  const { notificationCount, markNotificationsAsRead, connected } = useWebSocket()
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [breadcrumbs, setBreadcrumbs] = useState<string[]>([])
+
+  const handleNotificationClick = () => {
+    if (onNotificationClick) {
+      onNotificationClick()
+    }
+    markNotificationsAsRead()
+  }
 
   useEffect(() => {
     // Gerar breadcrumbs baseado na rota atual
@@ -84,13 +94,14 @@ const Topbar = ({ onNotificationClick, notificationCount = 0 }: TopbarProps) => 
         {/* Notificações */}
         <button 
           className="topbar-icon-btn notification-btn"
-          onClick={onNotificationClick}
-          title="Notificações"
+          onClick={handleNotificationClick}
+          title={`Notificações${connected ? ' (conectado)' : ' (desconectado)'}`}
         >
           <Bell size={20} />
           {notificationCount > 0 && (
             <span className="notification-badge">{notificationCount}</span>
           )}
+          {connected && <span className="connection-indicator" />}
         </button>
 
         {/* Configurações rápidas */}
@@ -101,6 +112,9 @@ const Topbar = ({ onNotificationClick, notificationCount = 0 }: TopbarProps) => 
         >
           <Settings size={20} />
         </button>
+
+        {/* Theme Toggle */}
+        <ThemeToggle />
 
         {/* Perfil do Usuário */}
         <div className="profile-container">

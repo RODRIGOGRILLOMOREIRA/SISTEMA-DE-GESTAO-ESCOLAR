@@ -3,6 +3,8 @@
  * Permite habilitar/desabilitar funcionalidades dinamicamente
  */
 
+import React from 'react';
+
 export interface FeatureFlags {
   // Módulos Principais
   alunos: boolean;

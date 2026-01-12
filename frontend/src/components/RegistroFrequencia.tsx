@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Save, X, Calendar, TrendingUp, ArrowLeft } from 'lucide-react'
 import { api } from '../lib/api'
+import { toast } from 'react-hot-toast'
+import { TableSkeleton } from './skeletons'
 import './RegistroFrequencia.css'
 import '../components/Modal.css'
 import '../pages/CommonPages.css'
@@ -94,10 +96,12 @@ const RegistroFrequencia = () => {
 
   const handleSalvarRegistro = async () => {
     if (!turmaId || !disciplinaSelecionada || !dataSelecionada || !periodoAtivo) {
-      alert('Preencha todos os campos necessários')
+      toast.error('Preencha todos os campos necessários')
       return
     }
 
+    const loadingToast = toast.loading('Salvando registro de frequência...')
+    
     try {
       setLoading(true)
 
@@ -115,7 +119,7 @@ const RegistroFrequencia = () => {
       
       console.log('✅ Registro salvo!')
       
-      alert('Registro salvo com sucesso!')
+      toast.success('Registro salvo com sucesso!', { id: loadingToast })
       
       // Recarregar as frequências do dia após salvar
       setTimeout(() => loadFrequenciasDoDia(), 500)
@@ -127,7 +131,7 @@ const RegistroFrequencia = () => {
       
     } catch (error: any) {
       console.error('Erro ao salvar registro:', error)
-      alert(error.response?.data?.error || 'Erro ao salvar registro')
+      toast.error(error.response?.data?.error || 'Erro ao salvar registro', { id: loadingToast })
     } finally {
       setLoading(false)
     }

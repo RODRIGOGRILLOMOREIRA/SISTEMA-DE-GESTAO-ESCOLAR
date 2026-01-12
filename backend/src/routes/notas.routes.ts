@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
+import { audit } from '../middlewares/audit';
 import eventsService from '../services/events.service';
 
 export const notasRouter = Router();
@@ -223,7 +224,7 @@ notasRouter.get('/aluno/:alunoId', async (req, res) => {
 });
 
 // POST/PUT salvar ou atualizar nota (Upsert)
-notasRouter.post('/salvar', async (req, res) => {
+notasRouter.post('/salvar', audit.create('NOTA'), async (req, res) => {
   try {
     const data = notaSchema.parse(req.body);
     const anoLetivo = data.anoLetivo || new Date().getFullYear();
@@ -454,7 +455,7 @@ notasRouter.get('/turma/:turmaId', async (req, res) => {
 });
 
 // DELETE nota
-notasRouter.delete('/:id', async (req, res) => {
+notasRouter.delete('/:id', audit.delete('NOTA'), async (req, res) => {
   try {
     const nota = await prisma.notas.findUnique({
       where: { id: req.params.id }

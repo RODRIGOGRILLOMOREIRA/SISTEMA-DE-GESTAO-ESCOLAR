@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Edit, X, Save, Users, GraduationCap, BookOpen, CheckCircle, XCircle } from 'lucide-react'
+import { Edit, X, Save, Users, GraduationCap, BookOpen, CheckCircle, XCircle, Download } from 'lucide-react'
 import { alunosAPI, disciplinasAPI, turmasAPI, Aluno, Disciplina, Turma, api } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useAnoLetivo } from '../contexts/AnoLetivoContext'
 import { isAdmin, isProfessor } from '../lib/permissions'
 import BackButton from '../components/BackButton'
+import { exportToExcel, formatNotasForExport } from '../utils/exportExcel'
+import { toast } from 'react-hot-toast'
+import { TableSkeleton } from '../components/skeletons'
 import './ModernPages.css'
 import './Notas.css'
 import '../components/Modal.css'
@@ -374,6 +377,8 @@ const Notas = () => {
     if (!editingNota) return
 
     setSaving(true)
+    const loadingToast = toast.loading('Salvando notas...')
+    
     try {
       // Enviar para a API
       const response = await api.post('/notas/salvar', {
@@ -406,17 +411,141 @@ const Notas = () => {
         loadNotas()
       }, 500)
       
+      toast.success('Notas salvas com sucesso!', { id: loadingToast })
       closeModal()
-      alert('Notas salvas com sucesso!')
     } catch (error) {
       console.error('Erro ao salvar nota:', error)
-      alert('Erro ao salvar nota. Tente novamente.')
+      toast.error('Erro ao salvar nota. Tente novamente.', { id: loadingToast })
     } finally {
       setSaving(false)
     }
   }
 
-  if (loading) return <div className="loading">Carregando...</div>
+  const handleExportarNotas = async () => {
+    if (!selectedTurma || !selectedDisciplina) {
+      toast.error('Selecione uma turma e disciplina primeiro');
+      return;
+    }
+
+    try {
+      // Buscar todas as notas da turma/disciplina
+      const turma = turmas.find(t => t.id === selectedTurma);
+      const disciplina = disciplinas.find(d => d.id === selectedDisciplina);
+      
+      if (!turma || !disciplina) {
+        toast.error('Turma ou disciplina não encontrada');
+        return;
+      }
+
+      // Buscar notas de todos os alunos da turma
+      const alunosDaTurma = alunos.filter(a => a.turmaId === selectedTurma);
+      
+      if (alunosDaTurma.length === 0) {
+        toast.error('Não há alunos nesta turma');
+        return;
+      }
+
+      const loadingToast = toast.loading('Preparando exportação...');
+      
+      // Buscar notas de cada aluno
+      const promises = alunosDaTurma.map(aluno => 
+        api.get(`/notas/aluno/${aluno.id}/disciplina/${selectedDisciplina}`, {
+          params: { anoLetivo }
+        }).catch(() => ({ data: { notas: [], notaFinal: null } }))
+      );
+
+      const respostas = await Promise.all(promises);
+      
+      // Formatar dados para exportação
+      const dadosExportacao = alunosDaTurma.map((aluno, index) => {
+        const { notas: notasAluno, notaFinal } = respostas[index].data;
+        
+        const trimestre1 = notasAluno.find((n: NotaData) => n.trimestre === 1);
+        const trimestre2 = notasAluno.find((n: NotaData) => n.trimestre === 2);
+        const trimestre3 = notasAluno.find((n: NotaData) => n.trimestre === 3);
+
+        return {
+          'Aluno': aluno.nome,
+          'Disciplina': disciplina.nome,
+          'Turma': turma.nome,
+          'Ano Letivo': anoLetivo,
+          'T1 - Av1': trimestre1?.avaliacao01 ?? '-',
+          'T1 - Av2': trimestre1?.avaliacao02 ?? '-',
+          'T1 - Av3': trimestre1?.avaliacao03 ?? '-',
+          'T1 - Média': trimestre1?.mediaM1 ?? '-',
+          'T1 - EAC': trimestre1?.avaliacaoEAC ?? '-',
+          'T1 - Final': trimestre1?.notaFinalTrimestre ?? '-',
+          'T2 - Av1': trimestre2?.avaliacao01 ?? '-',
+          'T2 - Av2': trimestre2?.avaliacao02 ?? '-',
+          'T2 - Av3': trimestre2?.avaliacao03 ?? '-',
+          'T2 - Média': trimestre2?.mediaM1 ?? '-',
+          'T2 - EAC': trimestre2?.avaliacaoEAC ?? '-',
+          'T2 - Final': trimestre2?.notaFinalTrimestre ?? '-',
+          'T3 - Av1': trimestre3?.avaliacao01 ?? '-',
+          'T3 - Av2': trimestre3?.avaliacao02 ?? '-',
+          'T3 - Av3': trimestre3?.avaliacao03 ?? '-',
+          'T3 - Média': trimestre3?.mediaM1 ?? '-',
+          'T3 - EAC': trimestre3?.avaliacaoEAC ?? '-',
+          'T3 - Final': trimestre3?.notaFinalTrimestre ?? '-',
+          'Média Final': notaFinal?.mediaFinal ?? '-',
+          'Situação': notaFinal?.aprovado ? 'Aprovado' : (notaFinal ? 'Reprovado' : '-'),
+        };
+      });
+
+      const success = exportToExcel({
+        filename: `notas-${turma.nome.replace(/\s+/g, '-')}-${disciplina.nome.replace(/\s+/g, '-')}-${anoLetivo}`,
+        sheetName: 'Notas',
+        data: dadosExportacao,
+        columns: [
+          { header: 'Aluno', key: 'Aluno', width: 30 },
+          { header: 'Disciplina', key: 'Disciplina', width: 25 },
+          { header: 'Turma', key: 'Turma', width: 15 },
+          { header: 'Ano Letivo', key: 'Ano Letivo', width: 12 },
+          { header: 'T1 - Av1', key: 'T1 - Av1', width: 10 },
+          { header: 'T1 - Av2', key: 'T1 - Av2', width: 10 },
+          { header: 'T1 - Av3', key: 'T1 - Av3', width: 10 },
+          { header: 'T1 - Média', key: 'T1 - Média', width: 12 },
+          { header: 'T1 - EAC', key: 'T1 - EAC', width: 10 },
+          { header: 'T1 - Final', key: 'T1 - Final', width: 12 },
+          { header: 'T2 - Av1', key: 'T2 - Av1', width: 10 },
+          { header: 'T2 - Av2', key: 'T2 - Av2', width: 10 },
+          { header: 'T2 - Av3', key: 'T2 - Av3', width: 10 },
+          { header: 'T2 - Média', key: 'T2 - Média', width: 12 },
+          { header: 'T2 - EAC', key: 'T2 - EAC', width: 10 },
+          { header: 'T2 - Final', key: 'T2 - Final', width: 12 },
+          { header: 'T3 - Av1', key: 'T3 - Av1', width: 10 },
+          { header: 'T3 - Av2', key: 'T3 - Av2', width: 10 },
+          { header: 'T3 - Av3', key: 'T3 - Av3', width: 10 },
+          { header: 'T3 - Média', key: 'T3 - Média', width: 12 },
+          { header: 'T3 - EAC', key: 'T3 - EAC', width: 10 },
+          { header: 'T3 - Final', key: 'T3 - Final', width: 12 },
+          { header: 'Média Final', key: 'Média Final', width: 12 },
+          { header: 'Situação', key: 'Situação', width: 12 },
+        ],
+      });
+
+      toast.dismiss(loadingToast);
+      
+      if (success) {
+        toast.success('Notas exportadas com sucesso!');
+      } else {
+        toast.error('Erro ao exportar notas');
+      }
+    } catch (error) {
+      console.error('Erro ao exportar notas:', error);
+      toast.error('Erro ao exportar notas');
+    }
+  };
+
+  if (loading) return (
+    <div className="page">
+      <BackButton />
+      <div className="page-header">
+        <h1>Notas e Avaliações</h1>
+      </div>
+      <TableSkeleton rows={5} columns={3} />
+    </div>
+  )
 
   const turmaSelecionada = turmas.find(t => t.id === selectedTurma)
   const alunoSelecionado = alunos.find(a => a.id === selectedAluno)
@@ -427,6 +556,16 @@ const Notas = () => {
       <BackButton />
       <div className="page-header">
         <h1>Notas e Avaliações</h1>
+        {selectedTurma && selectedDisciplina && (
+          <button 
+            className="btn-secondary" 
+            onClick={handleExportarNotas}
+            title="Exportar notas de todos os alunos desta turma/disciplina"
+          >
+            <Download size={20} />
+            Exportar Excel
+          </button>
+        )}
       </div>
 
       {/* Seleção de Turma */}
