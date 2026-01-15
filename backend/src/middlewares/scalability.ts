@@ -3,7 +3,7 @@
  * Previne abuso da API limitando número de requisições
  */
 
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 
 interface RateLimitStore {
   [key: string]: {
@@ -124,10 +124,9 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
  * Middleware de Compressão de Resposta
  */
 import compression from 'compression';
-import { Request, Response } from 'express';
 
 export const compressionMiddleware = compression({
-  filter: (req: Request, res: Response) => {
+  filter: (req, res) => {
     if (req.headers['x-no-compression']) {
       return false;
     }

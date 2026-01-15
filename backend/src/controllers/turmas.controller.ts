@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import cacheService from '../services/cache.service';
 import crypto from 'crypto';
+import { log } from '../lib/logger';
 
 // Schema de validação para criar/atualizar turma
 const turmaSchema = z.object({
@@ -18,7 +19,11 @@ const turmaSchema = z.object({
  */
 export async function listarTurmas(req: Request, res: Response) {
   try {
-    const { page, limit, skip, sort, order } = (req as any).pagination;
+    const pagination = (req as { pagination?: { page: number; limit: number; skip: number; sort: string; order: string } }).pagination;
+    if (!pagination) {
+      return res.status(500).json({ error: 'Erro de paginação' });
+    }
+    const { page, limit, skip, sort, order } = pagination;
     const { busca, ano, periodo, anoLetivo } = req.query;
 
     // Gera chave de cache única baseada em todos os parâmetros
@@ -88,7 +93,7 @@ export async function listarTurmas(req: Request, res: Response) {
 
     return res.json(cached);
   } catch (error) {
-    console.error('Erro ao listar turmas:', error);
+    log.error({ component: 'turmas-controller', action: 'listarTurmas', err: error }, 'Erro ao listar turmas');
     return res.status(500).json({ 
       error: 'Erro ao buscar turmas',
       details: error instanceof Error ? error.message : 'Erro desconhecido',
@@ -177,7 +182,7 @@ export async function buscarTurmaPorId(req: Request, res: Response) {
 
     return res.json(turma);
   } catch (error) {
-    console.error('Erro ao buscar turma:', error);
+    log.error({ component: 'turmas-controller', action: 'buscarTurma', err: error }, 'Erro ao buscar turma');
     return res.status(500).json({ 
       error: 'Erro ao buscar turma',
       details: error instanceof Error ? error.message : 'Erro desconhecido',
@@ -233,7 +238,7 @@ export async function criarTurma(req: Request, res: Response) {
 
     return res.status(201).json(turmaCriada);
   } catch (error) {
-    console.error('Erro ao criar turma:', error);
+    log.error({ component: 'turmas-controller', action: 'criarTurma', err: error }, 'Erro ao criar turma');
     
     if (error instanceof z.ZodError) {
       return res.status(400).json({ 
@@ -315,7 +320,7 @@ export async function atualizarTurma(req: Request, res: Response) {
 
     return res.json(turmaAtualizada);
   } catch (error) {
-    console.error('Erro ao atualizar turma:', error);
+    log.error({ component: 'turmas-controller', action: 'atualizarTurma', err: error }, 'Erro ao atualizar turma');
     
     if (error instanceof z.ZodError) {
       return res.status(400).json({ 
@@ -380,7 +385,7 @@ export async function deletarTurma(req: Request, res: Response) {
 
     return res.status(204).send();
   } catch (error) {
-    console.error('Erro ao deletar turma:', error);
+    log.error({ component: 'turmas-controller', action: 'deletarTurma', err: error }, 'Erro ao deletar turma');
     return res.status(500).json({ 
       error: 'Erro ao deletar turma',
       details: error instanceof Error ? error.message : 'Erro desconhecido',
@@ -489,7 +494,7 @@ export async function estatisticasTurma(req: Request, res: Response) {
 
     return res.json(stats);
   } catch (error) {
-    console.error('Erro ao buscar estatísticas da turma:', error);
+    log.error({ component: 'turmas-controller', action: 'estatisticasTurma', err: error }, 'Erro ao buscar estatísticas da turma');
     return res.status(500).json({ 
       error: 'Erro ao calcular estatísticas',
       details: error instanceof Error ? error.message : 'Erro desconhecido',

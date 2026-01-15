@@ -9,6 +9,7 @@ import cacheService from '../services/cache.service';
 import eventsService from '../services/events.service';
 import { z } from 'zod';
 import crypto from 'crypto';
+import { log } from '../lib/logger';
 
 // Schema de validação baseado no modelo real do Prisma
 const notaSchema = z.object({
@@ -68,7 +69,7 @@ export const buscarNotasAluno = async (req: Request, res: Response) => {
 
     res.json(notas);
   } catch (error) {
-    console.error('Erro ao buscar notas:', error);
+    log.error({ component: 'notas-controller', action: 'buscarNotasAluno', err: error }, 'Erro ao buscar notas');
     res.status(500).json({ error: 'Erro ao buscar notas' });
   }
 };
@@ -119,7 +120,7 @@ export const buscarNotasTurma = async (req: Request, res: Response) => {
 
     res.json(notas);
   } catch (error) {
-    console.error('Erro ao buscar notas da turma:', error);
+    log.error({ component: 'notas-controller', action: 'buscarNotasTurma', err: error }, 'Erro ao buscar notas da turma');
     res.status(500).json({ error: 'Erro ao buscar notas da turma' });
   }
 };
@@ -210,9 +211,10 @@ export const buscarBoletim = async (req: Request, res: Response) => {
     );
 
     res.json(boletim);
-  } catch (error: any) {
-    console.error('Erro ao buscar boletim:', error);
-    res.status(500).json({ error: error.message || 'Erro ao buscar boletim' });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Erro ao buscar boletim';
+    log.error({ component: 'notas-controller', action: 'buscarBoletim', err: error }, 'Erro ao buscar boletim');
+    res.status(500).json({ error: errorMessage });
   }
 };
 
@@ -282,7 +284,7 @@ export const lancarNota = async (req: Request, res: Response) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Dados inválidos', details: error.errors });
     }
-    console.error('Erro ao lançar nota:', error);
+    log.error({ component: 'notas-controller', action: 'lancarNota', err: error }, 'Erro ao lançar nota');
     res.status(500).json({ error: 'Erro ao lançar nota' });
   }
 };
@@ -334,7 +336,7 @@ export const atualizarNota = async (req: Request, res: Response) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Dados inválidos', details: error.errors });
     }
-    console.error('Erro ao atualizar nota:', error);
+    log.error({ component: 'notas-controller', action: 'atualizarNota', err: error }, 'Erro ao atualizar nota');
     res.status(500).json({ error: 'Erro ao atualizar nota' });
   }
 };
@@ -359,7 +361,7 @@ export const deletarNota = async (req: Request, res: Response) => {
 
     res.json({ message: 'Nota deletada com sucesso' });
   } catch (error) {
-    console.error('Erro ao deletar nota:', error);
+    log.error({ component: 'notas-controller', action: 'deletarNota', err: error }, 'Erro ao deletar nota');
     res.status(500).json({ error: 'Erro ao deletar nota' });
   }
 };
@@ -444,7 +446,7 @@ export const estatisticasAluno = async (req: Request, res: Response) => {
 
     res.json(stats);
   } catch (error) {
-    console.error('Erro ao buscar estatísticas:', error);
+    log.error({ component: 'notas-controller', action: 'estatisticasAluno', err: error }, 'Erro ao buscar estatísticas');
     res.status(500).json({ error: 'Erro ao buscar estatísticas' });
   }
 };

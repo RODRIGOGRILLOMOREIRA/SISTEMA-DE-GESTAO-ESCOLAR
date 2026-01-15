@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { 
   Users, GraduationCap, School, BookOpen, 
   Briefcase, GraduationCapIcon, Calendar, 
-  Grid, FileText, UserCog, ClipboardList, Award, ArrowLeft, Bell
+  Grid, FileText, UserCog, ClipboardList, Award, ArrowLeft, Bell, FileSpreadsheet
 } from 'lucide-react'
 import { alunosAPI, professoresAPI, turmasAPI, disciplinasAPI, configuracoesAPI } from '../lib/api'
-import { StatsChart } from '../components/charts'
 import { LineChartComponent, BarChartComponent, PieChartComponent } from '../components/Charts'
 import './Dashboard.css'
 import '../components/Charts.css'
@@ -130,6 +129,7 @@ const Dashboard = () => {
     { title: 'Frequência', route: '/frequencia', icon: Users, color: '#3b82f6', description: 'Controle de presença' },
     { title: 'Notas e Avaliações', route: '/notas', icon: FileText, color: '#f59e0b', description: 'Lançamento de notas' },
     { title: 'Registro de Habilidades', route: '/habilidades', icon: Award, color: '#ec4899', description: 'Competências e habilidades' },
+    { title: 'Importar Excel', route: '/importar-excel', icon: FileSpreadsheet, color: '#22c55e', description: 'Importar dados de planilhas' },
     { title: 'Boletim de Desempenho', route: '/boletim', icon: GraduationCapIcon, color: '#10b981', description: 'Desempenho acadêmico' },
   ]
 
@@ -168,7 +168,7 @@ const Dashboard = () => {
               return (
                 <div key={card.title} className="stat-card" style={{ borderTopColor: card.color }}>
                   <div className="stat-icon" style={{ backgroundColor: `${card.color}20` }}>
-                    <Icon size={32} color={card.color} />
+                    <Icon size={40} color="white" strokeWidth={2} />
                   </div>
                   <div className="stat-info">
                     <h3 className="stat-value">{card.value}</h3>
@@ -181,29 +181,24 @@ const Dashboard = () => {
 
           {/* Gráficos */}
           <div className="charts-grid">
+            {/* Linha 1 */}
             <div className="chart-card">
-              <StatsChart 
-                type="line" 
+              <LineChartComponent 
                 data={chartData.matriculas} 
-                dataKey="value" 
-                xAxisKey="name"
                 title="Evolução de Matrículas"
               />
             </div>
             <div className="chart-card">
-              <StatsChart 
-                type="bar" 
+              <BarChartComponent 
                 data={chartData.frequencia} 
-                dataKey="value" 
-                xAxisKey="name"
                 title="Taxa de Frequência por Turma (%)"
               />
             </div>
+            
+            {/* Linha 2 */}
             <div className="chart-card">
-              <StatsChart 
-                type="pie" 
+              <PieChartComponent 
                 data={chartData.distribuicao} 
-                dataKey="value"
                 title="Distribuição de Recursos"
               />
             </div>

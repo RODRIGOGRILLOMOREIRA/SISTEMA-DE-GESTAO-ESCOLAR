@@ -66,4 +66,25 @@ export default defineConfig({
     host: true, // Permite acesso via IP local
     open: true,
   },
+  build: {
+    // Otimizações para reduzir uso de memória
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'chart-vendor': ['chart.js', 'react-chartjs-2', 'recharts'],
+          'utils-vendor': ['axios', 'date-fns', 'zustand'],
+        },
+      },
+    },
+    // Reduzir uso de memória durante build
+    minify: 'esbuild',
+    target: 'esnext',
+    sourcemap: false,
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom'],
+    exclude: ['face-api.js'], // Carregar face-api sob demanda
+  },
 })

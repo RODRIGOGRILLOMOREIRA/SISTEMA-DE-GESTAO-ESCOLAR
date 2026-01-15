@@ -3,6 +3,7 @@ import { reportQueue } from '../queues';
 import { prisma } from '../lib/prisma';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { log } from '../lib/logger';
 
 /**
  * Interface para job de relatório
@@ -33,7 +34,7 @@ interface ReportJobData {
 async function processReport(job: Job<ReportJobData>) {
   const { data } = job;
   
-  console.log(`📊 Gerando relatório ${data.tipo} para ${data.solicitante.nome}`);
+  log.info({ component: 'report-worker', jobId: job.id, tipo: data.tipo, solicitante: data.solicitante.nome }, 'Gerando relatório');
   
   await job.progress(5);
 
@@ -95,8 +96,9 @@ async function processReport(job: Job<ReportJobData>) {
       solicitante: data.solicitante.nome,
     };
     
-  } catch (error: any) {
-    console.error(`❌ Erro ao gerar relatório ${job.id}:`, error.message);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    log.error({ component: 'report-worker', jobId: job.id, err: error }, 'Erro ao gerar relatório');
     throw error; // Permite retry
   }
 }
@@ -104,7 +106,7 @@ async function processReport(job: Job<ReportJobData>) {
 /**
  * Gera boletim completo de um aluno
  */
-async function gerarBoletim(filtros: any) {
+async function gerarBoletim(filtros: ReportJobData['filtros']) {
   const { alunoId, anoLetivo = 2025 } = filtros;
 
   if (!alunoId) {
@@ -216,7 +218,7 @@ async function gerarBoletim(filtros: any) {
 /**
  * Gera relatório de frequência de uma turma
  */
-async function gerarRelatorioFrequencia(filtros: any) {
+async function gerarRelatorioFrequencia(filtros: ReportJobData['filtros']) {
   const { turmaId, dataInicio, dataFim } = filtros;
 
   if (!turmaId || !dataInicio || !dataFim) {
@@ -314,7 +316,7 @@ async function gerarRelatorioFrequencia(filtros: any) {
 /**
  * Gera relatório de desempenho de uma turma
  */
-async function gerarDesempenhoTurma(filtros: any) {
+async function gerarDesempenhoTurma(filtros: ReportJobData['filtros']) {
   const { turmaId, trimestre, anoLetivo = 2025 } = filtros;
 
   if (!turmaId) {
@@ -408,7 +410,7 @@ async function gerarDesempenhoTurma(filtros: any) {
 /**
  * Gera relatório consolidado geral
  */
-async function gerarConsolidadoGeral(filtros: any) {
+async function gerarConsolidadoGeral(filtros: ReportJobData['filtros']) {
   const { anoLetivo = 2025 } = filtros;
 
   // Estatísticas em paralelo
@@ -465,7 +467,7 @@ async function gerarConsolidadoGeral(filtros: any) {
 /**
  * Gera arquivo no formato especificado
  */
-async function gerarArquivo(data: any, formato: string, fileName: string): Promise<string> {
+async function gerarArquivo(data: unknown, formato: string, fileName: string): Promise<string> {
   const fs = await import('fs/promises');
   const path = await import('path');
   
@@ -489,7 +491,7 @@ async function gerarArquivo(data: any, formato: string, fileName: string): Promi
     case 'EXCEL':
       // TODO: Implementar geração de PDF/Excel (usar bibliotecas como pdfkit ou exceljs)
       await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
-      console.warn(`⚠️  ${formato} não implementado ainda, salvando como JSON`);
+      log.warn({ component: 'report-worker', formato }, 'Formato não implementado ainda, salvando como JSON');
       break;
 
     default:
@@ -509,8 +511,7 @@ async function enviarRelatorioPorEmail(
   fileName: string
 ) {
   // TODO: Integrar com serviço de e-mail (SendGrid, SES, etc)
-  console.log(`📧 Enviando relatório ${tipoRelatorio} para ${email}`);
-  console.log(`📎 Anexo: ${fileName}`);
+  log.info({ component: 'report-worker', email, tipoRelatorio, fileName }, 'Enviando relatório por e-mail');
   
   // Placeholder - implementar integração real
   return Promise.resolve();
@@ -527,13 +528,13 @@ reportQueue.on('failed', async (job, error) => {
   const maxAttempts = 2; // Relatórios: menos retries (são idempotentes)
   
   if (job.attemptsMade < maxAttempts) {
-    console.log(`🔄 Retry ${job.attemptsMade}/${maxAttempts} para relatório ${job.id}`);
+    log.warn({ component: 'report-worker', jobId: job.id, attempt: job.attemptsMade, maxAttempts }, 'Retentando relatório');
     await job.retry();
   } else {
-    console.error(`💀 Relatório ${job.id} falhou após ${maxAttempts} tentativas`);
+    log.error({ component: 'report-worker', jobId: job.id, maxAttempts, err: error }, 'Relatório falhou após múltiplas tentativas');
   }
 });
 
-console.log('🚀 Report Worker iniciado');
+log.info({ component: 'report-worker' }, 'Report Worker iniciado');
 
 export default reportQueue;

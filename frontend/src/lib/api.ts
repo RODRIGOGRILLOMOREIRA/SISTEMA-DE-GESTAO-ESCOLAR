@@ -30,10 +30,38 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     console.log('✅ Response:', response.config.url, response.data);
+    
+    // Fase 4: Capturar headers de rate limit
+    const rateLimitRemaining = response.headers['x-ratelimit-remaining'];
+    const rateLimitReset = response.headers['x-ratelimit-reset'];
+    
+    if (rateLimitRemaining !== undefined && rateLimitReset !== undefined) {
+      const remaining = parseInt(rateLimitRemaining);
+      const resetTime = parseInt(rateLimitReset) * 1000; // Converter para ms
+      
+      // Emitir evento se estiver próximo do limite (menos de 20 requisições restantes)
+      if (remaining < 20) {
+        window.dispatchEvent(new CustomEvent('rateLimitWarning', {
+          detail: { remaining, resetTime }
+        }));
+      }
+    }
+    
     return response;
   },
   (error) => {
     console.error('❌ Response Error:', error.response?.status, error.response?.data);
+    
+    // Fase 4: Detectar erro 429 (Too Many Requests)
+    if (error.response?.status === 429) {
+      const retryAfter = error.response.headers['retry-after'];
+      const resetTime = retryAfter ? Date.now() + (parseInt(retryAfter) * 1000) : Date.now() + 60000;
+      
+      window.dispatchEvent(new CustomEvent('rateLimitExceeded', {
+        detail: { resetTime }
+      }));
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -205,6 +233,7 @@ export const configuracoesAPI = {
 export interface LoginData {
   email: string;
   senha: string;
+  twoFactorToken?: string; // FASE 4: Token 2FA opcional
 }
 
 export interface RegisterData {

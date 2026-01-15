@@ -52,6 +52,13 @@ import Configuracoes from './pages/Configuracoes'
 import BoletimDesempenho from './pages/BoletimDesempenho'
 import NotificacoesConfig from './pages/NotificacoesConfig'
 import AuditLogs from './pages/AuditLogs'
+import TwoFactorAuth from './pages/TwoFactorAuth'
+import SystemMonitoring from './pages/SystemMonitoring'
+import RBAC from './pages/RBAC'
+import Infrastructure from './pages/Infrastructure'
+import DropoutPrediction from './pages/DropoutPrediction'
+import CommunicationCenter from './pages/CommunicationCenter' // FASE 5: Central de Comunicação
+import ImportExcel from './pages/ImportExcel' // FASE 5: Importação de Excel
 
 function App() {
   return (
@@ -94,6 +101,13 @@ function App() {
                 <Route path="configuracoes" element={<Configuracoes />} />
                 <Route path="notificacoes" element={<NotificacoesConfig />} />
                 <Route path="auditoria" element={<AuditLogs />} />
+                <Route path="two-factor" element={<TwoFactorAuth />} />
+                <Route path="monitoramento" element={<SystemMonitoring />} />
+                <Route path="rbac" element={<RBAC />} />
+                <Route path="infraestrutura" element={<Infrastructure />} />
+                <Route path="predicao-evasao" element={<DropoutPrediction />} />
+                <Route path="central-comunicacao" element={<CommunicationCenter />} /> {/* FASE 5 */}
+                <Route path="importar-excel" element={<ImportExcel />} /> {/* FASE 5: Importação */}
               </Route>
             </Routes>
           </BrowserRouter>

@@ -275,7 +275,6 @@ frequenciaRouter.post('/', async (req, res) => {
     console.log('✅ Registro criado com sucesso:', {
       id: registro.id,
       disciplina: registro.disciplinas?.nome,
-      numeroAulas: registro.numeroAulas,
       totalPresencas: registro.presenca_aluno?.length
     });
 
@@ -287,7 +286,7 @@ frequenciaRouter.post('/', async (req, res) => {
         
         if (aluno) {
           // Contar total de presenças/faltas do aluno nesta disciplina
-          const todasPresencas = await prisma.presenca_aluno.findMany({
+          const todasPresencas = await prisma.presencaAluno.findMany({
             where: {
               alunoId: aluno.id,
               registro_frequencia: {
@@ -298,7 +297,7 @@ frequenciaRouter.post('/', async (req, res) => {
           });
 
           const totalAulas = todasPresencas.length;
-          const totalFaltas = todasPresencas.filter(p => !p.presente).length;
+          const totalFaltas = todasPresencas.filter((p: any) => !p.presente).length;
           const percentualFrequencia = totalAulas > 0 ? ((totalAulas - totalFaltas) / totalAulas) * 100 : 100;
 
           // Emitir evento para cada aula registrada

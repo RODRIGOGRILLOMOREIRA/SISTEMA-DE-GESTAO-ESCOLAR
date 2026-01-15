@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Bell, Search, Settings, User, Calendar, ChevronRight } from 'lucide-react'
+import { Bell, Search, Settings, User, Calendar, ChevronRight, LogOut } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useAnoLetivo } from '../contexts/AnoLetivoContext'
 import { useWebSocket } from '../contexts/WebSocketContext'
@@ -15,7 +15,7 @@ interface TopbarProps {
 const Topbar = ({ onNotificationClick }: TopbarProps) => {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { anoLetivo } = useAnoLetivo()
   const { notificationCount, markNotificationsAsRead, connected } = useWebSocket()
   const [showProfileMenu, setShowProfileMenu] = useState(false)
@@ -115,6 +115,18 @@ const Topbar = ({ onNotificationClick }: TopbarProps) => {
 
         {/* Theme Toggle */}
         <ThemeToggle />
+
+        {/* Logout */}
+        <button 
+          className="topbar-icon-btn logout-btn"
+          onClick={() => {
+            logout()
+            navigate('/login')
+          }}
+          title="Sair"
+        >
+          <LogOut size={20} />
+        </button>
 
         {/* Perfil do Usuário */}
         <div className="profile-container">

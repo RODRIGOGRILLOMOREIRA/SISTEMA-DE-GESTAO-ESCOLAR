@@ -21,13 +21,19 @@ import {
   FolderOpen,
   Menu,
   X,
-  Bell
+  Bell,
+  Activity,
+  Shield,
+  Server,
+  TrendingDown,
+  MessageSquare // FASE 5: Central de Comunicação
 } from 'lucide-react'
 import { configuracoesAPI, Configuracao } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useAnoLetivo } from '../contexts/AnoLetivoContext'
 import Topbar from './Topbar'
 import BottomNav from './BottomNav'
+import RateLimitWarning from './RateLimitWarning'
 import './Layout.css'
 
 interface MenuItem {
@@ -46,6 +52,9 @@ const Layout = () => {
   const [openDropdowns, setOpenDropdowns] = useState<string[]>([])
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [desktopMenuCollapsed, setDesktopMenuCollapsed] = useState(false)
+  const [showRateLimitWarning, setShowRateLimitWarning] = useState(false)
+  const [rateLimitData, setRateLimitData] = useState({ remaining: 0, resetTime: 0 })
+  
   useEffect(() => {
     loadConfig()
     
@@ -54,10 +63,30 @@ const Layout = () => {
       loadConfig()
     }
     
+    // Listener para rate limit warnings
+    const handleRateLimitWarning = (event: CustomEvent) => {
+      const { remaining, resetTime } = event.detail
+      setRateLimitData({ remaining, resetTime })
+      setShowRateLimitWarning(true)
+    }
+
+    const handleRateLimitExceeded = (event: CustomEvent) => {
+      const { resetTime } = event.detail
+      setRateLimitData({ remaining: 0, resetTime })
+      setShowRateLimitWarning(true)
+      
+      // Mostrar alerta adicional
+      alert('⚠️ Limite de requisições excedido! Por favor, aguarde alguns minutos antes de continuar.')
+    }
+    
     window.addEventListener('configUpdated', handleConfigUpdate)
+    window.addEventListener('rateLimitWarning', handleRateLimitWarning as EventListener)
+    window.addEventListener('rateLimitExceeded', handleRateLimitExceeded as EventListener)
     
     return () => {
       window.removeEventListener('configUpdated', handleConfigUpdate)
+      window.removeEventListener('rateLimitWarning', handleRateLimitWarning as EventListener)
+      window.removeEventListener('rateLimitExceeded', handleRateLimitExceeded as EventListener)
     }
   }, [])
 
@@ -138,11 +167,46 @@ const Layout = () => {
       ]
     },
     { path: '/notificacoes', icon: Bell, label: 'Notificações' },
+    ...(user?.tipo === 'ADMIN' || user?.tipo === 'GESTOR' ? [
+      {
+        icon: TrendingDown,
+        label: 'Fase 3 - Inteligência Artificial',
+        subItems: [
+          { path: '/predicao-evasao', icon: TrendingDown, label: 'Predição de Evasão' },
+        ]
+      },
+      {
+        icon: MessageSquare,
+        label: 'Fase 5 - Inovações',
+        subItems: [
+          { path: '/central-comunicacao', icon: MessageSquare, label: 'Central de Comunicação' },
+        ]
+      },
+      {
+        icon: Activity,
+        label: 'Fase 4 - Observabilidade',
+        subItems: [
+          { path: '/monitoramento', icon: Activity, label: 'Monitoramento do Sistema' },
+          { path: '/auditoria', icon: Shield, label: 'Logs de Auditoria' },
+          { path: '/two-factor', icon: Shield, label: 'Autenticação 2FA' },
+          { path: '/rbac', icon: Shield, label: 'Permissões (RBAC)' },
+          { path: '/infraestrutura', icon: Server, label: 'Backup e Cache' },
+        ]
+      }
+    ] : []),
     { path: '/configuracoes', icon: Settings, label: 'Configurações' },
   ]
 
   return (
     <div className="layout">
+      {/* Rate Limit Warning */}
+      <RateLimitWarning
+        remainingRequests={rateLimitData.remaining}
+        resetTime={rateLimitData.resetTime}
+        show={showRateLimitWarning}
+        onClose={() => setShowRateLimitWarning(false)}
+      />
+
       {/* Topbar - Desktop e Tablet */}
       <Topbar 
         onNotificationClick={handleNotificationClick}
@@ -247,29 +311,6 @@ const Layout = () => {
             )
           })}
         </nav>
-
-        {/* Área de Usuário e Logout */}
-        <div className="sidebar-footer">
-          <div className="user-info">
-            <div className="user-avatar">
-              <User size={20} />
-            </div>
-            <div className="user-details">
-              <span className="user-name">{user?.nome}</span>
-              <span className="user-email">{user?.email}</span>
-            </div>
-          </div>
-          <button 
-            className="logout-btn" 
-            onClick={() => {
-              logout()
-              navigate('/login')
-            }}
-            title="Sair"
-          >
-            <LogOut size={20} />
-          </button>
-        </div>
       </aside>
 
       {/* Botão Toggle Desktop */}

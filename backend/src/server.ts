@@ -45,13 +45,54 @@ import { queuesRouter } from './routes/queues.routes';
 import auditRouter from './routes/audit.routes';
 import backupRouter from './routes/backup.routes';
 import maintenanceRouter from './routes/maintenance.routes';
-import './services/notification.service'; // Inicializar listeners de notificações
+import healthRouter from './routes/health.routes';
+import metricsRouter from './routes/metrics.routes';
+import twoFactorRouter from './routes/two-factor.routes';
+import { rbacRouter } from './routes/rbac.routes'; // FASE 4: RBAC Granular
+import { dropoutPredictionRouter } from './routes/dropout-prediction.routes'; // FASE 3: Predição de Evasão
+import communicationRouter from './routes/communication.routes'; // FASE 5: Central de Comunicação
+import excelImportRouter from './routes/excel-import.routes'; // FASE 5: Importação de Excel
 import { backupService } from './services/backup.service'; // Serviço de backup
 import { maintenanceMiddleware } from './middlewares/maintenance'; // Middleware de manutenção
+import { loggerMiddleware, log } from './lib/logger'; // Sistema de logs estruturados
+import { metricsMiddleware } from './lib/metrics'; // Sistema de métricas
+import { apiRateLimiter, securityMiddleware } from './middlewares/rate-limit'; // Rate limiting
+import redis from './lib/redis';
 
-// Inicializar workers de filas em background
-import './workers/notification.worker';
-import './workers/report.worker';
+// Inicializar workers e notificações apenas se Redis estiver disponível
+let redisAvailable = false;
+let workersInitialized = false;
+
+// Verificar disponibilidade do Redis
+redis.ping().then(() => {
+  redisAvailable = true;
+  log.info({ component: 'redis' }, 'Redis disponível e conectado');
+  
+  // Inicializar serviços dependentes do Redis
+  try {
+    require('./services/notification.service');
+    log.info({ component: 'notifications' }, 'Notification Service: Listeners inicializados');
+    
+    require('./workers/notification.worker');
+    log.info({ component: 'workers' }, 'Notification Worker iniciado');
+    
+    require('./workers/report.worker');
+    log.info({ component: 'workers' }, 'Report Worker iniciado');
+    
+    // FASE 5: Inicializar worker de mensagens agendadas
+    const { scheduleRecurringJob } = require('./workers/scheduled-messages.worker');
+    scheduleRecurringJob();
+    log.info({ component: 'workers' }, 'Scheduled Messages Worker iniciado');
+    
+    workersInitialized = true;
+    log.info({ component: 'workers' }, 'Todos os workers inicializados com sucesso');
+  } catch (error: any) {
+    log.warn({ component: 'workers', err: error }, 'Erro ao inicializar workers');
+  }
+}).catch(() => {
+  log.warn({ component: 'redis' }, 'Redis não disponível - Sistema operando em modo básico');
+  log.info({ component: 'system' }, 'Funcionalidades de fila e notificações em tempo real desabilitadas');
+});
 
 dotenv.config();
 
@@ -77,6 +118,12 @@ app.use(cors({
   },
   credentials: true
 }));
+
+// FASE 4: Middlewares de Observabilidade e Segurança
+app.use(loggerMiddleware); // Logs estruturados com correlation ID
+app.use(metricsMiddleware); // Coleta de métricas Prometheus
+app.use(securityMiddleware); // Verificação de IPs bloqueados
+
 // Desabilitar cache para garantir sincronização entre dispositivos
 app.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -96,6 +143,13 @@ app.get('/', (req, res) => {
   res.json({ message: 'API Sistema de Gestão Escolar' });
 });
 
+// FASE 4: Rotas de Observabilidade (sem rate limit)
+app.use('/api/health', healthRouter); // Health checks
+app.use('/api', metricsRouter); // Métricas Prometheus
+
+// FASE 4: Aplicar rate limiting nas rotas da API
+app.use('/api', apiRateLimiter); // Rate limit global para a API
+
 app.use('/api/auth', authRouter);
 app.use('/api/alunos', alunosRouter);
 app.use('/api/professores', professoresRouter);
@@ -113,23 +167,49 @@ app.use('/api/registro-frequencia', frequenciaRouter);
 app.use('/api/ponto', pontoRouter);
 app.use('/api/reconhecimento-facial', reconhecimentoFacialRouter);
 app.use('/api/notificacoes', notificacoesRouter);
+app.use('/api/two-factor', twoFactorRouter); // FASE 4: Autenticação 2FA
+app.use('/api/rbac', rbacRouter); // FASE 4: RBAC Granular
+app.use('/api/dropout-prediction', dropoutPredictionRouter); // FASE 3: Predição de Evasão
+app.use('/api/communication', communicationRouter); // FASE 5: Central de Comunicação Unificada
+app.use('/api/excel-import', excelImportRouter); // FASE 5: Importação de Excel
 app.use('/api/queues', queuesRouter); // Dashboard de filas
 app.use('/api/audit', auditRouter); // Logs de auditoria
 app.use('/api/backup', backupRouter); // Backup automático
 app.use('/api/maintenance', maintenanceRouter); // Modo de manutenção
 
 // Start server
-app.listen(PORT, '0.0.0.0', async () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  console.log(`📱 Acesse de outros dispositivos: http://192.168.5.19:${PORT}`);
-  console.log(`📊 Bull Queue workers ativos`);
-  console.log(`   - Notifications Worker: 10 jobs concorrentes`);
-  console.log(`   - Reports Worker: 3 jobs concorrentes`);
+const port = typeof PORT === 'string' ? parseInt(PORT) : PORT;
+app.listen(port, '0.0.0.0', async () => {
+  log.info({ 
+    component: 'server',
+    port: PORT,
+    env: process.env.NODE_ENV || 'development'
+  }, `Servidor iniciado na porta ${PORT}`);
+  
+  log.info({ 
+    component: 'server',
+    ip: '192.168.5.19',
+    port: PORT 
+  }, 'Acesse de outros dispositivos: http://192.168.5.19:' + PORT);
+  
+  if (workersInitialized) {
+    log.info({ component: 'workers' }, 'Bull Queue workers ativos');
+    log.info({ component: 'workers', queue: 'notifications', concurrency: 10 }, 'Notifications Worker: 10 jobs concorrentes');
+    log.info({ component: 'workers', queue: 'reports', concurrency: 3 }, 'Reports Worker: 3 jobs concorrentes');
+  }
   
   // Inicializar serviço de backup automático
   try {
     await backupService.initialize();
-  } catch (error) {
-    console.error('❌ Erro ao inicializar serviço de backup:', error);
+    log.info({ component: 'backup' }, 'Serviço de backup inicializado');
+  } catch (error: any) {
+    log.error({ component: 'backup', err: error }, 'Erro ao inicializar serviço de backup');
   }
+
+  // FASE 4: Informações sobre novas funcionalidades
+  log.info({ component: 'fase4' }, '🔐 Segurança: Rate limiting ativo');
+  log.info({ component: 'fase4' }, '📊 Observabilidade: Logs estruturados (Pino)');
+  log.info({ component: 'fase4' }, '📈 Métricas: Prometheus em /api/metrics');
+  log.info({ component: 'fase4' }, '🏥 Health checks: /api/health, /api/health/live, /api/health/ready');
+  log.info({ component: 'fase4' }, '✅ Sistema pronto para produção');
 });

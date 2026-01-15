@@ -87,7 +87,13 @@ export interface EventoResumoDiario {
 class EventsService extends EventEmitter {
   constructor() {
     super();
-    this.setMaxListeners(50); // Aumentar limite para múltiplos listeners
+    // Aumentar limite para múltiplos listeners (evita warning de vazamento de memória)
+    this.setMaxListeners(100); 
+  }
+
+  // Método para remover todos os listeners (útil para testes e cleanup)
+  cleanup() {
+    this.removeAllListeners();
   }
 
   // Eventos de Nota

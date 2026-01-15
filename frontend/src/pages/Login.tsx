@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { LogIn, Mail, Lock, School } from 'lucide-react'
 import { authAPI, configuracoesAPI, Configuracao } from '../lib/api'
+import TwoFactorModal from '../components/TwoFactorModal'
 import './Auth.css'
 
 const Login = () => {
@@ -13,6 +14,10 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [config, setConfig] = useState<Configuracao | null>(null)
+  
+  // 2FA
+  const [show2FAModal, setShow2FAModal] = useState(false)
+  const [twoFactorError, setTwoFactorError] = useState('')
 
   useEffect(() => {
     loadConfig()
@@ -34,12 +39,43 @@ const Login = () => {
 
     try {
       const response = await authAPI.login(formData)
+      
+      // Verificar se requer 2FA
+      if (response.data.requires2FA) {
+        setShow2FAModal(true)
+        setLoading(false)
+        return
+      }
+      
+      // Login normal (sem 2FA)
       localStorage.setItem('token', response.data.token)
       localStorage.setItem('user', JSON.stringify(response.data.usuario))
       navigate('/dashboard')
     } catch (error: any) {
       console.error('Erro no login:', error)
       setError(error.response?.data?.error || 'Erro ao fazer login')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handle2FAVerify = async (code: string) => {
+    setTwoFactorError('')
+    setLoading(true)
+
+    try {
+      const response = await authAPI.login({
+        ...formData,
+        twoFactorToken: code
+      })
+      
+      localStorage.setItem('token', response.data.token)
+      localStorage.setItem('user', JSON.stringify(response.data.usuario))
+      navigate('/dashboard')
+    } catch (error: any) {
+      console.error('Erro na verificação 2FA:', error)
+      setTwoFactorError(error.response?.data?.error || 'Código inválido')
+      throw error // Para manter o modal aberto
     } finally {
       setLoading(false)
     }
@@ -108,6 +144,18 @@ const Login = () => {
           </div>
         </form>
       </div>
+
+      {/* Modal 2FA */}
+      <TwoFactorModal
+        isOpen={show2FAModal}
+        onClose={() => {
+          setShow2FAModal(false)
+          setTwoFactorError('')
+        }}
+        onVerify={handle2FAVerify}
+        loading={loading}
+        error={twoFactorError}
+      />
     </div>
   )
 }

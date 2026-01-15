@@ -318,16 +318,26 @@ model turmas {
 }
 
 model usuarios {
-  id               String    @id
+  id               String          @id
   nome             String
-  email            String    @unique
+  email            String          @unique
   senha            String
-  tipo             String    @default("USUARIO")
+  tipo             String          @default("USUARIO")
   cargo            String?
-  ativo            Boolean   @default(true)
+  ativo            Boolean         @default(true)
+  resetToken       String?
   resetTokenExpira DateTime?
-  createdAt        DateTime  @default(now())
+  createdAt        DateTime        @default(now())
   updatedAt        DateTime
+  
+  // FASE 4: Relações RBAC e 2FA
+  twoFactorAuth    TwoFactorAuth?
+  apiKeys          ApiKey[]
+  auditLogs        AuditLog[]
+  userRoles        UserRole[]      // RBAC: Múltiplos roles por usuário
+
+  @@index([email])
+  @@index([ativo])
 }
 
 enum DiaSemana {
@@ -551,9 +561,289 @@ model AuditLog {
   userAgent  String?
   createdAt  DateTime @default(now())
 
+  user usuarios @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([action])
   @@index([resource])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ============================================
+// FASE 4: Two-Factor Authentication (2FA)
+// ============================================
+
+model TwoFactorAuth {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  secret      String   // TOTP secret
+  enabled     Boolean  @default(false)
+  backupCodes String[] // Códigos de backup para recuperação
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user usuarios @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([enabled])
+  @@map("two_factor_auth")
+}
+
+model TwoFactorLog {
+  id        String   @id @default(uuid())
+  userId    String
+  success   Boolean
+  method    String   // totp, backup_code
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("two_factor_logs")
+}
+
+// ============================================
+// FASE 4: API Keys para API Pública
+// ============================================
+
+model ApiKey {
+  id          String    @id @default(uuid())
+  name        String    // Nome identificador da chave
+  key         String    @unique // Hash da API key
+  userId      String?   // Usuário dono da key (opcional)
+  permissions String[]  // Permissões específicas da key
+  rateLimit   Int       @default(100) // Requests por minuto
+  enabled     Boolean   @default(true)
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user usuarios? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([key])
+  @@index([userId])
+  @@index([enabled])
+  @@map("api_keys")
+}
+
+// ============================================
+// FASE 4: Machine Learning - Predições
+// ============================================
+
+model StudentPrediction {
+  id                 String   @id @default(uuid())
+  studentId          String   // ID do aluno
+  predictionType     String   // performance, dropout_risk, subject_recommendation
+  predictedValue     Float    // Valor numérico da predição (0-1 ou nota)
+  confidence         Float    // Nível de confiança (0-1)
+  features           Json     // Features usadas na predição
+  modelVersion       String   // Versão do modelo usado
+  recommendations    Json?    // Recomendações baseadas na predição
+  createdAt          DateTime @default(now())
+
+  @@index([studentId])
+  @@index([predictionType])
+  @@index([createdAt])
+  @@map("student_predictions")
+}
+
+model MLModel {
+  id             String   @id @default(uuid())
+  name           String   @unique // Nome do modelo
+  type           String   // performance_prediction, dropout_detection
+  version        String   // Versão do modelo
+  accuracy       Float?   // Acurácia do modelo
+  parameters     Json     // Hiperparâmetros do modelo
+  trainingData   Json?    // Metadados sobre os dados de treino
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([type])
+  @@index([active])
+  @@map("ml_models")
+}
+
+// ============================================
+// RBAC - Role Based Access Control (FASE 4)
+// ============================================
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique // Ex: "alunos.create", "notas.update", "turmas.delete"
+  description String?  // Descrição da permissão
+  resource    String   // Recurso: "alunos", "notas", "turmas", etc
+  action      String   // Ação: "create", "read", "update", "delete", "list"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  roles RolePermission[]
+
+  @@index([resource])
+  @@index([action])
+  @@index([resource, action])
+  @@map("permissions")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique // Ex: "ADMIN", "PROFESSOR", "COORDENADOR"
+  description String?  // Descrição da role
+  level       Int      @default(0) // Nível hierárquico (maior = mais permissões)
+  isSystem    Boolean  @default(false) // Role do sistema (não pode ser deletada)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  permissions RolePermission[]
+  users       UserRole[]
+
+  @@index([level])
+  @@map("roles")
+}
+
+model RolePermission {
+  id           String   @id @default(uuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  roleId    String
+  userType  String   // "usuarios", "professor", "funcionario", "equipe_diretiva"
+  createdAt DateTime @default(now())
+
+  role    Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  usuario usuarios @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@index([userType])
+  @@map("user_roles")
+}
+
+// ==================== FASE 5: CENTRAL DE COMUNICAÇÃO UNIFICADA ====================
+
+model MessageTemplate {
+  id          String   @id @default(uuid())
+  name        String   // Nome do template
+  category    String   // Ex: "ACADEMICO", "FINANCEIRO", "EVENTOS", "AVISOS"
+  channel     String   // "whatsapp", "sms", "email", "push", "all"
+  subject     String?  // Para emails
+  content     String   @db.Text // Conteúdo com variáveis: {{nome}}, {{turma}}, etc
+  variables   Json     // Array de variáveis disponíveis
+  isActive    Boolean  @default(true)
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  messages    Message[]
+  schedules   MessageSchedule[]
+
+  @@index([channel])
+  @@index([category])
+  @@index([isActive])
+  @@map("message_templates")
+}
+
+model Message {
+  id             String    @id @default(uuid())
+  templateId     String?
+  channel        String    // "whatsapp", "sms", "email", "push"
+  recipientType  String    // "aluno", "responsavel", "professor", "funcionario", "turma", "todos"
+  recipientId    String?   // ID do destinatário específico
+  recipient      String    // Email, telefone ou ID do dispositivo
+  subject        String?   // Para emails
+  content        String    @db.Text
+  status         String    @default("pending") // pending, sent, delivered, failed, read
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  errorMessage   String?   @db.Text
+  metadata       Json?     // Dados adicionais do provedor
+  sentBy         String    // ID do usuário que enviou
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  template       MessageTemplate? @relation(fields: [templateId], references: [id])
+
+  @@index([channel])
+  @@index([recipientType])
+  @@index([status])
+  @@index([sentAt])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+model MessageSchedule {
+  id             String    @id @default(uuid())
+  templateId     String
+  channel        String    // "whatsapp", "sms", "email", "push", "all"
+  recipientType  String    // "aluno", "responsavel", "professor", "turma", "todos"
+  recipientIds   Json?     // Array de IDs específicos (null = todos)
+  scheduledFor   DateTime  // Data/hora do envio
+  recurrence     String?   // "daily", "weekly", "monthly", null
+  isActive       Boolean   @default(true)
+  lastSentAt     DateTime?
+  nextSendAt     DateTime?
+  sentCount      Int       @default(0)
+  createdBy      String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  template       MessageTemplate @relation(fields: [templateId], references: [id])
+
+  @@index([scheduledFor])
+  @@index([isActive])
+  @@index([nextSendAt])
+  @@map("message_schedules")
+}
+
+model CommunicationChannel {
+  id          String   @id @default(uuid())
+  channel     String   @unique // "whatsapp", "sms", "email", "push"
+  provider    String   // "twilio", "sendgrid", "firebase", etc
+  isActive    Boolean  @default(true)
+  config      Json     // Configurações específicas do canal (API keys, etc - criptografadas)
+  limits      Json?    // Limites de envio (por dia, por mês, etc)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([channel])
+  @@index([isActive])
+  @@map("communication_channels")
+}
+
+model MessageAnalytics {
+  id              String   @id @default(uuid())
+  date            DateTime @db.Date
+  channel         String
+  sent            Int      @default(0)
+  delivered       Int      @default(0)
+  failed          Int      @default(0)
+  read            Int      @default(0)
+  clicked         Int      @default(0)
+  averageDelivery Float?   // Tempo médio de entrega em segundos
+  cost            Float?   // Custo total do dia
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([date, channel])
+  @@index([date])
+  @@index([channel])
+  @@map("message_analytics")
 }

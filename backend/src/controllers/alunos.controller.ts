@@ -9,6 +9,7 @@ import cacheService from '../services/cache.service';
 import { paginatedResponse, getCacheKey } from '../middlewares/pagination';
 import { z } from 'zod';
 import crypto from 'crypto';
+import encryption from '../services/encryption.service';
 
 // Schema de validação
 const alunoSchema = z.object({
@@ -87,7 +88,15 @@ export const listarAlunos = async (req: Request, res: Response) => {
       prisma.alunos.count({ where }),
     ]);
 
-    const response = paginatedResponse(alunos, total, pagination.page, pagination.limit);
+    // Descriptografar dados sensíveis
+    const alunosDecrypted = alunos.map(aluno => ({
+      ...aluno,
+      cpf: encryption.decrypt(aluno.cpf),
+      telefone: aluno.telefone ? encryption.decrypt(aluno.telefone) : null,
+      telefoneResp: encryption.decrypt(aluno.telefoneResp),
+    }));
+
+    const response = paginatedResponse(alunosDecrypted, total, pagination.page, pagination.limit);
 
     // Armazenar no cache (30 minutos)
     await cacheService.set(cacheKey, response, 1800);
@@ -183,7 +192,16 @@ export const buscarAlunoPorId = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Aluno não encontrado' });
     }
 
-    res.json(aluno);
+    // Descriptografar dados sensíveis
+    const alunoResponse = {
+      ...aluno,
+      cpf: encryption.decrypt(aluno.cpf),
+      telefone: aluno.telefone ? encryption.decrypt(aluno.telefone) : null,
+      endereco: aluno.endereco ? encryption.decrypt(aluno.endereco) : null,
+      telefoneResp: encryption.decrypt(aluno.telefoneResp),
+    };
+
+    res.json(alunoResponse);
   } catch (error) {
     console.error('Erro ao buscar aluno:', error);
     res.status(500).json({ error: 'Erro ao buscar aluno' });
@@ -201,12 +219,27 @@ export const criarAluno = async (req: Request, res: Response) => {
     // Gerar ID único
     const id = crypto.randomUUID();
 
+    // Criptografar dados sensíveis
+    const encryptedData = {
+      cpf: encryption.encrypt(validatedData.cpf),
+      telefone: validatedData.telefone ? encryption.encrypt(validatedData.telefone) : null,
+      endereco: validatedData.endereco ? encryption.encrypt(validatedData.endereco) : null,
+      telefoneResp: encryption.encrypt(validatedData.telefoneResp),
+    };
+
     // Criar aluno
     const aluno = await prisma.alunos.create({
       data: {
         id,
-        ...validatedData,
+        nome: validatedData.nome,
+        cpf: encryptedData.cpf,
         dataNascimento: new Date(validatedData.dataNascimento),
+        email: validatedData.email,
+        telefone: encryptedData.telefone,
+        endereco: encryptedData.endereco,
+        responsavel: validatedData.responsavel,
+        telefoneResp: encryptedData.telefoneResp,
+        turmaId: validatedData.turmaId,
         numeroMatricula: `MAT${Date.now()}`,
         statusMatricula: 'ATIVO',
         createdAt: new Date(),
@@ -217,10 +250,19 @@ export const criarAluno = async (req: Request, res: Response) => {
       },
     });
 
+    // Descriptografar dados para retorno
+    const alunoResponse = {
+      ...aluno,
+      cpf: encryption.decrypt(aluno.cpf),
+      telefone: aluno.telefone ? encryption.decrypt(aluno.telefone) : null,
+      endereco: aluno.endereco ? encryption.decrypt(aluno.endereco) : null,
+      telefoneResp: encryption.decrypt(aluno.telefoneResp),
+    };
+
     // Invalidar cache de alunos
     await cacheService.invalidate('alunos:*');
 
-    res.status(201).json(aluno);
+    res.status(201).json(alunoResponse);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Dados inválidos', details: error.errors });
@@ -240,11 +282,30 @@ export const atualizarAluno = async (req: Request, res: Response) => {
     // Validar dados (parcial)
     const validatedData = alunoSchema.partial().parse(req.body);
 
+    // Criptografar dados sensíveis se fornecidos
+    const encryptedData: any = {};
+    if (validatedData.cpf) {
+      encryptedData.cpf = encryption.encrypt(validatedData.cpf);
+    }
+    if (validatedData.telefone) {
+      encryptedData.telefone = encryption.encrypt(validatedData.telefone);
+    }
+    if (validatedData.endereco) {
+      encryptedData.endereco = encryption.encrypt(validatedData.endereco);
+    }
+    if (validatedData.telefoneResp) {
+      encryptedData.telefoneResp = encryption.encrypt(validatedData.telefoneResp);
+    }
+
     // Atualizar aluno
     const aluno = await prisma.alunos.update({
       where: { id },
       data: {
-        ...validatedData,
+        nome: validatedData.nome,
+        email: validatedData.email,
+        responsavel: validatedData.responsavel,
+        turmaId: validatedData.turmaId,
+        ...encryptedData,
         dataNascimento: validatedData.dataNascimento
           ? new Date(validatedData.dataNascimento)
           : undefined,
@@ -255,11 +316,20 @@ export const atualizarAluno = async (req: Request, res: Response) => {
       },
     });
 
+    // Descriptografar dados para retorno
+    const alunoResponse = {
+      ...aluno,
+      cpf: encryption.decrypt(aluno.cpf),
+      telefone: aluno.telefone ? encryption.decrypt(aluno.telefone) : null,
+      endereco: aluno.endereco ? encryption.decrypt(aluno.endereco) : null,
+      telefoneResp: encryption.decrypt(aluno.telefoneResp),
+    };
+
     // Invalidar cache
     await cacheService.invalidate('alunos:*');
     await cacheService.delete(`aluno:${id}`);
 
-    res.json(aluno);
+    res.json(alunoResponse);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Dados inválidos', details: error.errors });

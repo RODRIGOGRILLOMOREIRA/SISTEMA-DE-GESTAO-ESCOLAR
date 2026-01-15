@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "dev": "set NODE_OPTIONS=--max-old-space-size=4096 && vite",
+    "build": "set NODE_OPTIONS=--max-old-space-size=4096 && tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

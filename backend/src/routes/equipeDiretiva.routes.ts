@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
+import encryption from '../services/encryption.service';
 
 export const equipeDiretivaRouter = Router();
 
@@ -19,7 +20,15 @@ equipeDiretivaRouter.get('/', async (req, res) => {
     const equipe = await prisma.equipe_diretiva.findMany({
       orderBy: { nome: 'asc' }
     });
-    res.json(equipe);
+    
+    // Descriptografar dados sensíveis
+    const equipeDecrypted = equipe.map(membro => ({
+      ...membro,
+      cpf: encryption.decrypt(membro.cpf),
+      telefone: membro.telefone ? encryption.decrypt(membro.telefone) : null,
+    }));
+    
+    res.json(equipeDecrypted);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao buscar equipe diretiva' });
   }
@@ -36,7 +45,14 @@ equipeDiretivaRouter.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Membro não encontrado' });
     }
     
-    res.json(membro);
+    // Descriptografar dados sensíveis
+    const membroDecrypted = {
+      ...membro,
+      cpf: encryption.decrypt(membro.cpf),
+      telefone: membro.telefone ? encryption.decrypt(membro.telefone) : null,
+    };
+    
+    res.json(membroDecrypted);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao buscar membro' });
   }
@@ -47,13 +63,19 @@ equipeDiretivaRouter.post('/', async (req, res) => {
   try {
     const data = equipeDiretivaSchema.parse(req.body);
     
+    // Criptografar dados sensíveis
+    const encryptedData = {
+      cpf: encryption.encrypt(data.cpf),
+      telefone: data.telefone ? encryption.encrypt(data.telefone) : null,
+    };
+    
     const membro = await prisma.equipe_diretiva.create({
       data: {
         id: crypto.randomUUID(),
         nome: data.nome,
-        cpf: data.cpf,
+        cpf: encryptedData.cpf,
         email: data.email,
-        telefone: data.telefone || null,
+        telefone: encryptedData.telefone,
         cargo: data.cargo,
         updatedAt: new Date(),
       }
@@ -74,10 +96,19 @@ equipeDiretivaRouter.put('/:id', async (req, res) => {
   try {
     const data = equipeDiretivaSchema.partial().parse(req.body);
     
+    // Criptografar dados sensíveis se fornecidos
+    const encryptedData: any = { ...data };
+    if (data.cpf) {
+      encryptedData.cpf = encryption.encrypt(data.cpf);
+    }
+    if (data.telefone) {
+      encryptedData.telefone = encryption.encrypt(data.telefone);
+    }
+    
     const membro = await prisma.equipe_diretiva.update({
       where: { id: req.params.id },
       data: {
-        ...data,
+        ...encryptedData,
         updatedAt: new Date(),
       }
     });

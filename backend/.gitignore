@@ -31,3 +31,6 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# ⚠️ Backup sensível de chaves de segurança - NUNCA COMMITAR!
+SECURITY_KEYS_BACKUP.txt

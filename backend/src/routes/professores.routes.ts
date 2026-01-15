@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
+import encryption from '../services/encryption.service';
 
 export const professoresRouter = Router();
 
@@ -16,13 +17,37 @@ const professorSchema = z.object({
   turmasVinculadas: z.string().optional(),
 });
 
+// Função auxiliar para descriptografar com segurança
+function safeDecrypt(data: string | null): string | null {
+  if (!data) return null;
+  try {
+    // Verificar se está no formato criptografado (salt:iv:tag:encrypted)
+    if (data.includes(':') && data.split(':').length === 4) {
+      return encryption.decrypt(data);
+    }
+    // Se não estiver criptografado, retornar como está
+    return data;
+  } catch (error) {
+    // Se falhar ao descriptografar, retornar dado original
+    return data;
+  }
+}
+
 // GET todos os professores
 professoresRouter.get('/', async (req, res) => {
   try {
     const professores = await prisma.professores.findMany({
       include: { disciplinas: true, turmas: true }
     });
-    res.json(professores);
+    
+    // Descriptografar dados sensíveis com segurança
+    const professoresDecrypted = professores.map(prof => ({
+      ...prof,
+      cpf: safeDecrypt(prof.cpf) || prof.cpf,
+      telefone: safeDecrypt(prof.telefone) || prof.telefone,
+    }));
+    
+    res.json(professoresDecrypted);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao buscar professores' });
   }
@@ -40,7 +65,14 @@ professoresRouter.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Professor não encontrado' });
     }
     
-    res.json(professor);
+    // Descriptografar dados sensíveis com segurança
+    const professorDecrypted = {
+      ...professor,
+      cpf: safeDecrypt(professor.cpf) || professor.cpf,
+      telefone: safeDecrypt(professor.telefone) || professor.telefone,
+    };
+    
+    res.json(professorDecrypted);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao buscar professor' });
   }
@@ -51,13 +83,19 @@ professoresRouter.post('/', async (req, res) => {
   try {
     const data = professorSchema.parse(req.body);
     
+    // Criptografar dados sensíveis
+    const encryptedData = {
+      cpf: encryption.encrypt(data.cpf),
+      telefone: encryption.encrypt(data.telefone),
+    };
+    
     const professor = await prisma.professores.create({
       data: {
         id: crypto.randomUUID(),
         nome: data.nome,
-        cpf: data.cpf,
+        cpf: encryptedData.cpf,
         email: data.email,
-        telefone: data.telefone,
+        telefone: encryptedData.telefone,
         area: data.area,
         updatedAt: new Date(),
         ...(data.especialidade && { especialidade: data.especialidade }),
@@ -122,9 +160,18 @@ professoresRouter.put('/:id', async (req, res) => {
     const data = professorSchema.partial().parse(req.body);
     const professorId = req.params.id;
     
+    // Criptografar dados sensíveis se fornecidos
+    const encryptedData: any = { ...data };
+    if (data.cpf) {
+      encryptedData.cpf = encryption.encrypt(data.cpf);
+    }
+    if (data.telefone) {
+      encryptedData.telefone = encryption.encrypt(data.telefone);
+    }
+    
     const professor = await prisma.professores.update({
       where: { id: professorId },
-      data
+      data: encryptedData
     });
 
     // Se componentes e turmas foram fornecidos, recriar disciplinas_turmas

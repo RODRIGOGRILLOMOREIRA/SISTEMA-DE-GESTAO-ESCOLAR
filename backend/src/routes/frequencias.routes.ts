@@ -61,7 +61,7 @@ frequenciasRouter.get('/aluno/:alunoId', async (req, res) => {
           }
         },
         include: {
-          disciplina: true,
+          disciplinas: true,
           presenca_aluno: {
             where: {
               alunoId: alunoId
@@ -75,7 +75,7 @@ frequenciasRouter.get('/aluno/:alunoId', async (req, res) => {
 
       registros.forEach(registro => {
         const disciplinaId = registro.disciplinaId;
-        const disciplinaNome = registro.disciplina?.nome || 'Sem disciplina';
+        const disciplinaNome = registro.disciplinas?.nome || 'Sem disciplina';
         const mes = new Date(registro.data).getMonth() + 1;
         
         // Determinar trimestre (ajustar conforme calendário escolar)
@@ -99,7 +99,7 @@ frequenciasRouter.get('/aluno/:alunoId', async (req, res) => {
         const freq = frequenciasPorDisciplina.get(disciplinaId);
         
         // Contar presenças e total de aulas
-        registro.presenca_aluno.forEach(presenca => {
+        registro.presenca_aluno.forEach((presenca: any) => {
           if (trimestre === 1) {
             freq.trimestre1Total++;
             if (presenca.presente) freq.trimestre1Presencas++;

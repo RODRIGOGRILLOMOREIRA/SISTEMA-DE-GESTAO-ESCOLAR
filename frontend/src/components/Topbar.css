@@ -143,6 +143,26 @@
   box-shadow: 0 4px 12px rgba(0, 188, 212, 0.2);
 }
 
+/* Logout Button */
+.topbar-icon-btn.logout-btn {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+[data-theme="light"] .topbar-icon-btn.logout-btn {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+}
+
+.topbar-icon-btn.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
 /* Notification Badge */
 .notification-badge {
   position: absolute;

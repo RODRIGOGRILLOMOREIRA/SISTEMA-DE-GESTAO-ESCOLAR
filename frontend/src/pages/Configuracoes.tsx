@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Save, Upload, Moon, Sun, Calendar } from 'lucide-react'
+import { Save, Upload, Moon, Sun, Calendar, Shield } from 'lucide-react'
 import { configuracoesAPI, Configuracao } from '../lib/api'
 import { useTheme } from '../contexts/ThemeContext'
 import { useAnoLetivo } from '../contexts/AnoLetivoContext'
+import { useNavigate } from 'react-router-dom'
 import SeletorAnoLetivo from '../components/SeletorAnoLetivo'
 import './ModernPages.css'
 import './Configuracoes.css'
@@ -10,6 +11,7 @@ import './Configuracoes.css'
 const Configuracoes = () => {
   const { theme, setTheme } = useTheme()
   const { anoLetivo, setAnoLetivo } = useAnoLetivo()
+  const navigate = useNavigate()
   const [config, setConfig] = useState<Configuracao>({
     id: '',
     nomeEscola: '',
@@ -254,6 +256,44 @@ const Configuracoes = () => {
                 )}
               </button>
             </div>
+          </div>
+
+          {/* FASE 4: Segurança */}
+          <div className="config-section">
+            <h2>
+              <Shield size={24} />
+              Segurança
+            </h2>
+            <p className="section-description">
+              Configure opções avançadas de segurança para sua conta
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/two-factor')}
+              className="security-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.5rem',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: '500',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+            >
+              <Shield size={20} />
+              Configurar Autenticação Multi-Fator (2FA)
+            </button>
+            <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
+              Adicione uma camada extra de segurança à sua conta com 2FA
+            </p>
           </div>
 
           <button type="submit" className="save-btn" disabled={saving}>
