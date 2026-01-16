@@ -21,10 +21,13 @@
  * @since 2026-01-10
  */
 
+// Carregar variáveis de ambiente ANTES de qualquer outro import
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { initializeWebSocket } from './lib/websocket';
 import { authRouter } from './routes/auth.routes';
 import { alunosRouter } from './routes/alunos.routes';
@@ -96,8 +99,6 @@ redis.ping().then(() => {
   log.warn({ component: 'redis' }, 'Redis não disponível - Sistema operando em modo básico');
   log.info({ component: 'system' }, 'Funcionalidades de fila e notificações em tempo real desabilitadas');
 });
-
-dotenv.config();
 
 const app = express();
 const httpServer = createServer(app); // Criar HTTP Server para WebSocket

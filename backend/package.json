@@ -4,7 +4,7 @@
   "description": "Backend do Sistema de Gestão Escolar",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "set NODE_OPTIONS=--max-old-space-size=2048 --expose-gc && npx tsx watch src/server.ts",
+    "dev": "set NODE_OPTIONS=--max-old-space-size=2048 --expose-gc && npx tsx watch --env-file=.env src/server.ts",
     "build": "tsc",
     "start": "set NODE_OPTIONS=--max-old-space-size=2048 && node dist/server.js",
     "prisma:generate": "prisma generate",

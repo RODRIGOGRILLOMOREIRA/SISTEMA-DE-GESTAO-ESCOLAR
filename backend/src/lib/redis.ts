@@ -41,20 +41,27 @@ if (process.env.UPSTASH_REDIS_URL) {
   redis = new Redis({
     ...upstashConfig,
     host: url.hostname,
-    port: parseInt(url.port),
+    port: parseInt(url.port) || 6379,
     password: url.password || '',
     username: url.username || 'default',
-    tls: {
+    tls: url.protocol === 'rediss:' ? {
       rejectUnauthorized: false, // Importante para Upstash Cloud
-    },
+      minVersion: 'TLSv1.2',
+    } : undefined,
     family: 4, // Force IPv4 para compatibilidade celular/notebook
-    lazyConnect: false, // Conectar imediatamente
+    lazyConnect: true, // Conectar de forma lazy para evitar problemas
+    showFriendlyErrorStack: true,
   });
   
-  console.log('☁️ Conectando ao Upstash Redis Cloud...');
+  console.log('☁️ Configurando Upstash Redis Cloud...');
   console.log(`   Host: ${url.hostname}`);
-  console.log(`   Port: ${url.port}`);
-  console.log(`   TLS: Ativado`);
+  console.log(`   Port: ${url.port || 6379}`);
+  console.log(`   TLS: ${url.protocol === 'rediss:' ? 'Ativado' : 'Desativado'}`);
+  
+  // Conectar de forma assíncrona
+  redis.connect().catch((err) => {
+    console.error('❌ Erro ao conectar ao Upstash:', err.message);
+  });
 } else {
   // Erro se não tiver Upstash configurado
   console.error('❌ UPSTASH_REDIS_URL não configurado no .env');
