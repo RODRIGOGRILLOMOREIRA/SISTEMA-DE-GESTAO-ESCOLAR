@@ -57,15 +57,15 @@ const rateLimitHandler = (req: any, res: any) => {
 
 /**
  * Rate limiting para autenticação (mais restritivo)
- * 5 tentativas a cada 15 minutos
+ * DESENVOLVIMENTO: Limites aumentados para facilitar testes
  */
 export const authRateLimiter = rateLimit({
   ...rateLimitOptions,
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // 5 tentativas
+  windowMs: 1 * 60 * 1000, // 1 minuto
+  max: 100, // 100 tentativas (desenvolvimento)
   message: {
     error: 'Too Many Requests',
-    message: 'Muitas tentativas de login. Por favor, tente novamente em 15 minutos.',
+    message: 'Muitas tentativas de login. Por favor, tente novamente em alguns segundos.',
   },
   standardHeaders: true,
   legacyHeaders: false,

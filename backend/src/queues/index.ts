@@ -1,23 +1,43 @@
 import Queue from 'bull';
 import redis from '../lib/redis';
 
-// Configuração do Redis para Bull Queue - TOTALMENTE FUNCIONAL
-const redisConfig = {
-  redis: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-    password: process.env.REDIS_PASSWORD,
-    maxRetriesPerRequest: null, // Bull Queue necessita disso
+// Configuração do Redis para Bull Queue - UPSTASH COM TLS
+const getRedisConfig = () => {
+  if (process.env.UPSTASH_REDIS_URL) {
+    const url = new URL(process.env.UPSTASH_REDIS_URL);
+    return {
+      host: url.hostname,
+      port: parseInt(url.port),
+      password: url.password || '',
+      username: url.username || 'default',
+      tls: {
+        rejectUnauthorized: false,
+      },
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      lazyConnect: false,
+      retryStrategy: (times: number) => {
+        if (times > 3) return null;
+        return Math.min(times * 200, 1000);
+      },
+    };
+  }
+  return {
+    host: 'localhost',
+    port: 6379,
+    password: undefined,
+    maxRetriesPerRequest: null,
     enableReadyCheck: false,
     lazyConnect: true,
     retryStrategy: (times: number) => {
-      // Limitar tentativas de reconexão
-      if (times > 3) {
-        return null; // Para de tentar após 3 tentativas
-      }
+      if (times > 3) return null;
       return Math.min(times * 200, 1000);
     },
-  },
+  };
+};
+
+const redisConfig = {
+  redis: getRedisConfig(),
   // Configurações otimizadas para performance e memória
   settings: {
     maxStalledCount: 1,

@@ -78,7 +78,7 @@ const Topbar = ({ onNotificationClick }: TopbarProps) => {
       <div className="topbar-right">
         {/* Indicador de Ano Letivo */}
         <div className="ano-letivo-badge">
-          <Calendar size={16} />
+          <Calendar size={20} />
           <span>{anoLetivo}</span>
         </div>
 
@@ -88,7 +88,7 @@ const Topbar = ({ onNotificationClick }: TopbarProps) => {
           onClick={() => setShowSearch(!showSearch)}
           title="Pesquisar"
         >
-          <Search size={20} />
+          <Search size={28} />
         </button>
 
         {/* Notificações */}
@@ -97,7 +97,7 @@ const Topbar = ({ onNotificationClick }: TopbarProps) => {
           onClick={handleNotificationClick}
           title={`Notificações${connected ? ' (conectado)' : ' (desconectado)'}`}
         >
-          <Bell size={20} />
+          <Bell size={28} />
           {notificationCount > 0 && (
             <span className="notification-badge">{notificationCount}</span>
           )}
@@ -110,7 +110,7 @@ const Topbar = ({ onNotificationClick }: TopbarProps) => {
           onClick={() => navigate('/configuracoes')}
           title="Configurações"
         >
-          <Settings size={20} />
+          <Settings size={28} />
         </button>
 
         {/* Theme Toggle */}
@@ -125,7 +125,7 @@ const Topbar = ({ onNotificationClick }: TopbarProps) => {
           }}
           title="Sair"
         >
-          <LogOut size={20} />
+          <LogOut size={28} />
         </button>
 
         {/* Perfil do Usuário */}
@@ -135,7 +135,7 @@ const Topbar = ({ onNotificationClick }: TopbarProps) => {
             onClick={() => setShowProfileMenu(!showProfileMenu)}
           >
             <div className="profile-avatar">
-              <User size={18} />
+              <User size={24} />
             </div>
             <div className="profile-info">
               <span className="profile-name">{user?.nome}</span>

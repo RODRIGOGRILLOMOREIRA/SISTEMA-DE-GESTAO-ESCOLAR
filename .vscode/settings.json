@@ -1,0 +1,70 @@
+{
+  // Otimizações para prevenir crashes do VS Code
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/uploads/**": true,
+    "**/backups/**": true,
+    "**/prisma/migrations/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/uploads": true,
+    "**/backups": true,
+    "**/.git": true
+  },
+  "files.exclude": {
+    "**/node_modules": false,
+    "**/.git": false,
+    "**/dist": true,
+    "**/build": true
+  },
+  
+  // Limitar uso de memória (REDUZIDO PARA EVITAR CRASH)
+  "typescript.tsserver.maxTsServerMemory": 1536,
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "typescript.tsserver.log": "off",
+  
+  // Melhorar performance do editor (OTIMIZADO)
+  "editor.quickSuggestions": {
+    "other": "inline",
+    "comments": false,
+    "strings": false
+  },
+  "editor.suggestOnTriggerCharacters": true,
+  "editor.parameterHints.enabled": true,
+  "editor.suggest.localityBonus": true,
+  "editor.inlayHints.enabled": "off",
+  "editor.bracketPairColorization.enabled": false,
+  "editor.guides.bracketPairs": false,
+  
+  // Git otimizações
+  "git.autofetch": false,
+  "git.autorefresh": false,
+  "git.enableSmartCommit": false,
+  "git.postCommitCommand": "none",
+  
+  // Extensões
+  "extensions.autoUpdate": false,
+  "extensions.autoCheckUpdates": false,
+  
+  // Terminal
+  "terminal.integrated.enablePersistentSessions": false,
+  "terminal.integrated.persistentSessionReviveProcess": "never",
+  
+  // TypeScript/JavaScript (DESABILITADO PARA ECONOMIA DE MEMÓRIA)
+  "javascript.updateImportsOnFileMove.enabled": "never",
+  "typescript.updateImportsOnFileMove.enabled": "never",
+  "javascript.suggest.enabled": false,
+  "typescript.suggest.enabled": false,
+  
+  // Redis e ambiente
+  "[dotenv]": {
+    "editor.defaultFormatter": "vscode.plain-text"
+  }
+}

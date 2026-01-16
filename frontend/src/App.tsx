@@ -27,6 +27,8 @@ import { AuthProvider } from './contexts/AuthContext'
 import { AnoLetivoProvider } from './contexts/AnoLetivoContext'
 import { WebSocketProvider } from './contexts/WebSocketContext'
 import { Toaster } from './components/Toaster'
+import { EnhancedToastContainer } from './components/EnhancedToast'
+import { ScrollToTopButton } from './hooks/useSmoothScroll'
 import PrivateRoute from './components/PrivateRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -68,6 +70,8 @@ function App() {
           <WebSocketProvider>
             <BrowserRouter>
               <Toaster />
+              <EnhancedToastContainer />
+              <ScrollToTopButton />
               <Routes>
                 {/* Rotas públicas */}
                 <Route path="/login" element={<Login />} />

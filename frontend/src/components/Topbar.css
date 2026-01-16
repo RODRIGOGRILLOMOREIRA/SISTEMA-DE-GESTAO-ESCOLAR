@@ -115,8 +115,8 @@
 
 /* Icon Buttons */
 .topbar-icon-btn {
-  width: 42px;
-  height: 42px;
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -127,6 +127,16 @@
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
+}
+
+.topbar-icon-btn svg {
+  width: 28px;
+  height: 28px;
+}
+
+.topbar-icon-btn svg {
+  width: 24px;
+  height: 24px;
 }
 
 [data-theme="light"] .topbar-icon-btn {
@@ -148,6 +158,13 @@
   background: rgba(239, 68, 68, 0.1);
   border-color: rgba(239, 68, 68, 0.2);
   color: #ef4444;
+  width: 56px;
+  height: 56px;
+}
+
+.topbar-icon-btn.logout-btn svg {
+  width: 28px !important;
+  height: 28px !important;
 }
 
 [data-theme="light"] .topbar-icon-btn.logout-btn {

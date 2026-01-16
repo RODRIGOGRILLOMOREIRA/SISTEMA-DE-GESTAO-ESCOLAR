@@ -2,14 +2,29 @@ import { Queue, Worker, Job } from 'bullmq';
 import { logger } from '../lib/logger';
 import communicationService from '../services/communication.service';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+// Configuração do Redis via Upstash
+const getRedisConnection = () => {
+  if (process.env.UPSTASH_REDIS_URL) {
+    const url = new URL(process.env.UPSTASH_REDIS_URL);
+    return {
+      host: url.hostname,
+      port: parseInt(url.port),
+      password: url.password || '',
+      username: url.username || 'default',
+      tls: {
+        rejectUnauthorized: false,
+      },
+    };
+  }
+  return {
+    host: 'localhost',
+    port: 6379,
+  };
+};
 
 // Fila para processar mensagens agendadas
 export const scheduledMessagesQueue = new Queue('scheduled-messages', {
-  connection: {
-    host: 'localhost',
-    port: 6379
-  },
+  connection: getRedisConnection(),
   defaultJobOptions: {
     attempts: 3,
     backoff: {
@@ -47,10 +62,7 @@ const scheduledMessagesWorker = new Worker(
     }
   },
   {
-    connection: {
-      host: 'localhost',
-      port: 6379
-    },
+    connection: getRedisConnection(),
     concurrency: 5
   }
 );

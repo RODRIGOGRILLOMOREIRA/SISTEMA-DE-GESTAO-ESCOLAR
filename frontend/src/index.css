@@ -140,6 +140,15 @@ table {
 input, select, textarea, button {
   max-width: 100%;
   font-size: 16px; /* Previne zoom no iOS */
+  /* Touch targets WCAG AA - mínimo 44x44px */
+  min-height: 44px;
+  padding: 12px 16px;
+}
+
+button {
+  cursor: pointer;
+  touch-action: manipulation; /* Melhora responsividade em touch */
+  -webkit-tap-highlight-color: transparent; /* Remove highlight azul no tap */
 }
 
 /* Containers responsivos */
@@ -462,4 +471,40 @@ table {
     margin: 0 !important;
     opacity: 0.9;
   }
+}
+
+/* ========================================
+   PERFORMANCE E OTIMIZAÇÕES
+======================================== */
+
+/* GPU Acceleration para animações */
+.animate-gpu {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Otimizar scroll performance */
+.optimized-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+  transform: translateZ(0);
+}
+
+/* Reduzir repaints em animações */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Otimização de toque para mobile */
+a, button, input, select, textarea {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  -webkit-touch-callout: none;
 }

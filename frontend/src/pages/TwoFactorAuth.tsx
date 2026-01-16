@@ -7,7 +7,8 @@ import { useState, useEffect } from 'react';
 import { Shield, Key, Copy, Check, AlertCircle, Smartphone } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3333';
+// Usar variável de ambiente ou fallback para localhost
+const API_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3333';
 
 interface TwoFactorStatus {
   enabled: boolean;

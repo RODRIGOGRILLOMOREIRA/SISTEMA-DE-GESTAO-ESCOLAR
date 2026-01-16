@@ -22,8 +22,10 @@
  */
 
 import express from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { initializeWebSocket } from './lib/websocket';
 import { authRouter } from './routes/auth.routes';
 import { alunosRouter } from './routes/alunos.routes';
 import { professoresRouter } from './routes/professores.routes';
@@ -52,6 +54,7 @@ import { rbacRouter } from './routes/rbac.routes'; // FASE 4: RBAC Granular
 import { dropoutPredictionRouter } from './routes/dropout-prediction.routes'; // FASE 3: Predição de Evasão
 import communicationRouter from './routes/communication.routes'; // FASE 5: Central de Comunicação
 import excelImportRouter from './routes/excel-import.routes'; // FASE 5: Importação de Excel
+import realtimeRouter from './routes/realtime.routes'; // RECURSOS EM TEMPO REAL
 import { backupService } from './services/backup.service'; // Serviço de backup
 import { maintenanceMiddleware } from './middlewares/maintenance'; // Middleware de manutenção
 import { loggerMiddleware, log } from './lib/logger'; // Sistema de logs estruturados
@@ -97,6 +100,7 @@ redis.ping().then(() => {
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app); // Criar HTTP Server para WebSocket
 const PORT = process.env.PORT || 3333;
 
 // Middlewares
@@ -177,9 +181,15 @@ app.use('/api/audit', auditRouter); // Logs de auditoria
 app.use('/api/backup', backupRouter); // Backup automático
 app.use('/api/maintenance', maintenanceRouter); // Modo de manutenção
 
+// RECURSOS EM TEMPO REAL
+app.use('/api/realtime', realtimeRouter); // Gamificação, Busca, Presença, Chat
+
+// Inicializar WebSocket Server
+const io = initializeWebSocket(httpServer);
+
 // Start server
 const port = typeof PORT === 'string' ? parseInt(PORT) : PORT;
-app.listen(port, '0.0.0.0', async () => {
+httpServer.listen(port, '0.0.0.0', async () => {
   log.info({ 
     component: 'server',
     port: PORT,
@@ -205,6 +215,14 @@ app.listen(port, '0.0.0.0', async () => {
   } catch (error: any) {
     log.error({ component: 'backup', err: error }, 'Erro ao inicializar serviço de backup');
   }
+  
+  // RECURSOS EM TEMPO REAL
+  log.info({ component: 'realtime' }, '🚀 WebSocket: Notificações em tempo real ativo');
+  log.info({ component: 'realtime' }, '🎮 Gamificação: Pontos, badges e rankings');
+  log.info({ component: 'realtime' }, '👥 Presença Online: Who\'s online + last seen');
+  log.info({ component: 'realtime' }, '💬 Chat: Mensagens instantâneas');
+  log.info({ component: 'realtime' }, '🔍 Busca: Autocomplete em tempo real');
+  log.info({ component: 'realtime' }, '📊 Dashboard: Atualização ao vivo');
 
   // FASE 4: Informações sobre novas funcionalidades
   log.info({ component: 'fase4' }, '🔐 Segurança: Rate limiting ativo');

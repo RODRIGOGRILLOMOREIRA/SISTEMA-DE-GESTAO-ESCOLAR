@@ -1,7 +1,20 @@
 import axios from 'axios';
 
+// Detectar se está acessando via rede local ou localhost
+const getBaseURL = () => {
+  const hostname = window.location.hostname;
+  
+  // Se acessar via IP da rede (ex: 192.168.x.x), usar o mesmo IP para o backend
+  if (hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+    return `http://${hostname}:3333/api`;
+  }
+  
+  // Se acessar via localhost, usar localhost
+  return import.meta.env.VITE_API_URL || 'http://localhost:3333/api';
+};
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3333/api',
+  baseURL: getBaseURL(),
   headers: {
     'Cache-Control': 'no-cache, no-store, must-revalidate',
     'Pragma': 'no-cache',

@@ -6,6 +6,7 @@ import {
 } from 'recharts'
 import { turmasAPI, registroFrequenciaAPI, notasAPI, alunosAPI, api, Turma as TurmaAPI } from '../lib/api'
 import BackButton from '../components/BackButton'
+import SeletorAnoLetivo from '../components/SeletorAnoLetivo'
 import { useAnoLetivo } from '../contexts/AnoLetivoContext'
 import './ModernPages.css'
 import './Relatorios.css'
@@ -59,7 +60,7 @@ type PeriodoFrequencia = 'dia' | 'mes' | 'trimestre' | 'ano'
 type PeriodoNotas = 'trim1' | 'trim2' | 'trim3' | 'final'
 
 const Relatorios = () => {
-  const { anoLetivo } = useAnoLetivo()
+  const { anoLetivo, setAnoLetivo, anosDisponiveis, setAnosDisponiveis } = useAnoLetivo()
   const [tipoRelatorio, setTipoRelatorio] = useState<TipoRelatorio>('frequencia')
   const [segmento, setSegmento] = useState<Segmento>('iniciais')
   const [turmas, setTurmas] = useState<Turma[]>([])

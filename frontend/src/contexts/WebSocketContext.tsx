@@ -37,7 +37,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     // Conectar ao WebSocket apenas se o usuário estiver autenticado
     if (!user) return
 
-    const newSocket = io('http://localhost:3333', {
+    // Obter URL da API da variável de ambiente ou usar localhost como fallback
+    const apiUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3333';
+
+    const newSocket = io(apiUrl, {
       transports: ['websocket'],
       reconnection: true,
       reconnectionAttempts: 5,

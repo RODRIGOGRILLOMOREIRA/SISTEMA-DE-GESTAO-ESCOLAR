@@ -342,6 +342,23 @@ npx prisma migrate dev
 npx prisma db seed
 ```
 
+**⚡ Redis (Opcional mas Recomendado):**
+
+Para funcionalidades de fila e cache, configure o Redis seguindo o guia:
+
+```powershell
+# Windows: Execute o script interativo
+.\setup-redis.ps1
+
+# Ou veja o guia completo
+# Ver: REDIS_SETUP.md
+```
+
+O sistema funciona **sem Redis**, mas algumas funcionalidades ficam limitadas:
+- ✅ Funciona: Todo o sistema principal
+- ⚠️ Limitado: Filas de relatórios e notificações assíncronas
+- 📖 Ver: [REDIS_SETUP.md](./REDIS_SETUP.md) para configuração completa
+
 ### Passo 3: Configure o Frontend
 
 ```bash

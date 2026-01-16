@@ -329,7 +329,7 @@ const CommunicationCenter: React.FC = () => {
         <div className="chart-card">
           <h3>Mensagens por Canal</h3>
           <div className="channel-bars">
-            {stats?.messagesByChannel.map((item) => (
+            {stats?.messagesByChannel?.map((item) => (
               <div key={item.channel} className="channel-bar">
                 <div className="channel-info">
                   {getChannelIcon(item.channel)}
@@ -352,7 +352,7 @@ const CommunicationCenter: React.FC = () => {
         <div className="chart-card">
           <h3>Taxa de Sucesso</h3>
           <div className="success-rate">
-            {stats?.successRate.map((item) => (
+            {stats?.successRate?.map((item) => (
               <div key={item.status} className={`rate-item ${item.status}`}>
                 {getStatusIcon(item.status)}
                 <div className="rate-info">

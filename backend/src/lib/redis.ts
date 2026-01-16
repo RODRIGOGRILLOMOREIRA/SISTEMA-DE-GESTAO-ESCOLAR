@@ -1,76 +1,125 @@
 import Redis from 'ioredis';
 
-// Configuração otimizada do Redis para Windows - mantendo TODAS as funcionalidades
-const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD,
-  maxRetriesPerRequest: 3,
-  retryStrategy: (times) => {
-    // Limitar tentativas de reconexão para evitar consumo excessivo de memória
-    if (times > 3) {
-      return null; // Para de tentar reconectar após 3 tentativas
-    }
-    return Math.min(times * 200, 1000);
-  },
-  lazyConnect: true,
-  enableOfflineQueue: false,
-  connectTimeout: 5000,
-  commandTimeout: 3000,
-  keepAlive: 30000,
-  db: 0,
-  keyPrefix: 'sge:',
-  // Otimizações específicas para evitar problemas de memória
-  enableReadyCheck: true,
-});
+/**
+ * ========================================
+ * REDIS - UPSTASH CLOUD
+ * ========================================
+ * 
+ * Conexão direta com Upstash Redis Cloud
+ * 100% funcional para celular e notebook
+ */
 
-// Eventos do Redis com logs informativos
+let redis: Redis;
+let isConnected = false;
+
+// Configuração para Upstash Cloud
+const upstashConfig = {
+  maxRetriesPerRequest: 3,
+  retryStrategy: (times: number) => {
+    const delay = Math.min(times * 50, 2000);
+    return delay;
+  },
+  enableOfflineQueue: true,
+  connectTimeout: 10000,
+  commandTimeout: 5000,
+  keepAlive: 30000,
+  keyPrefix: 'sge:',
+  enableReadyCheck: true,
+  reconnectOnError: (err: Error) => {
+    const targetError = 'READONLY';
+    if (err.message.includes(targetError)) {
+      return true;
+    }
+    return false;
+  },
+};
+
+// Criar instância do Redis com Upstash
+if (process.env.UPSTASH_REDIS_URL) {
+  const url = new URL(process.env.UPSTASH_REDIS_URL);
+  
+  redis = new Redis({
+    ...upstashConfig,
+    host: url.hostname,
+    port: parseInt(url.port),
+    password: url.password || '',
+    username: url.username || 'default',
+    tls: {
+      rejectUnauthorized: false, // Importante para Upstash Cloud
+    },
+    family: 4, // Force IPv4 para compatibilidade celular/notebook
+    lazyConnect: false, // Conectar imediatamente
+  });
+  
+  console.log('☁️ Conectando ao Upstash Redis Cloud...');
+  console.log(`   Host: ${url.hostname}`);
+  console.log(`   Port: ${url.port}`);
+  console.log(`   TLS: Ativado`);
+} else {
+  // Erro se não tiver Upstash configurado
+  console.error('❌ UPSTASH_REDIS_URL não configurado no .env');
+  console.error('   Configure a URL do Upstash para usar Redis');
+  console.error('   Formato: rediss://default:senha@host.upstash.io:6379');
+  
+  // Criar instância fake para não quebrar a aplicação
+  redis = new Redis({
+    host: 'localhost',
+    port: 6379,
+    lazyConnect: true,
+    maxRetriesPerRequest: null,
+    retryStrategy: () => null, // Não tentar reconectar
+  });
+}
+
+// Eventos de conexão
 redis.on('connect', () => {
-  console.log('✅ Redis: Conectado com sucesso');
+  console.log('🔄 Redis: Conectando...');
 });
 
 redis.on('ready', () => {
-  console.log('✅ Redis: Pronto para operações');
+  isConnected = true;
+  console.log('✅ Redis: Conectado e pronto!');
+  console.log('🎮 Gamificação ATIVA');
+  console.log('🔍 Busca Autocomplete ATIVA');
+  console.log('👥 Presença Online ATIVA');
+  console.log('💬 Chat em Tempo Real ATIVO');
+  console.log('📊 Dashboard Ao Vivo ATIVO');
 });
 
-let errorLogged = false;
-
-redis.on('error', (err) => {
-  if (!errorLogged) {
-    console.log('⚠️ Redis: Não disponível');
-    errorLogged = true;
+redis.on('error', (err: Error) => {
+  if (!isConnected) {
+    console.error('❌ Redis: Erro de conexão');
+    console.error('   Mensagem:', err.message);
+    console.log('');
+    console.log('📝 Verifique:');
+    console.log('   1. UPSTASH_REDIS_URL no .env está correto');
+    console.log('   2. URL completa: rediss://default:senha@host:port');
+    console.log('   3. Porta é 6379 para Upstash');
+    console.log('   4. Protocolo é rediss:// (com dois s)');
   }
 });
 
 redis.on('close', () => {
-  // Silenciar logs de close
+  isConnected = false;
+  console.log('⚠️ Redis: Conexão fechada');
 });
 
-redis.on('reconnecting', () => {
-  // Silenciar logs de reconnecting
+redis.on('reconnecting', (delay: number) => {
+  console.log(`🔄 Redis: Reconectando em ${delay}ms...`);
 });
 
-redis.on('connect', () => {
-  errorLogged = false;
-});
-
-// Conectar ao Redis com tratamento de erro robusto
-redis.connect().catch((err) => {
-  console.log('🚀 Sistema iniciando... Tentando conectar Redis em segundo plano');
-  console.log('📝 Instale Redis para funcionalidades completas: https://redis.io/docs/install/install-windows/');
-});
+// Teste de conexão inicial
+redis.ping()
+  .then(() => {
+    console.log('✅ Teste de conexão Redis: SUCESSO');
+  })
+  .catch((err) => {
+    console.error('❌ Teste de conexão Redis: FALHOU');
+    console.error('   Configure UPSTASH_REDIS_URL no .env');
+  });
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  try {
-    await redis.quit();
-    console.log('✅ Redis desconectado graciosamente');
-  } catch (error) {
-    console.log('✅ Sistema encerrado');
-  }
-});
-
-process.on('SIGINT', async () => {
+const shutdown = async () => {
   try {
     await redis.quit();
     console.log('✅ Redis desconectado graciosamente');
@@ -78,6 +127,19 @@ process.on('SIGINT', async () => {
     console.log('✅ Sistema encerrado');
   }
   process.exit(0);
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
+// Helper para verificar se está conectado
+export const isRedisConnected = () => isConnected;
+
+// Helper para obter informações
+export const getRedisInfo = () => ({
+  isConnected,
+  status: redis.status,
+  host: process.env.UPSTASH_REDIS_URL ? 'Upstash Cloud' : 'Local',
 });
 
 export default redis;

@@ -163,38 +163,32 @@ const Layout = () => {
         { path: '/habilidades', icon: ClipboardCheck, label: 'Registro de Habilidades' },
         { path: '/boletim', icon: FileBarChart, label: 'Boletim de Desempenho' },
         { path: '/relatorios', icon: FileBarChart, label: 'Relatórios Pedagógicos' },
+        { path: '/predicao-evasao', icon: TrendingDown, label: 'Predição de Evasão' },
         { path: '/relatorios-administrativos', icon: FileBarChart, label: 'Relatórios Administrativos' },
       ]
     },
-    { path: '/notificacoes', icon: Bell, label: 'Notificações' },
-    ...(user?.tipo === 'ADMIN' || user?.tipo === 'GESTOR' ? [
-      {
-        icon: TrendingDown,
-        label: 'Fase 3 - Inteligência Artificial',
-        subItems: [
-          { path: '/predicao-evasao', icon: TrendingDown, label: 'Predição de Evasão' },
-        ]
-      },
-      {
-        icon: MessageSquare,
-        label: 'Fase 5 - Inovações',
-        subItems: [
-          { path: '/central-comunicacao', icon: MessageSquare, label: 'Central de Comunicação' },
-        ]
-      },
-      {
-        icon: Activity,
-        label: 'Fase 4 - Observabilidade',
-        subItems: [
-          { path: '/monitoramento', icon: Activity, label: 'Monitoramento do Sistema' },
+    {
+      icon: MessageSquare,
+      label: 'Central de Comunicação',
+      subItems: [
+        { path: '/central-comunicacao', icon: MessageSquare, label: 'Central de Comunicação' },
+        { path: '/notificacoes', icon: Bell, label: 'Notificações' },
+      ]
+    },
+    {
+      icon: Settings,
+      label: 'Configurações',
+      subItems: [
+        { path: '/configuracoes', icon: Settings, label: 'Configurações Gerais' },
+        ...(user?.tipo === 'ADMIN' || user?.tipo === 'GESTOR' ? [
+          { path: '/monitoramento', icon: Activity, label: 'Observabilidade' },
           { path: '/auditoria', icon: Shield, label: 'Logs de Auditoria' },
           { path: '/two-factor', icon: Shield, label: 'Autenticação 2FA' },
           { path: '/rbac', icon: Shield, label: 'Permissões (RBAC)' },
           { path: '/infraestrutura', icon: Server, label: 'Backup e Cache' },
-        ]
-      }
-    ] : []),
-    { path: '/configuracoes', icon: Settings, label: 'Configurações' },
+        ] : []),
+      ]
+    },
   ]
 
   return (

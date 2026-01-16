@@ -85,7 +85,8 @@ const ImportExcel: React.FC = () => {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const response = await axios.post('http://localhost:3333/api/excel-import/analyze', formData, {
+      const apiBaseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3333';
+      const response = await axios.post(`${apiBaseUrl}/api/excel-import/analyze`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -117,7 +118,8 @@ const ImportExcel: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:3333/api/excel-import/preview', {
+      const apiBaseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3333';
+      const response = await axios.post(`${apiBaseUrl}/api/excel-import/preview`, {
         fileId,
         sheetIndex: selectedSheet,
         columnMapping
@@ -141,7 +143,8 @@ const ImportExcel: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:3333/api/excel-import/execute', {
+      const apiBaseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3333';
+      const response = await axios.post(`${apiBaseUrl}/api/excel-import/execute`, {
         fileId,
         sheetIndex: selectedSheet,
         columnMapping,
