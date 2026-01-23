@@ -8,7 +8,9 @@
     "**/.git/subtree-cache/**": true,
     "**/uploads/**": true,
     "**/backups/**": true,
-    "**/prisma/migrations/**": true
+    "**/prisma/migrations/**": true,
+    "**/dev-dist/**": true,
+    "**/*.log": true
   },
   "search.exclude": {
     "**/node_modules": true,
@@ -16,7 +18,8 @@
     "**/build": true,
     "**/uploads": true,
     "**/backups": true,
-    "**/.git": true
+    "**/.git": true,
+    "**/dev-dist": true
   },
   "files.exclude": {
     "**/node_modules": false,
@@ -25,14 +28,15 @@
     "**/build": true
   },
   
-  // Limitar uso de memória (REDUZIDO PARA EVITAR CRASH)
-  "typescript.tsserver.maxTsServerMemory": 1536,
+  // AUMENTO DE MEMÓRIA PARA TYPESCRIPT SERVER (4GB)
+  "typescript.tsserver.maxTsServerMemory": 4096,
   "typescript.disableAutomaticTypeAcquisition": true,
   "typescript.tsserver.log": "off",
+  "typescript.tsserver.useSyntaxServer": "auto",
   
   // Melhorar performance do editor (OTIMIZADO)
   "editor.quickSuggestions": {
-    "other": "inline",
+    "other": true,
     "comments": false,
     "strings": false
   },
@@ -40,13 +44,15 @@
   "editor.parameterHints.enabled": true,
   "editor.suggest.localityBonus": true,
   "editor.inlayHints.enabled": "off",
-  "editor.bracketPairColorization.enabled": false,
-  "editor.guides.bracketPairs": false,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "editor.semanticHighlighting.enabled": true,
+  "editor.suggest.preview": true,
   
   // Git otimizações
   "git.autofetch": false,
-  "git.autorefresh": false,
-  "git.enableSmartCommit": false,
+  "git.autorefresh": true,
+  "git.enableSmartCommit": true,
   "git.postCommitCommand": "none",
   
   // Extensões
@@ -57,11 +63,20 @@
   "terminal.integrated.enablePersistentSessions": false,
   "terminal.integrated.persistentSessionReviveProcess": "never",
   
-  // TypeScript/JavaScript (DESABILITADO PARA ECONOMIA DE MEMÓRIA)
+  // TypeScript/JavaScript (REATIVADO COM LIMITES)
   "javascript.updateImportsOnFileMove.enabled": "never",
   "typescript.updateImportsOnFileMove.enabled": "never",
-  "javascript.suggest.enabled": false,
-  "typescript.suggest.enabled": false,
+  "javascript.suggest.enabled": true,
+  "typescript.suggest.enabled": true,
+  
+  // Otimizações de memória do VS Code
+  "files.autoSave": "onFocusChange",
+  "files.hotExit": "onExitAndWindowClose",
+  "window.restoreWindows": "none",
+  "workbench.editor.limit.enabled": true,
+  "workbench.editor.limit.value": 10,
+  "workbench.editor.limit.perEditorGroup": true,
+  "workbench.startupEditor": "none",
   
   // Redis e ambiente
   "[dotenv]": {

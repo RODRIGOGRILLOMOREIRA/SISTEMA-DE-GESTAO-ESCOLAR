@@ -322,13 +322,16 @@ model usuarios {
   nome             String
   email            String          @unique
   senha            String
-  tipo             String          @default("USUARIO")
+  role             String          @default("PROFESSOR")
   cargo            String?
-  ativo            Boolean         @default(true)
+  isActive         Boolean         @default(true)
   resetToken       String?
   resetTokenExpira DateTime?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime
+  lastLogin        DateTime?
+  photoUrl         String?
+  profileImage     String?
   
   // FASE 4: Relações RBAC e 2FA
   twoFactorAuth    TwoFactorAuth?
@@ -337,7 +340,8 @@ model usuarios {
   userRoles        UserRole[]      // RBAC: Múltiplos roles por usuário
 
   @@index([email])
-  @@index([ativo])
+  @@index([isActive])
+  @@index([role])
 }
 
 enum DiaSemana {

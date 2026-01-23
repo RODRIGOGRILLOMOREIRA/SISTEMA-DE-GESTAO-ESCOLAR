@@ -1,176 +1,132 @@
 import { Router } from 'express';
-import { prisma } from '../lib/prisma';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import crypto from 'crypto';
-import { log, securityLogger } from '../lib/logger';
+import { log } from '../lib/logger';
 import { recordLoginAttempt } from '../lib/metrics';
 import { authRateLimiter, registerAuthFailure, clearAuthFailures } from '../middlewares/rate-limit';
-import twoFactorService from '../services/two-factor.service';
+import authService from '../services/auth.service';
 
 export const authRouter = Router();
-
-const JWT_SECRET = process.env.JWT_SECRET || 'seu-secret-super-secreto-aqui-123';
 
 // Schemas de validação
 const loginSchema = z.object({
   email: z.string().email(),
   senha: z.string().min(6),
-  twoFactorToken: z.string().optional(), // Token 2FA (se habilitado)
+  twoFactorToken: z.string().optional(),
 });
 
-const registerSchema = z.object({
-  nome: z.string().min(3),
-  email: z.string().email(),
-  senha: z.string().min(6),
-  tipo: z.enum(['admin', 'usuario']).optional(),
-  cargo: z.string().optional(),
+const refreshTokenSchema = z.object({
+  refreshToken: z.string(),
 });
 
-const resetPasswordRequestSchema = z.object({
-  email: z.string().email(),
-});
-
-const resetPasswordSchema = z.object({
-  token: z.string(),
-  novaSenha: z.string().min(6),
-});
-
-// POST /api/auth/login
+// POST /api/auth/login - VERSÃO PROFISSIONAL
 authRouter.post('/login', authRateLimiter, async (req, res) => {
   const ip = req.ip || req.socket.remoteAddress;
   
   try {
-    log.info({ event: 'login_attempt', email: req.body.email, ip }, 'Tentativa de login');
+    // Validar entrada
     const { email, senha, twoFactorToken } = loginSchema.parse(req.body);
 
-    // Buscar usuário (com fallback caso 2FA não esteja configurado)
-    let usuario;
-    try {
-      usuario = await prisma.usuarios.findUnique({
-        where: { email },
-        include: {
-          twoFactorAuth: true // Incluir informações de 2FA
-        }
-      });
-    } catch (relationError) {
-      // Fallback: se a relação 2FA não existir, buscar apenas o usuário
-      log.warn({ event: 'relation_error', err: relationError }, '2FA relation error, falling back');
-      usuario = await prisma.usuarios.findUnique({
-        where: { email }
+    // Executar login via serviço profissional
+    const result = await authService.login({ email, senha, twoFactorToken }, ip);
+
+    if (!result.success) {
+      // Registrar falha
+      await registerAuthFailure(ip);
+      recordLoginAttempt(false);
+      
+      return res.status(401).json({ 
+        error: result.error || 'Falha na autenticação' 
       });
     }
 
-    log.debug({ event: 'user_lookup', email, found: !!usuario }, 'Busca de usuário');
-
-    if (!usuario) {
-      securityLogger.warn({ event: 'login_failed', email, ip, reason: 'user_not_found' }, 'Usuário não encontrado');
-      await registerAuthFailure(ip);
-      recordLoginAttempt(false);
-      return res.status(401).json({ error: 'Email ou senha inválidos' });
-    }
-
-    if (!usuario.ativo) {
-      securityLogger.warn({ event: 'login_failed', email, ip, reason: 'user_inactive' }, 'Usuário inativo');
-      await registerAuthFailure(ip);
-      recordLoginAttempt(false);
-      return res.status(401).json({ error: 'Usuário inativo' });
-    }
-
-    // Verificar senha
-    log.debug({ event: 'password_check', email }, 'Verificando senha');
-    const senhaValida = await bcrypt.compare(senha, usuario.senha);
-    
-    if (!senhaValida) {
-      securityLogger.warn({ event: 'login_failed', email, ip, reason: 'invalid_password' }, 'Senha inválida');
-      await registerAuthFailure(ip);
-      recordLoginAttempt(false);
-      return res.status(401).json({ error: 'Email ou senha inválidos' });
-    }
-
-    // FASE 4: Verificar 2FA se habilitado (com tratamento de erro robusto)
-    try {
-      if (usuario.twoFactorAuth?.enabled) {
-        if (!twoFactorToken) {
-          // Senha correta, mas precisa de 2FA
-          log.info({ event: 'login_2fa_required', userId: usuario.id, email }, 'Login requer 2FA');
-          return res.status(200).json({ 
-            requires2FA: true,
-            message: 'Digite o código do seu aplicativo autenticador' 
-          });
-        }
-
-        // Verificar token 2FA
-        const tokenValido = await twoFactorService.verifyToken(usuario.id, twoFactorToken);
-        
-        if (!tokenValido) {
-          securityLogger.warn({ 
-            event: 'login_2fa_failed', 
-            userId: usuario.id, 
-            email, 
-            ip 
-          }, 'Token 2FA inválido');
-          await registerAuthFailure(ip);
-          recordLoginAttempt(false);
-          return res.status(401).json({ error: 'Código 2FA inválido' });
-        }
-
-        securityLogger.info({ 
-          event: 'login_2fa_success', 
-          userId: usuario.id, 
-          email, 
-          ip 
-        }, '2FA verificado com sucesso');
-      }
-    } catch (twoFactorError: any) {
-      // Se houver erro no 2FA (serviço não disponível, etc), apenas loga e continua
-      log.warn({ event: '2fa_error', err: twoFactorError }, 'Erro no 2FA, continuando sem verificação');
-    }
-
-    // Limpar falhas de autenticação após login bem-sucedido
+    // Login bem-sucedido
     await clearAuthFailures(ip);
     recordLoginAttempt(true);
 
-    // Gerar token JWT
-    const token = jwt.sign(
-      { 
-        userId: usuario.id, // FASE 4: Padronizar como userId
-        id: usuario.id, 
-        email: usuario.email,
-        tipo: usuario.tipo,
-        cargo: usuario.cargo
-      },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    securityLogger.info({ 
-      event: 'login_success', 
-      userId: usuario.id, 
-      email, 
-      ip,
-      userAgent: req.headers['user-agent']
-    }, 'Login realizado com sucesso');
-
-    // Retornar dados do usuário (sem a senha)
-    res.json({
-      token,
-      usuario: {
-        id: usuario.id,
-        nome: usuario.nome,
-        email: usuario.email,
-        tipo: usuario.tipo,
-        cargo: usuario.cargo,
-      },
+    return res.json({
+      success: true,
+      token: result.token,
+      refreshToken: result.refreshToken,
+      user: result.user,
     });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      log.warn({ event: 'validation_error', errors: error.errors }, 'Erro de validação no login');
-      return res.status(400).json({ error: error.errors });
+
+  } catch (validationError: any) {
+    log.warn({ component: 'auth', err: validationError }, 'Erro de validação no login');
+    return res.status(400).json({ 
+      error: 'Dados inválidos',
+      details: validationError.errors || validationError.message
+    });
+  }
+});
+
+// POST /api/auth/refresh - Renovar token
+authRouter.post('/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = refreshTokenSchema.parse(req.body);
+
+    const result = await authService.refreshToken(refreshToken);
+
+    if (!result.success) {
+      return res.status(401).json({ error: result.error });
     }
-    log.error({ err: error, event: 'login_error' }, 'Erro no processo de login');
-    res.status(500).json({ error: 'Erro ao fazer login' });
+
+    return res.json({
+      success: true,
+      token: result.token,
+      refreshToken: result.refreshToken,
+      user: result.user,
+    });
+
+  } catch (error: any) {
+    log.warn({ component: 'auth', err: error }, 'Erro no refresh token');
+    return res.status(400).json({ error: 'Token inválido' });
+  }
+});
+
+// POST /api/auth/logout - Logout
+authRouter.post('/logout', async (req, res) => {
+  try {
+    const userId = req.body.userId || (req as any).user?.userId;
+
+    if (userId) {
+      await authService.logout(userId);
+    }
+
+    return res.json({ success: true, message: 'Logout realizado com sucesso' });
+
+  } catch (error: any) {
+    log.error({ component: 'auth', err: error }, 'Erro no logout');
+    return res.status(500).json({ error: 'Erro ao realizar logout' });
+  }
+});
+
+// GET /api/auth/me - Obter usuário atual
+authRouter.get('/me', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({ error: 'Token não fornecido' });
+    }
+
+    const decoded = authService.verifyToken(token);
+
+    if (!decoded) {
+      return res.status(401).json({ error: 'Token inválido' });
+    }
+
+    // Validar sessão
+    const sessionValid = await authService.validateSession(decoded.userId, token);
+
+    if (!sessionValid) {
+      return res.status(401).json({ error: 'Sessão expirada' });
+    }
+
+    return res.json({ user: decoded });
+
+  } catch (error: any) {
+    log.error({ component: 'auth', err: error }, 'Erro ao obter usuário');
+    return res.status(500).json({ error: 'Erro interno' });
   }
 });
 

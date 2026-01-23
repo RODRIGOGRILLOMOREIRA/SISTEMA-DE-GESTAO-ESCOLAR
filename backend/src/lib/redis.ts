@@ -1,137 +1,165 @@
-import Redis from 'ioredis';
+import { HybridRedisManager } from './redis-hybrid';
+import { log } from './logger';
 
 /**
  * ========================================
- * REDIS - UPSTASH CLOUD
+ * REDIS HÍBRIDO - Docker Local + Upstash Cloud
  * ========================================
  * 
- * Conexão direta com Upstash Redis Cloud
- * 100% funcional para celular e notebook
+ * Sistema profissional com redundância e otimização:
+ * - Local (Docker): Velocidade (~1ms latência)
+ * - Cloud (Upstash): Persistência e backup
+ * - Failover automático entre os dois
+ * - Health checks contínuos
+ * - Sem single point of failure
  */
 
-let redis: Redis;
-let isConnected = false;
+// Instância singleton do gerenciador híbrido
+const hybridRedis = new HybridRedisManager();
 
-// Configuração para Upstash Cloud
-const upstashConfig = {
-  maxRetriesPerRequest: 3,
-  retryStrategy: (times: number) => {
-    const delay = Math.min(times * 50, 2000);
-    return delay;
-  },
-  enableOfflineQueue: true,
-  connectTimeout: 10000,
-  commandTimeout: 5000,
-  keepAlive: 30000,
-  keyPrefix: 'sge:',
-  enableReadyCheck: true,
-  reconnectOnError: (err: Error) => {
-    const targetError = 'READONLY';
-    if (err.message.includes(targetError)) {
-      return true;
-    }
-    return false;
-  },
-};
+// Inicializar conexões
+let isInitialized = false;
 
-// Criar instância do Redis com Upstash
-if (process.env.UPSTASH_REDIS_URL) {
-  const url = new URL(process.env.UPSTASH_REDIS_URL);
-  
-  redis = new Redis({
-    ...upstashConfig,
-    host: url.hostname,
-    port: parseInt(url.port) || 6379,
-    password: url.password || '',
-    username: url.username || 'default',
-    tls: url.protocol === 'rediss:' ? {
-      rejectUnauthorized: false, // Importante para Upstash Cloud
-      minVersion: 'TLSv1.2',
-    } : undefined,
-    family: 4, // Force IPv4 para compatibilidade celular/notebook
-    lazyConnect: true, // Conectar de forma lazy para evitar problemas
-    showFriendlyErrorStack: true,
-  });
-  
-  console.log('☁️ Configurando Upstash Redis Cloud...');
-  console.log(`   Host: ${url.hostname}`);
-  console.log(`   Port: ${url.port || 6379}`);
-  console.log(`   TLS: ${url.protocol === 'rediss:' ? 'Ativado' : 'Desativado'}`);
-  
-  // Conectar de forma assíncrona
-  redis.connect().catch((err) => {
-    console.error('❌ Erro ao conectar ao Upstash:', err.message);
-  });
-} else {
-  // Erro se não tiver Upstash configurado
-  console.error('❌ UPSTASH_REDIS_URL não configurado no .env');
-  console.error('   Configure a URL do Upstash para usar Redis');
-  console.error('   Formato: rediss://default:senha@host.upstash.io:6379');
-  
-  // Criar instância fake para não quebrar a aplicação
-  redis = new Redis({
-    host: 'localhost',
-    port: 6379,
-    lazyConnect: true,
-    maxRetriesPerRequest: null,
-    retryStrategy: () => null, // Não tentar reconectar
-  });
+async function ensureInitialized() {
+  if (!isInitialized) {
+    await hybridRedis.initialize();
+    isInitialized = true;
+    log.info({ component: 'redis' }, '✅ Redis híbrido inicializado com sucesso');
+  }
 }
 
-// Eventos de conexão
-redis.on('connect', () => {
-  console.log('🔄 Redis: Conectando...');
-});
+/**
+ * Obter cliente Redis (com failover automático)
+ */
+export async function getRedisClient() {
+  await ensureInitialized();
+  return hybridRedis.getClient();
+}
 
-redis.on('ready', () => {
-  isConnected = true;
-  console.log('✅ Redis: Conectado e pronto!');
-  console.log('🎮 Gamificação ATIVA');
-  console.log('🔍 Busca Autocomplete ATIVA');
-  console.log('👥 Presença Online ATIVA');
-  console.log('💬 Chat em Tempo Real ATIVO');
-  console.log('📊 Dashboard Ao Vivo ATIVO');
-});
+/**
+ * GET: Buscar valor por chave
+ * Prioriza local (mais rápido), faz fallback para cloud
+ */
+export async function redisGet(key: string): Promise<string | null> {
+  await ensureInitialized();
+  return hybridRedis.get(key);
+}
 
-redis.on('error', (err: Error) => {
-  if (!isConnected) {
-    console.error('❌ Redis: Erro de conexão');
-    console.error('   Mensagem:', err.message);
-    console.log('');
-    console.log('📝 Verifique:');
-    console.log('   1. UPSTASH_REDIS_URL no .env está correto');
-    console.log('   2. URL completa: rediss://default:senha@host:port');
-    console.log('   3. Porta é 6379 para Upstash');
-    console.log('   4. Protocolo é rediss:// (com dois s)');
+/**
+ * SET: Armazenar valor com TTL opcional
+ * Escreve em ambos (local + cloud) se REDIS_WRITE_BOTH=true
+ */
+export async function redisSet(key: string, value: string, ttl?: number): Promise<void> {
+  await ensureInitialized();
+  await hybridRedis.set(key, value, ttl);
+}
+
+/**
+ * DEL: Remover chave
+ * Remove de ambos os Redis
+ */
+export async function redisDel(key: string): Promise<void> {
+  await ensureInitialized();
+  await hybridRedis.del(key);
+}
+
+/**
+ * EXISTS: Verificar se chave existe
+ */
+export async function redisExists(key: string): Promise<boolean> {
+  await ensureInitialized();
+  return hybridRedis.exists(key);
+}
+
+/**
+ * INCR: Incrementar contador
+ */
+export async function redisIncr(key: string): Promise<number> {
+  await ensureInitialized();
+  const client = await hybridRedis.getClient();
+  return await client.incr(key);
+}
+
+/**
+ * EXPIRE: Definir TTL para chave existente
+ */
+export async function redisExpire(key: string, seconds: number): Promise<void> {
+  await ensureInitialized();
+  const client = await hybridRedis.getClient();
+  await client.expire(key, seconds);
+}
+
+/**
+ * Health check: Status de ambos os Redis
+ */
+export async function getRedisHealth() {
+  await ensureInitialized();
+  return hybridRedis.getHealth();
+}
+
+/**
+ * Obter ambos os clientes (local + cloud)
+ * Útil para casos especiais que precisam acessar um específico
+ */
+export async function getRedisClients() {
+  await ensureInitialized();
+  return hybridRedis.getClients();
+}
+
+/**
+ * Verificar se está conectado (pelo menos um Redis funcionando)
+ */
+export async function isRedisConnected(): Promise<boolean> {
+  try {
+    await ensureInitialized();
+    const health = hybridRedis.getHealth();
+    return health.local.connected || health.cloud.connected;
+  } catch {
+    return false;
   }
-});
+}
 
-redis.on('close', () => {
-  isConnected = false;
-  console.log('⚠️ Redis: Conexão fechada');
-});
+/**
+ * Informações detalhadas do sistema
+ */
+export function getRedisInfo() {
+  return {
+    type: 'hybrid',
+    strategy: {
+      read: 'local-first with cloud fallback',
+      write: process.env.REDIS_WRITE_BOTH === 'true' ? 'both (local + cloud)' : 'local only',
+    },
+    health: hybridRedis.getHealth(),
+  };
+}
 
-redis.on('reconnecting', (delay: number) => {
-  console.log(`🔄 Redis: Reconectando em ${delay}ms...`);
-});
+// Exportar instância para casos avançados
+export { hybridRedis as redis };
 
-// Teste de conexão inicial
-redis.ping()
-  .then(() => {
-    console.log('✅ Teste de conexão Redis: SUCESSO');
-  })
-  .catch((err) => {
-    console.error('❌ Teste de conexão Redis: FALHOU');
-    console.error('   Configure UPSTASH_REDIS_URL no .env');
-  });
+// Inicializar automaticamente no carregamento do módulo
+ensureInitialized().catch((error) => {
+  log.error({ component: 'redis', err: error }, '❌ Falha crítica ao inicializar Redis híbrido');
+  // Não lança erro para não quebrar a aplicação durante startup
+});
 
 // Graceful shutdown
 const shutdown = async () => {
   try {
-    await redis.quit();
-    console.log('✅ Redis desconectado graciosamente');
-  } catch (error) {
-    console.log('✅ Sistema encerrado');
+    const clients = await hybridRedis.getClients();
+    
+    if (clients.local) {
+      await clients.local.quit();
+      log.info({ component: 'redis' }, '✅ Redis local desconectado');
+    }
+    
+    if (clients.cloud) {
+      await clients.cloud.quit();
+      log.info({ component: 'redis' }, '✅ Redis cloud desconectado');
+    }
+    
+    log.info({ component: 'redis' }, '✅ Sistema Redis híbrido encerrado com sucesso');
+  } catch (error: any) {
+    log.error({ component: 'redis', err: error }, '❌ Erro ao desconectar Redis');
   }
   process.exit(0);
 };
@@ -139,14 +167,4 @@ const shutdown = async () => {
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
-// Helper para verificar se está conectado
-export const isRedisConnected = () => isConnected;
-
-// Helper para obter informações
-export const getRedisInfo = () => ({
-  isConnected,
-  status: redis.status,
-  host: process.env.UPSTASH_REDIS_URL ? 'Upstash Cloud' : 'Local',
-});
-
-export default redis;
+export default hybridRedis;

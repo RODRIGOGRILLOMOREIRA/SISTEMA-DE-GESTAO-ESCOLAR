@@ -11,6 +11,10 @@ dist/
 uploads/*
 !uploads/.gitkeep
 
+# Backups (database dumps)
+backups/*
+!backups/.gitkeep
+
 # Debug/Dev files
 *.sql
 check-*.ts

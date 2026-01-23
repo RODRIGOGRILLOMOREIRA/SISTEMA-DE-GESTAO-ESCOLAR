@@ -1,5 +1,4 @@
 import { Job } from 'bull';
-import { notificationQueue } from '../queues';
 import { notificationService } from '../services/notification.service';
 
 /**
@@ -196,49 +195,9 @@ async function buscarContatoDestinatario(id: string, tipo: string) {
 }
 
 /**
- * Configura o worker da fila de notificações
- * Processa até 10 jobs concorrentes
+ * Exporta a função processadora para ser usada pela fila
  */
-notificationQueue.process(10, processNotification);
+export { processNotification };
 
-// Retry strategy: 3 tentativas com backoff exponencial
-notificationQueue.on('failed', async (job, error) => {
-  const maxAttempts = 3;
-  
-  if (job.attemptsMade < maxAttempts) {
-    console.log(`🔄 Retry ${job.attemptsMade}/${maxAttempts} para job ${job.id}`);
-    
-    // Backoff exponencial: 1min, 3min, 10min
-    const delays = [60000, 180000, 600000];
-    const delay = delays[job.attemptsMade - 1] || 600000;
-    
-    await job.retry();
-  } else {
-    console.error(`💀 Job ${job.id} falhou após ${maxAttempts} tentativas:`, error.message);
-    
-    // Registra falha permanente no banco
-    try {
-      const { prisma } = await import('../lib/prisma');
-      await prisma.log_notificacao.create({
-        data: {
-          id: crypto.randomUUID(),
-          destinatarioId: job.data.destinatarioId,
-          tipoPerfil: job.data.destinatarioTipo as any,
-          canal: job.data.canais[0] as any,
-          tipoEvento: job.data.tipo as any,
-          conteudo: job.data.mensagem,
-          status: 'FALHOU',
-          tentativas: job.attemptsMade,
-          erroMsg: error.message,
-          metadata: JSON.stringify(job.data.metadata),
-        },
-      });
-    } catch (logError) {
-      console.error('❌ Erro ao registrar falha:', logError);
-    }
-  }
-});
+console.log('🚀 Notification Worker pronto para ser registrado');
 
-console.log('🚀 Notification Worker iniciado');
-
-export default notificationQueue;

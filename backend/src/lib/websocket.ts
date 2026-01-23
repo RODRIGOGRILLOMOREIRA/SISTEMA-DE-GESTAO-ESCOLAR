@@ -57,8 +57,10 @@ export function initializeWebSocket(httpServer: HttpServer): SocketServer {
     transports: ['websocket', 'polling'],
   });
 
-  // Configurar Pub/Sub do Redis
-  setupRedisPubSub();
+  // Configurar Pub/Sub do Redis de forma assíncrona (não bloqueia inicialização)
+  setupRedisPubSub().catch((error) => {
+    log.warn({ err: error }, 'Falha ao configurar Redis Pub/Sub');
+  });
 
   // Eventos de conexão
   io.on('connection', (socket: Socket) => {
@@ -71,15 +73,35 @@ export function initializeWebSocket(httpServer: HttpServer): SocketServer {
 }
 
 /**
- * Setup Redis Pub/Sub
+ * Setup Redis Pub/Sub com suporte ao Redis Híbrido
  */
-function setupRedisPubSub() {
+async function setupRedisPubSub() {
   try {
-    // Criar subscriber separado para Pub/Sub
-    redisSubscriber = redis.duplicate();
+    // Tentar obter cliente Redis do sistema híbrido
+    const Redis = require('ioredis');
+    const { getRedisClients } = require('./redis');
     
-    // Subscribir aos canais
-    redisSubscriber.subscribe(
+    const clients = await getRedisClients();
+    const primaryClient = clients.local || clients.cloud;
+    
+    if (!primaryClient) {
+      throw new Error('Nenhum cliente Redis disponível');
+    }
+    
+    // Criar subscriber separado com as mesmas configurações
+    const redisConfig = primaryClient.options;
+    redisSubscriber = new Redis({
+      host: redisConfig.host,
+      port: redisConfig.port,
+      password: redisConfig.password,
+      username: redisConfig.username,
+      tls: redisConfig.tls,
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+    });
+    
+    // Subscribe aos canais
+    await redisSubscriber.subscribe(
       'notifications',
       'presence',
       'chat',

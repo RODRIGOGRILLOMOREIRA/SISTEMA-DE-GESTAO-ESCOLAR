@@ -3,22 +3,28 @@
  * Gerencia cache com Redis para otimizar performance
  */
 
-import redis from '../lib/redis';
+import { redisGet, redisSet, redisDel, redisExists, redisIncr, redisExpire, getRedisClient, isRedisConnected } from '../lib/redis';
 
 class CacheService {
   private isRedisAvailable: boolean = false;
 
   constructor() {
     // Verificar se Redis está disponível
-    redis.ping()
-      .then(() => {
-        this.isRedisAvailable = true;
+    this.checkRedisAvailability();
+  }
+
+  private async checkRedisAvailability() {
+    try {
+      this.isRedisAvailable = await isRedisConnected();
+      if (this.isRedisAvailable) {
         console.log('✅ CacheService: Redis disponível');
-      })
-      .catch(() => {
-        this.isRedisAvailable = false;
+      } else {
         console.warn('⚠️ CacheService: Redis não disponível, cache desabilitado');
-      });
+      }
+    } catch (error) {
+      this.isRedisAvailable = false;
+      console.warn('⚠️ CacheService: Redis não disponível, cache desabilitado');
+    }
   }
 
   /**
@@ -32,7 +38,7 @@ class CacheService {
 
     try {
       const serialized = JSON.stringify(value);
-      await redis.setex(key, ttlSeconds, serialized);
+      await redisSet(key, serialized, ttlSeconds);
       console.log(`📦 Cache SET: ${key} (TTL: ${ttlSeconds}s)`);
     } catch (error) {
       console.error('❌ Erro ao armazenar no cache:', error);
@@ -48,7 +54,7 @@ class CacheService {
     if (!this.isRedisAvailable) return null;
 
     try {
-      const cached = await redis.get(key);
+      const cached = await redisGet(key);
       
       if (!cached) {
         console.log(`📦 Cache MISS: ${key}`);
@@ -71,10 +77,11 @@ class CacheService {
     if (!this.isRedisAvailable) return;
 
     try {
-      const keys = await redis.keys(pattern);
+      const client = await getRedisClient();
+      const keys = await client.keys(pattern);
       
       if (keys.length > 0) {
-        await redis.del(...keys);
+        await Promise.all(keys.map(key => redisDel(key)));
         console.log(`🗑️ Cache INVALIDATED: ${pattern} (${keys.length} chaves)`);
       }
     } catch (error) {
@@ -90,7 +97,7 @@ class CacheService {
     if (!this.isRedisAvailable) return;
 
     try {
-      await redis.del(key);
+      await redisDel(key);
       console.log(`🗑️ Cache DELETE: ${key}`);
     } catch (error) {
       console.error('❌ Erro ao deletar do cache:', error);
@@ -133,8 +140,7 @@ class CacheService {
     if (!this.isRedisAvailable) return false;
 
     try {
-      const result = await redis.exists(key);
-      return result === 1;
+      return await redisExists(key);
     } catch (error) {
       console.error('❌ Erro ao verificar existência no cache:', error);
       return false;
@@ -150,7 +156,8 @@ class CacheService {
     if (!this.isRedisAvailable) return -1;
 
     try {
-      return await redis.ttl(key);
+      const client = await getRedisClient();
+      return await client.ttl(key);
     } catch (error) {
       console.error('❌ Erro ao obter TTL do cache:', error);
       return -1;
@@ -164,7 +171,8 @@ class CacheService {
     if (!this.isRedisAvailable) return;
 
     try {
-      await redis.flushdb();
+      const client = await getRedisClient();
+      await client.flushDb();
       console.log('🗑️ Cache FLUSH: Tudo limpo');
     } catch (error) {
       console.error('❌ Erro ao limpar cache:', error);
@@ -183,8 +191,9 @@ class CacheService {
     }
 
     try {
-      const info = await redis.info('stats');
-      const dbSize = await redis.dbsize();
+      const client = await getRedisClient();
+      const info = await client.info('stats');
+      const dbSize = await client.dbSize();
       
       return {
         available: true,
@@ -197,7 +206,7 @@ class CacheService {
           return acc;
         }, {} as Record<string, string>),
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro ao obter stats do cache:', error);
       return {
         available: false,
@@ -216,7 +225,12 @@ class CacheService {
     if (!this.isRedisAvailable) return 0;
 
     try {
-      return await redis.incrby(key, increment);
+      if (increment === 1) {
+        return await redisIncr(key);
+      } else {
+        const client = await getRedisClient();
+        return await client.incrBy(key, increment);
+      }
     } catch (error) {
       console.error('❌ Erro ao incrementar no cache:', error);
       return 0;
@@ -231,11 +245,12 @@ class CacheService {
     if (!this.isRedisAvailable) return;
 
     try {
-      const pipeline = redis.pipeline();
+      const client = await getRedisClient();
+      const pipeline = client.pipeline();
 
       for (const [key, value, ttl = 300] of entries) {
         const serialized = JSON.stringify(value);
-        pipeline.setex(key, ttl, serialized);
+        pipeline.setEx(key, ttl, serialized);
       }
 
       await pipeline.exec();
@@ -254,7 +269,8 @@ class CacheService {
     if (!this.isRedisAvailable) return keys.map(() => null);
 
     try {
-      const values = await redis.mget(...keys);
+      const client = await getRedisClient();
+      const values = await client.mGet(keys);
       
       return values.map((value, index) => {
         if (!value) {

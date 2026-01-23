@@ -69,36 +69,85 @@ import redis from './lib/redis';
 let redisAvailable = false;
 let workersInitialized = false;
 
-// Verificar disponibilidade do Redis
-redis.ping().then(() => {
-  redisAvailable = true;
-  log.info({ component: 'redis' }, 'Redis disponível e conectado');
-  
-  // Inicializar serviços dependentes do Redis
+/**
+ * Inicialização profissional do sistema Redis + Filas + Workers
+ * Executa de forma assíncrona sem bloquear o startup do servidor
+ */
+(async () => {
   try {
-    require('./services/notification.service');
-    log.info({ component: 'notifications' }, 'Notification Service: Listeners inicializados');
+    // Passo 1: Inicializar Redis Híbrido
+    log.info({ component: 'startup' }, 'Inicializando Redis híbrido...');
+    await redis.initialize();
     
-    require('./workers/notification.worker');
-    log.info({ component: 'workers' }, 'Notification Worker iniciado');
+    // Passo 2: Verificar conectividade
+    const client = await redis.getClient();
+    await client.ping();
+    redisAvailable = true;
+    log.info({ component: 'redis' }, '✅ Redis híbrido conectado com sucesso');
     
-    require('./workers/report.worker');
-    log.info({ component: 'workers' }, 'Report Worker iniciado');
+    // Passo 3: Inicializar Filas Bull
+    log.info({ component: 'startup' }, 'Inicializando sistema de filas...');
+    const { initializeQueues, getNotificationQueue, areQueuesReady } = require('./queues');
+    const queuesReady = await initializeQueues();
     
-    // FASE 5: Inicializar worker de mensagens agendadas
-    const { scheduleRecurringJob } = require('./workers/scheduled-messages.worker');
-    scheduleRecurringJob();
-    log.info({ component: 'workers' }, 'Scheduled Messages Worker iniciado');
+    if (!queuesReady) {
+      log.warn({ component: 'queues' }, 'Filas não disponíveis - continuando sem sistema de filas');
+      return;
+    }
     
-    workersInitialized = true;
-    log.info({ component: 'workers' }, 'Todos os workers inicializados com sucesso');
+    log.info({ component: 'queues' }, '✅ Sistema de filas Bull inicializado');
+    
+    // Passo 4: Inicializar Serviços de Notificação
+    try {
+      require('./services/notification.service');
+      log.info({ component: 'notifications' }, '✅ Notification Service: Listeners configurados');
+    } catch (error: any) {
+      log.warn({ component: 'notifications', err: error }, 'Erro ao carregar notification service');
+    }
+    
+    // Passo 5: Registrar Workers (com delay para garantir que tudo está pronto)
+    setTimeout(async () => {
+      try {
+        if (!areQueuesReady()) {
+          log.warn({ component: 'workers' }, 'Filas não estão prontas - workers não serão registrados');
+          return;
+        }
+        
+        const notificationQueue = getNotificationQueue();
+        if (!notificationQueue) {
+          log.warn({ component: 'workers' }, 'notificationQueue não disponível');
+          return;
+        }
+        
+        const { processNotification } = require('./workers/notification.worker');
+        
+        // Registrar worker com concorrência de 10 jobs
+        notificationQueue.process(10, processNotification);
+        workersInitialized = true;
+        
+        log.info({ 
+          component: 'workers', 
+          queue: 'notifications', 
+          concurrency: 10 
+        }, '✅ Notification Worker registrado');
+        
+        log.info({ component: 'workers' }, '✅ Sistema de workers ativo e funcional');
+        
+      } catch (error: any) {
+        log.error({ component: 'workers', err: error }, 'Erro ao registrar workers');
+      }
+    }, 1000); // Delay de 1 segundo para garantir que tudo está estável
+    
   } catch (error: any) {
-    log.warn({ component: 'workers', err: error }, 'Erro ao inicializar workers');
+    log.warn({ 
+      component: 'startup', 
+      err: error 
+    }, 'Redis/Filas não disponíveis - Sistema operando em modo básico');
+    log.info({ 
+      component: 'system' 
+    }, '⚠️  Funcionalidades dependentes de Redis/Filas estão desabilitadas');
   }
-}).catch(() => {
-  log.warn({ component: 'redis' }, 'Redis não disponível - Sistema operando em modo básico');
-  log.info({ component: 'system' }, 'Funcionalidades de fila e notificações em tempo real desabilitadas');
-});
+})();
 
 const app = express();
 const httpServer = createServer(app); // Criar HTTP Server para WebSocket

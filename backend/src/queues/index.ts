@@ -1,18 +1,50 @@
 import Queue from 'bull';
-import redis from '../lib/redis';
+import { log } from '../lib/logger';
 
-// Configuração do Redis para Bull Queue - UPSTASH COM TLS
+/**
+ * ========================================
+ * SISTEMA DE FILAS BULL - INICIALIZAÇÃO PROFISSIONAL
+ * ========================================
+ * 
+ * Gerenciamento robusto de filas com:
+ * - Verificação de disponibilidade do Redis antes de criar filas
+ * - Lazy initialization controlada
+ * - Tratamento de erros gracioso
+ * - Suporte a múltiplos ambientes (Docker local + Upstash Cloud)
+ * - Prevenção de criação múltipla de instâncias
+ */
+
+// Estado de inicialização
+let queuesInitialized = false;
+let redisAvailable = false;
+let initializationPromise: Promise<boolean> | null = null;
+
+// Instâncias das filas (singleton)
+let _notificationQueue: Queue.Queue | null = null;
+let _reportQueue: Queue.Queue | null = null;
+let _emailQueue: Queue.Queue | null = null;
+let _scheduledQueue: Queue.Queue | null = null;
+
+/**
+ * Obter configuração do Redis com detecção automática
+ * Prioriza REDIS_URL (Docker local) sobre UPSTASH_REDIS_URL (Cloud)
+ */
 const getRedisConfig = () => {
-  if (process.env.UPSTASH_REDIS_URL) {
-    const url = new URL(process.env.UPSTASH_REDIS_URL);
+  const redisUrl = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL;
+  
+  if (redisUrl) {
+    const url = new URL(redisUrl);
+    const isUpstash = redisUrl.includes('upstash.io');
+    const isTLS = url.protocol === 'rediss:';
+    
     return {
       host: url.hostname,
-      port: parseInt(url.port),
-      password: url.password || '',
-      username: url.username || 'default',
-      tls: {
+      port: parseInt(url.port) || 6379,
+      password: url.password ? decodeURIComponent(url.password) : (isUpstash ? '' : 'Dev@Redis123'),
+      username: isUpstash && url.username ? url.username : undefined,
+      tls: isTLS ? {
         rejectUnauthorized: false,
-      },
+      } : undefined,
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
       lazyConnect: false,
@@ -22,13 +54,15 @@ const getRedisConfig = () => {
       },
     };
   }
+  
+  // Fallback para Docker local
   return {
     host: 'localhost',
     port: 6379,
-    password: undefined,
+    password: 'Dev@Redis123',
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
-    lazyConnect: true,
+    lazyConnect: false,
     retryStrategy: (times: number) => {
       if (times > 3) return null;
       return Math.min(times * 200, 1000);
@@ -38,7 +72,6 @@ const getRedisConfig = () => {
 
 const redisConfig = {
   redis: getRedisConfig(),
-  // Configurações otimizadas para performance e memória
   settings: {
     maxStalledCount: 1,
     stalledInterval: 30000,
@@ -47,133 +80,288 @@ const redisConfig = {
   },
 };
 
-// Variáveis para armazenar as instâncias das filas (lazy initialization)
-let _notificationQueue: Queue.Queue | null = null;
-let _reportQueue: Queue.Queue | null = null;
-let _emailQueue: Queue.Queue | null = null;
-let _scheduledQueue: Queue.Queue | null = null;
-let queuesInitialized = false;
+/**
+ * Verificar se Redis está disponível antes de criar filas
+ */
+async function checkRedisAvailability(): Promise<boolean> {
+  try {
+    const Redis = require('ioredis');
+    const testClient = new Redis(redisConfig.redis);
+    
+    await testClient.ping();
+    await testClient.quit();
+    
+    return true;
+  } catch (error: any) {
+    log.warn({ component: 'queues', err: error }, 'Redis não disponível para filas Bull');
+    return false;
+  }
+}
 
 /**
- * Fila para processamento de notificações
- * Prioridade: ALTA - crítico para experiência do usuário
+ * Inicializar todas as filas de forma controlada e segura
+ * Retorna true se foi bem-sucedido, false caso contrário
+ */
+export async function initializeQueues(): Promise<boolean> {
+  // Evita múltiplas inicializações simultâneas
+  if (initializationPromise) {
+    return initializationPromise;
+  }
+  
+  // Se já foi inicializado, retorna o status
+  if (queuesInitialized) {
+    return redisAvailable;
+  }
+  
+  initializationPromise = (async () => {
+    try {
+      // Verificar disponibilidade do Redis
+      redisAvailable = await checkRedisAvailability();
+      
+      if (!redisAvailable) {
+        log.warn({ component: 'queues' }, 'Filas Bull desabilitadas - Redis não disponível');
+        return false;
+      }
+      
+      // Criar filas
+      _notificationQueue = new Queue('notifications', redisConfig);
+      _reportQueue = new Queue('reports', redisConfig);
+      _emailQueue = new Queue('emails', redisConfig);
+      _scheduledQueue = new Queue('scheduled', redisConfig);
+      
+      // Configurar eventos
+      setupQueueEvents(_notificationQueue, 'NOTIFICATIONS');
+      setupQueueEvents(_reportQueue, 'REPORTS');
+      setupQueueEvents(_emailQueue, 'EMAILS');
+      setupQueueEvents(_scheduledQueue, 'SCHEDULED');
+      
+      queuesInitialized = true;
+      log.info({ component: 'queues' }, '✅ Filas Bull inicializadas com sucesso');
+      
+      return true;
+    } catch (error: any) {
+      log.error({ component: 'queues', err: error }, 'Erro ao inicializar filas Bull');
+      return false;
+    } finally {
+      initializationPromise = null;
+    }
+  })();
+  
+  return initializationPromise;
+}
+
+/**
+ * Verificar se as filas estão prontas para uso
+ */
+export function areQueuesReady(): boolean {
+  return queuesInitialized && redisAvailable;
+}
+
+/**
+ * Obter fila de notificações de forma segura
+ * Retorna null se as filas não estiverem disponíveis
+ */
+export function getNotificationQueue(): Queue.Queue | null {
+  if (!areQueuesReady()) {
+    log.warn({ component: 'queues' }, 'Tentativa de acessar notificationQueue sem inicialização');
+    return null;
+  }
+  return _notificationQueue;
+}
+
+/**
+ * Obter fila de relatórios de forma segura
+ */
+export function getReportQueue(): Queue.Queue | null {
+  if (!areQueuesReady()) {
+    log.warn({ component: 'queues' }, 'Tentativa de acessar reportQueue sem inicialização');
+    return null;
+  }
+  return _reportQueue;
+}
+
+/**
+ * Obter fila de emails de forma segura
+ */
+export function getEmailQueue(): Queue.Queue | null {
+  if (!areQueuesReady()) {
+    log.warn({ component: 'queues' }, 'Tentativa de acessar emailQueue sem inicialização');
+    return null;
+  }
+  return _emailQueue;
+}
+
+/**
+ * Obter fila de tarefas agendadas de forma segura
+ */
+export function getScheduledQueue(): Queue.Queue | null {
+  if (!areQueuesReady()) {
+    log.warn({ component: 'queues' }, 'Tentativa de acessar scheduledQueue sem inicialização');
+    return null;
+  }
+  return _scheduledQueue;
+}
+
+/**
+ * Exports legados para compatibilidade (deprecated - use get*Queue())
+ * Mantidos por retrocompatibilidade mas com aviso
  */
 export const notificationQueue = new Proxy({} as Queue.Queue, {
   get(target, prop) {
-    if (!_notificationQueue && !queuesInitialized) {
-      _notificationQueue = new Queue('notifications', redisConfig);
-      setupQueueEvents(_notificationQueue, 'NOTIFICATIONS');
+    const queue = getNotificationQueue();
+    if (!queue) {
+      log.warn({ component: 'queues' }, 'notificationQueue acessado mas não disponível');
+      return undefined;
     }
-    return _notificationQueue ? (_notificationQueue as any)[prop] : undefined;
+    return (queue as any)[prop];
   }
 });
 
-/**
- * Fila para geração de relatórios
- * Prioridade: MÉDIA - pode ser processado em background
- */
 export const reportQueue = new Proxy({} as Queue.Queue, {
   get(target, prop) {
-    if (!_reportQueue && !queuesInitialized) {
-      _reportQueue = new Queue('reports', redisConfig);
-      setupQueueEvents(_reportQueue, 'REPORTS');
+    const queue = getReportQueue();
+    if (!queue) {
+      log.warn({ component: 'queues' }, 'reportQueue acessado mas não disponível');
+      return undefined;
     }
-    return _reportQueue ? (_reportQueue as any)[prop] : undefined;
+    return (queue as any)[prop];
   }
 });
 
-/**
- * Fila para envio de e-mails
- * Prioridade: MÉDIA - retry automático importante
- */
 export const emailQueue = new Proxy({} as Queue.Queue, {
   get(target, prop) {
-    if (!_emailQueue && !queuesInitialized) {
-      _emailQueue = new Queue('emails', redisConfig);
-      setupQueueEvents(_emailQueue, 'EMAILS');
+    const queue = getEmailQueue();
+    if (!queue) {
+      log.warn({ component: 'queues' }, 'emailQueue acessado mas não disponível');
+      return undefined;
     }
-    return _emailQueue ? (_emailQueue as any)[prop] : undefined;
+    return (queue as any)[prop];
   }
 });
 
-/**
- * Fila para backup e tarefas agendadas
- * Prioridade: BAIXA - executar fora do horário de pico
- */
 export const scheduledQueue = new Proxy({} as Queue.Queue, {
   get(target, prop) {
-    if (!_scheduledQueue && !queuesInitialized) {
-      _scheduledQueue = new Queue('scheduled', redisConfig);
-      setupQueueEvents(_scheduledQueue, 'SCHEDULED');
+    const queue = getScheduledQueue();
+    if (!queue) {
+      log.warn({ component: 'queues' }, 'scheduledQueue acessado mas não disponível');
+      return undefined;
     }
-    return _scheduledQueue ? (_scheduledQueue as any)[prop] : undefined;
+    return (queue as any)[prop];
   }
 });
+
 
 // Configurações de rate limiting por fila
 // (settings são configurados nas options do job, não na fila)
 
-// Eventos de monitoramento (logs) - TOTALMENTE FUNCIONAIS
+/**
+ * Configurar eventos de monitoramento para uma fila
+ * Logs estruturados para observabilidade completa
+ */
 function setupQueueEvents(queue: Queue.Queue, queueName: string) {
   queue.on('error', (error) => {
-    // Silenciar erros de conexão Redis se não estiver disponível
-    if (error.message.includes('ECONNREFUSED') || error.message.includes('connect ETIMEDOUT')) {
+    // Silenciar erros de conexão Redis esperados
+    if (error.message.includes('ECONNREFUSED') || 
+        error.message.includes('connect ETIMEDOUT') ||
+        error.message.includes('ENOTFOUND')) {
       return;
     }
-    console.error(`❌ [${queueName}] Queue error:`, error.message);
+    log.error({ component: 'queues', queue: queueName, err: error }, `Queue error`);
   });
 
   queue.on('waiting', (jobId) => {
-    console.log(`⏳ [${queueName}] Job ${jobId} waiting`);
+    log.debug({ component: 'queues', queue: queueName, jobId }, 'Job waiting');
   });
 
   queue.on('active', (job) => {
-    console.log(`▶️  [${queueName}] Job ${job.id} active: ${job.name}`);
+    log.info({ component: 'queues', queue: queueName, jobId: job.id, jobName: job.name }, 'Job active');
   });
 
   queue.on('completed', (job, result) => {
-    console.log(`✅ [${queueName}] Job ${job.id} completed:`, result);
+    log.info({ component: 'queues', queue: queueName, jobId: job.id, result }, 'Job completed');
   });
 
   queue.on('failed', (job, error) => {
-    console.error(`❌ [${queueName}] Job ${job?.id} failed:`, error.message);
+    log.error({ 
+      component: 'queues', 
+      queue: queueName, 
+      jobId: job?.id, 
+      err: error 
+    }, 'Job failed');
   });
 
   queue.on('stalled', (job) => {
-    console.warn(`⚠️  [${queueName}] Job ${job.id} stalled`);
+    log.warn({ component: 'queues', queue: queueName, jobId: job.id }, 'Job stalled');
   });
 
   queue.on('progress', (job, progress) => {
-    console.log(`📊 [${queueName}] Job ${job.id} progress: ${progress}%`);
+    log.debug({ component: 'queues', queue: queueName, jobId: job.id, progress }, 'Job progress');
   });
 }
 
-// Função para limpar as filas quando necessário
-export function cleanupQueues() {
-  const promises = [];
-  if (_notificationQueue) promises.push(_notificationQueue.close());
-  if (_reportQueue) promises.push(_reportQueue.close());
-  if (_emailQueue) promises.push(_emailQueue.close());
-  if (_scheduledQueue) promises.push(_scheduledQueue.close());
-  return Promise.all(promises);
+/**
+ * Limpar e fechar todas as filas gracefully
+ */
+export async function cleanupQueues(): Promise<void> {
+  if (!queuesInitialized) {
+    return;
+  }
+  
+  log.info({ component: 'queues' }, 'Encerrando filas Bull...');
+  
+  const promises: Promise<void>[] = [];
+  
+  if (_notificationQueue) {
+    promises.push(_notificationQueue.close());
+  }
+  if (_reportQueue) {
+    promises.push(_reportQueue.close());
+  }
+  if (_emailQueue) {
+    promises.push(_emailQueue.close());
+  }
+  if (_scheduledQueue) {
+    promises.push(_scheduledQueue.close());
+  }
+  
+  await Promise.allSettled(promises);
+  
+  _notificationQueue = null;
+  _reportQueue = null;
+  _emailQueue = null;
+  _scheduledQueue = null;
+  queuesInitialized = false;
+  redisAvailable = false;
+  
+  log.info({ component: 'queues' }, '✅ Todas as filas fechadas');
 }
 
-// Graceful shutdown - FUNCIONAL COMPLETO
+
+/**
+ * Graceful shutdown handlers
+ */
 process.on('SIGTERM', async () => {
-  console.log('🛑 SIGTERM received, closing queues...');
+  log.info({ component: 'queues' }, 'SIGTERM recebido, encerrando filas...');
   await cleanupQueues();
-  console.log('✅ All queues closed');
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('🛑 SIGINT received, closing queues...');
+  log.info({ component: 'queues' }, 'SIGINT recebido, encerrando filas...');
   await cleanupQueues();
-  console.log('✅ All queues closed');
   process.exit(0);
 });
 
+/**
+ * Exports principais
+ */
 export default {
+  initializeQueues,
+  areQueuesReady,
+  getNotificationQueue,
+  getReportQueue,
+  getEmailQueue,
+  getScheduledQueue,
   notificationQueue,
   reportQueue,
   emailQueue,
