@@ -68,11 +68,16 @@ export class HybridRedisManager {
           host: url.hostname,
           port: parseInt(url.port) || 6379,
           password: url.password ? decodeURIComponent(url.password) : undefined,
-          maxRetriesPerRequest: 3,
-          enableReadyCheck: true,
+          maxRetriesPerRequest: 10,
+          enableReadyCheck: false,
           retryStrategy: (times) => {
-            if (times > 3) return null;
-            return Math.min(times * 200, 1000);
+            if (times > 10) {
+              log.error({ component: 'redis-hybrid' }, 'Redis Local: Falha após 10 tentativas');
+              return null;
+            }
+            const delay = Math.min(times * 100, 2000);
+            log.info({ component: 'redis-hybrid', attempt: times, delay }, 'Redis Local: Reconectando...');
+            return delay;
           },
         };
 
@@ -80,22 +85,39 @@ export class HybridRedisManager {
         
         this.localRedis.on('connect', () => {
           this.localHealthy = true;
-          log.info({ component: 'redis-hybrid' }, '✅ Redis Local conectado');
+          log.info({ component: 'redis-hybrid' }, '✅ Redis Local CONECTADO com sucesso');
+        });
+
+        this.localRedis.on('ready', () => {
+          this.localHealthy = true;
+          log.info({ component: 'redis-hybrid' }, '✅ Redis Local PRONTO para uso');
         });
 
         this.localRedis.on('error', (err) => {
           this.localHealthy = false;
-          log.warn({ component: 'redis-hybrid', err }, '⚠️  Redis Local erro');
+          log.warn({ component: 'redis-hybrid', err: err.message }, '⚠️  Redis Local erro');
         });
 
-        await this.localRedis.ping();
-        log.info({ component: 'redis-hybrid' }, '🐳 Redis Local inicializado (Docker)');
+        this.localRedis.on('close', () => {
+          this.localHealthy = false;
+          log.warn({ component: 'redis-hybrid' }, '⚠️  Redis Local conexão fechada');
+        });
+
+        // Aguardar conexão com timeout
+        await Promise.race([
+          this.localRedis.ping(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+        ]);
+        
+        this.localHealthy = true;
+        log.info({ component: 'redis-hybrid' }, '🐳 Redis Local inicializado (Docker) - MODO MÁXIMO ATIVO');
       }
     } catch (error: any) {
-      log.warn({ component: 'redis-hybrid' }, `Redis Local não disponível: ${error.message}`);
+      this.localHealthy = false;
+      log.error({ component: 'redis-hybrid', err: error.message }, `❌ Redis Local não disponível: ${error.message}`);
     }
 
-    // 2. Redis Cloud (Upstash)
+    // 2. Redis Cloud (Upstash) - OPCIONAL
     try {
       const cloudUrl = process.env.UPSTASH_REDIS_URL;
       if (cloudUrl) {
@@ -108,7 +130,7 @@ export class HybridRedisManager {
           username: isUpstash && url.username ? url.username : undefined,
           tls: url.protocol === 'rediss:' ? { rejectUnauthorized: false } : undefined,
           maxRetriesPerRequest: 3,
-          enableReadyCheck: true,
+          enableReadyCheck: false,
           retryStrategy: (times) => {
             if (times > 5) return null;
             return Math.min(times * 500, 2000);
@@ -124,27 +146,36 @@ export class HybridRedisManager {
 
         this.cloudRedis.on('error', (err) => {
           this.cloudHealthy = false;
-          log.warn({ component: 'redis-hybrid', err }, '⚠️  Redis Cloud erro');
+          log.warn({ component: 'redis-hybrid', err: err.message }, '⚠️  Redis Cloud erro (opcional)');
         });
 
-        await this.cloudRedis.ping();
+        await Promise.race([
+          this.cloudRedis.ping(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+        ]);
+        
+        this.cloudHealthy = true;
         log.info({ component: 'redis-hybrid' }, '☁️  Redis Cloud inicializado (Upstash)');
+      } else {
+        log.info({ component: 'redis-hybrid' }, '⏭️  Redis Cloud não configurado (opcional)');
       }
     } catch (error: any) {
-      log.warn({ component: 'redis-hybrid' }, `Redis Cloud não disponível: ${error.message}`);
+      this.cloudHealthy = false;
+      log.info({ component: 'redis-hybrid' }, `⏭️  Redis Cloud não disponível (opcional): ${error.message}`);
     }
 
-    // Validar que pelo menos um está disponível
-    if (!this.localRedis && !this.cloudRedis) {
-      throw new Error('Nenhum Redis disponível! Configure REDIS_URL ou UPSTASH_REDIS_URL');
+    // Validar que pelo menos o LOCAL está disponível
+    if (!this.localRedis || !this.localHealthy) {
+      throw new Error('❌ Redis Local (Docker) não está disponível! Verifique se o container está rodando: docker ps');
     }
 
     log.info({ 
       component: 'redis-hybrid',
-      local: !!this.localRedis,
-      cloud: !!this.cloudRedis,
+      local: this.localHealthy ? '✅ ATIVO' : '❌ INATIVO',
+      cloud: this.cloudHealthy ? '✅ ATIVO' : '⏭️  OPCIONAL',
+      mode: 'MODO MÁXIMO',
       sync: SYNC_ENABLED
-    }, '🔄 Redis Híbrido inicializado');
+    }, '🚀 Redis Híbrido inicializado em MODO MÁXIMO');
   }
 
   /**
@@ -311,12 +342,18 @@ export class HybridRedisManager {
   async getClient(): Promise<Redis> {
     await this.ensureInitialized();
     
+    // MODO MÁXIMO: Sempre usar Redis Local (Docker) - mais rápido e confiável
     if (this.localHealthy && this.localRedis) {
       return this.localRedis;
     }
+    
+    // Fallback para cloud apenas se local falhar
     if (this.cloudHealthy && this.cloudRedis) {
+      log.warn({ component: 'redis-hybrid' }, '⚠️  Usando Redis Cloud como fallback');
       return this.cloudRedis;
     }
+    
+    throw new Error('❌ Nenhum Redis disponível! Verifique o container Docker: docker ps');
     throw new Error('Nenhum Redis disponível');
   }
 

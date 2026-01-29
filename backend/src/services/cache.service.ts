@@ -1,9 +1,26 @@
 /**
  * Serviço de Cache Inteligente
  * Gerencia cache com Redis para otimizar performance
+ * 
+ * @class CacheService
+ * @description Fornece abstração para operações de cache usando Redis
+ * com fallback automático caso Redis não esteja disponível
+ * 
+ * @example
+ * ```typescript
+ * // Armazenar no cache
+ * await cacheService.set('user:123', userData, 3600);
+ * 
+ * // Buscar do cache
+ * const user = await cacheService.get<User>('user:123');
+ * 
+ * // Invalidar cache por padrão
+ * await cacheService.invalidate('user:*');
+ * ```
  */
 
 import { redisGet, redisSet, redisDel, redisExists, redisIncr, redisExpire, getRedisClient, isRedisConnected } from '../lib/redis';
+import { logInfo, logWarn, logError, logDebug } from '../lib/logger';
 
 class CacheService {
   private isRedisAvailable: boolean = false;
@@ -13,25 +30,37 @@ class CacheService {
     this.checkRedisAvailability();
   }
 
-  private async checkRedisAvailability() {
+  /**
+   * Verifica disponibilidade do Redis
+   * @private
+   * @returns {Promise<void>}
+   */
+  private async checkRedisAvailability(): Promise<void> {
     try {
       this.isRedisAvailable = await isRedisConnected();
       if (this.isRedisAvailable) {
-        console.log('✅ CacheService: Redis disponível');
+        logInfo('Redis disponível', { component: 'cache' });
       } else {
-        console.warn('⚠️ CacheService: Redis não disponível, cache desabilitado');
+        logWarn('Redis não disponível, cache desabilitado', { component: 'cache' });
       }
     } catch (error) {
       this.isRedisAvailable = false;
-      console.warn('⚠️ CacheService: Redis não disponível, cache desabilitado');
+      logWarn('Redis não disponível, cache desabilitado', { component: 'cache' });
     }
   }
 
   /**
-   * Armazenar valor no cache
-   * @param key Chave única
-   * @param value Valor a ser armazenado (será serializado)
-   * @param ttlSeconds Tempo de vida em segundos (padrão: 5 minutos)
+   * Armazena valor no cache com TTL configurável
+   * 
+   * @param {string} key - Chave única para identificar o valor
+   * @param {any} value - Valor a ser armazenado (será serializado em JSON)
+   * @param {number} [ttlSeconds=300] - Tempo de vida em segundos (padrão: 5 minutos)
+   * @returns {Promise<void>}
+   * 
+   * @example
+   * ```typescript
+   * await cacheService.set('alunos:lista', alunos, 600); // 10 minutos
+   * ```
    */
   async set(key: string, value: any, ttlSeconds: number = 300): Promise<void> {
     if (!this.isRedisAvailable) return;
@@ -39,16 +68,28 @@ class CacheService {
     try {
       const serialized = JSON.stringify(value);
       await redisSet(key, serialized, ttlSeconds);
-      console.log(`📦 Cache SET: ${key} (TTL: ${ttlSeconds}s)`);
+      logDebug(`Cache SET: ${key}`, { component: 'cache', key, ttl: ttlSeconds });
     } catch (error) {
-      console.error('❌ Erro ao armazenar no cache:', error);
+      logError('Erro ao armazenar no cache', error, { component: 'cache', key });
     }
   }
 
   /**
-   * Obter valor do cache
-   * @param key Chave única
-   * @returns Valor deserializado ou null se não existir
+   * Obtém valor do cache
+   * 
+   * @template T - Tipo do valor retornado
+   * @param {string} key - Chave única do valor
+   * @returns {Promise<T | null>} Valor deserializado ou null se não existir
+   * 
+   * @example
+   * ```typescript
+   * const alunos = await cacheService.get<Aluno[]>('alunos:lista');
+   * if (alunos) {
+   *   // Usar dados do cache
+   * } else {
+   *   // Buscar do banco
+   * }
+   * ```
    */
   async get<T>(key: string): Promise<T | null> {
     if (!this.isRedisAvailable) return null;
@@ -57,21 +98,32 @@ class CacheService {
       const cached = await redisGet(key);
       
       if (!cached) {
-        console.log(`📦 Cache MISS: ${key}`);
+        logDebug(`Cache MISS: ${key}`, { component: 'cache', key });
         return null;
       }
 
-      console.log(`📦 Cache HIT: ${key}`);
+      logDebug(`Cache HIT: ${key}`, { component: 'cache', key });
       return JSON.parse(cached) as T;
     } catch (error) {
-      console.error('❌ Erro ao buscar do cache:', error);
+      logError('Erro ao buscar do cache', error, { component: 'cache', key });
       return null;
     }
   }
 
   /**
-   * Invalidar cache por padrão
-   * @param pattern Padrão de chaves (ex: "alunos:*")
+   * Invalida cache por padrão (wildcard)
+   * 
+   * @param {string} pattern - Padrão de chaves com wildcard (ex: "alunos:*", "user:123:*")
+   * @returns {Promise<void>}
+   * 
+   * @example
+   * ```typescript
+   * // Invalidar todos os caches de alunos
+   * await cacheService.invalidate('alunos:*');
+   * 
+   * // Invalidar cache de um usuário específico
+   * await cacheService.invalidate('user:123:*');
+   * ```
    */
   async invalidate(pattern: string): Promise<void> {
     if (!this.isRedisAvailable) return;
@@ -82,10 +134,10 @@ class CacheService {
       
       if (keys.length > 0) {
         await Promise.all(keys.map(key => redisDel(key)));
-        console.log(`🗑️ Cache INVALIDATED: ${pattern} (${keys.length} chaves)`);
+        logInfo(`Cache invalidado: ${pattern}`, { component: 'cache', pattern, count: keys.length });
       }
     } catch (error) {
-      console.error('❌ Erro ao invalidar cache:', error);
+      logError('Erro ao invalidar cache', error, { component: 'cache', pattern });
     }
   }
 

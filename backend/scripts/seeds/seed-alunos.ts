@@ -211,17 +211,27 @@ async function vincularDisciplinasATurmas() {
       // Buscar professor da especialidade
       const professor = professores.find(p => p.especialidade === disciplina.nome);
       
-      await prisma.disciplinas_turmas.create({
-        data: {
-          id: uuidv4(),
+      // Verificar se já existe
+      const existente = await prisma.disciplinas_turmas.findFirst({
+        where: {
           disciplinaId: disciplina.id,
-          turmaId: turma.id,
-          professorId: professor?.id,
-          updatedAt: new Date()
+          turmaId: turma.id
         }
       });
       
-      totalVinculos++;
+      if (!existente) {
+        await prisma.disciplinas_turmas.create({
+          data: {
+            id: uuidv4(),
+            disciplinaId: disciplina.id,
+            turmaId: turma.id,
+            professorId: professor?.id,
+            updatedAt: new Date()
+          }
+        });
+        
+        totalVinculos++;
+      }
     }
     
     console.log(`  ✅ ${turma.nome}: ${disciplinas.length} disciplinas vinculadas`);

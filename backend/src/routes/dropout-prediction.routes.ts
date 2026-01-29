@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { dropoutPredictionService } from '../services/dropout-prediction.service';
 import { authMiddleware } from '../middlewares/auth';
 import { requireRole } from '../middlewares/rbac.middleware';
-import logger from '../lib/logger';
+import { log } from '../lib/logger';
 
 const router = Router();
 
@@ -23,16 +23,16 @@ router.get(
         turmaId as string | undefined
       );
 
-      // Log de successão
-      console.log('Análise de predição de evasão realizada', {
+      log.info({ 
+        component: 'dropout-prediction.routes',
         userId: req.user?.id,
         turmaId,
         totalAnalyzed: analyses.length
-      });
+      }, 'Análise de predição de evasão realizada');
 
       res.json(analyses);
     } catch (error: any) {
-      logger.error('Erro ao analisar predição de evasão:', error);
+      log.error({ component: 'dropout-prediction.routes', error }, 'Erro ao analisar predição de evasão');
       res.status(500).json({ 
         error: 'Erro ao processar análise de predição',
         message: error.message 
@@ -56,16 +56,16 @@ router.get(
 
       const analysis = await dropoutPredictionService.analyzeStudent(id);
 
-      // Log de successão
-      console.log('Análise individual de predição realizada', {
+      log.info({ 
+        component: 'dropout-prediction.routes',
         userId: req.user?.id,
         alunoId: id,
         riskLevel: analysis.riskLevel
-      });
+      }, 'Análise individual de predição realizada');
 
       res.json(analysis);
     } catch (error: any) {
-      logger.error('Erro ao analisar aluno:', error);
+      log.error({ component: 'dropout-prediction.routes', error }, 'Erro ao analisar aluno');
       
       if (error.message === 'Aluno não encontrado') {
         return res.status(404).json({ error: 'Aluno não encontrado' });
@@ -96,16 +96,16 @@ router.get(
         turmaId as string | undefined
       );
 
-      // Log de successão
-      console.log('Consulta de alunos em alto risco', {
+      log.info({ 
+        component: 'dropout-prediction.routes',
         userId: req.user?.id,
         turmaId,
         count: highRiskStudents.length
-      });
+      }, 'Consulta de alunos em alto risco');
 
       res.json(highRiskStudents);
     } catch (error: any) {
-      logger.error('Erro ao buscar alunos em alto risco:', error);
+      log.error({ component: 'dropout-prediction.routes', error }, 'Erro ao buscar alunos em alto risco');
       res.status(500).json({ 
         error: 'Erro ao processar consulta',
         message: error.message 

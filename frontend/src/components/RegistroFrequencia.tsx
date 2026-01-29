@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Save, X, Calendar, TrendingUp, ArrowLeft } from 'lucide-react'
 import { api } from '../lib/api'
+import { extractData } from '../utils/apiHelpers'
 import { toast } from 'react-hot-toast'
 import { TableSkeleton } from './skeletons'
 import './RegistroFrequencia.css'
@@ -139,9 +140,10 @@ const RegistroFrequencia = () => {
 
   const loadTurmas = async () => {
     try {
-      const response = await api.get('/turmas')
-      console.log('FREQUENCIA - Turmas carregadas:', response.data.length, response.data)
-      setTurmas(response.data)
+      const response = await api.get('/turmas', { params: { page: 1, limit: 100 } })
+      const todasTurmas = extractData(response.data)
+      console.log('FREQUENCIA - Turmas carregadas:', todasTurmas.length, todasTurmas)
+      setTurmas(todasTurmas)
     } catch (error) {
       console.error('Erro ao carregar turmas:', error)
     }

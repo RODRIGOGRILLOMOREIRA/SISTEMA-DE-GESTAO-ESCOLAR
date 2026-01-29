@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import * as faceapi from 'face-api.js';
+import { loadFaceApi } from '../utils/faceApiLoader';
 import { api } from '../lib/api';
 import './ReconhecimentoFacialIA.css';
 
@@ -36,7 +36,8 @@ export default function ReconhecimentoFacialIA({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectionInterval = useRef<any>(null);
-  const labeledDescriptors = useRef<faceapi.LabeledFaceDescriptors[]>([]);
+  const faceapiRef = useRef<typeof import('face-api.js') | null>(null);
+  const labeledDescriptors = useRef<any[]>([]);
   const deteccaoConsecutiva = useRef<Map<string, number>>(new Map());
   const historicoConfianca = useRef<Map<string, number[]>>(new Map());
   const isProcessingRef = useRef<boolean>(false);
@@ -57,6 +58,10 @@ export default function ReconhecimentoFacialIA({
   const carregarModelos = async () => {
     try {
       setStatus('📦 Carregando modelos de IA...');
+      
+      // Carregar face-api dinamicamente
+      const faceapi = await loadFaceApi();
+      faceapiRef.current = faceapi;
       
       const MODEL_URL = '/models';
       
@@ -80,6 +85,9 @@ export default function ReconhecimentoFacialIA({
 
   const carregarDescritoresCadastrados = async () => {
     try {
+      if (!faceapiRef.current) return;
+      const faceapi = faceapiRef.current;
+      
       setStatus('📥 Carregando perfis cadastrados...');
       const response = await api.get('/reconhecimento-facial/api/descritores');
       const cadastros = response.data;
@@ -90,7 +98,7 @@ export default function ReconhecimentoFacialIA({
         return;
       }
 
-      const labeled: faceapi.LabeledFaceDescriptors[] = [];
+      const labeled: any[] = [];
 
       for (const cadastro of cadastros) {
         const descritores = JSON.parse(cadastro.descritores);
@@ -149,6 +157,12 @@ export default function ReconhecimentoFacialIA({
   };
 
   const iniciarDeteccaoInteligente = () => {
+    if (!faceapiRef.current) {
+      console.error('face-api não carregado');
+      return;
+    }
+    const faceapi = faceapiRef.current;
+    
     setProcessando(true);
 
     const faceMatcher = labeledDescriptors.current.length > 0 

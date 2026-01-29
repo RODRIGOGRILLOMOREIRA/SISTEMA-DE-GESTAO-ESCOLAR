@@ -38,7 +38,10 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/api/],
+        maximumFileSizeToCacheInBytes: 3000000, // 3MB limit
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\./i,
@@ -77,14 +80,44 @@ export default defineConfig({
           'utils-vendor': ['axios', 'date-fns', 'zustand'],
         },
       },
+      // Ignorar warnings de sourcemaps ausentes
+      onwarn(warning, warn) {
+        // Ignorar warnings de sourcemaps do face-api.js
+        if (warning.code === 'SOURCEMAP_ERROR' && warning.message.includes('face-api.js')) {
+          return;
+        }
+        warn(warning);
+      }
     },
     // Reduzir uso de memória durante build
     minify: 'esbuild',
     target: 'esnext',
     sourcemap: false,
   },
+  resolve: {
+    alias: {
+      stream: 'stream-browserify',
+      util: 'util',
+    }
+  },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom'],
     exclude: ['face-api.js'], // Carregar face-api sob demanda
+    esbuildOptions: {
+      // Desabilitar sourcemaps no dev
+      sourcemap: false,
+      // Configuração de memória para esbuild
+      logLevel: 'warning',
+      // Reduzir uso de memória
+      target: 'esnext',
+      define: {
+        global: 'globalThis'
+      }
+    }
+  },
+  // Otimizações adicionais para reduzir uso de memória
+  esbuild: {
+    logOverride: { 'this-is-undefined-in-esm': 'silent' },
+    target: 'esnext',
   },
 })

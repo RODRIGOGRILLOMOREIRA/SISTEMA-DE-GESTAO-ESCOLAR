@@ -3,6 +3,7 @@ import { api, turmasAPI, Turma, Aluno } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import { useAnoLetivo } from '../contexts/AnoLetivoContext'
 import { isAdmin, isProfessor } from '../lib/permissions'
+import { extractData } from '../utils/apiHelpers'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import BackButton from '../components/BackButton'
@@ -107,8 +108,8 @@ const BoletimDesempenho = () => {
 
   const loadTurmas = async () => {
     try {
-      const response = await turmasAPI.getAll()
-      let turmasParaExibir = response.data
+      const response = await turmasAPI.getAll(1, 100)
+      let turmasParaExibir = extractData(response.data)
       
       if (user && isProfessor(user) && !isAdmin(user) && professorTurmas.length > 0) {
         turmasParaExibir = response.data.filter((t: Turma) => professorTurmas.includes(t.id))
@@ -129,8 +130,9 @@ const BoletimDesempenho = () => {
 
   const loadAlunos = async () => {
     try {
-      const response = await api.get('/alunos')
-      const alunosFiltrados = response.data
+      const response = await api.get('/alunos', { params: { page: 1, limit: 1000 } })
+      const todosAlunos = extractData(response.data)
+      const alunosFiltrados = todosAlunos
         .filter((aluno: Aluno) => aluno.turmaId === selectedTurma)
         .sort((a: Aluno, b: Aluno) => a.nome.localeCompare(b.nome))
       setAlunos(alunosFiltrados)

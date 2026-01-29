@@ -63,7 +63,14 @@ export const AnoLetivoProvider = ({ children }: AnoLetivoProviderProps) => {
 export const useAnoLetivo = () => {
   const context = useContext(AnoLetivoContext)
   if (context === undefined) {
-    throw new Error('useAnoLetivo deve ser usado dentro de um AnoLetivoProvider')
+    console.warn('useAnoLetivo called outside AnoLetivoProvider, returning default values')
+    const anoAtual = new Date().getFullYear()
+    return {
+      anoLetivo: anoAtual,
+      setAnoLetivo: () => {},
+      anosDisponiveis: [anoAtual - 1, anoAtual, anoAtual + 1],
+      setAnosDisponiveis: () => {}
+    }
   }
   return context
 }

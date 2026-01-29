@@ -25,8 +25,8 @@ funcionariosRouter.get('/', async (req, res) => {
     // Descriptografar dados sensíveis
     const funcionariosDecrypted = funcionarios.map(func => ({
       ...func,
-      cpf: encryption.decrypt(func.cpf),
-      telefone: func.telefone ? encryption.decrypt(func.telefone) : null,
+      cpf: encryption.safeDecrypt(func.cpf),
+      telefone: func.telefone ? encryption.safeDecrypt(func.telefone) : null,
     }));
     
     res.json(funcionariosDecrypted);
@@ -49,8 +49,8 @@ funcionariosRouter.get('/:id', async (req, res) => {
     // Descriptografar dados sensíveis
     const funcionarioDecrypted = {
       ...funcionario,
-      cpf: encryption.decrypt(funcionario.cpf),
-      telefone: funcionario.telefone ? encryption.decrypt(funcionario.telefone) : null,
+      cpf: encryption.safeDecrypt(funcionario.cpf),
+      telefone: funcionario.telefone ? encryption.safeDecrypt(funcionario.telefone) : null,
     };
     
     res.json(funcionarioDecrypted);

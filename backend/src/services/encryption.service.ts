@@ -101,6 +101,28 @@ export function decrypt(encryptedData: string): string {
 }
 
 /**
+ * Descriptografar texto de forma segura (retorna original se falhar)
+ * Útil para dados que podem estar não criptografados
+ */
+export function safeDecrypt(encryptedData: string): string {
+  try {
+    if (!encryptedData) return '';
+    
+    // Verificar se parece estar criptografado (formato salt:iv:tag:encrypted)
+    const parts = encryptedData.split(':');
+    if (parts.length !== 4) {
+      // Não está no formato criptografado, retornar como está
+      return encryptedData;
+    }
+
+    return decrypt(encryptedData);
+  } catch (error) {
+    // Se falhar ao descriptografar, retornar o dado original
+    return encryptedData;
+  }
+}
+
+/**
  * Criptografar CPF (remove pontuação antes)
  */
 export function encryptCPF(cpf: string): string {
@@ -207,6 +229,7 @@ if (!isEncryptionConfigured()) {
 export default {
   encrypt,
   decrypt,
+  safeDecrypt,
   encryptCPF,
   decryptCPF,
   encryptPhone,

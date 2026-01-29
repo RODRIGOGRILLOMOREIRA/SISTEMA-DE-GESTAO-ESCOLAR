@@ -10,7 +10,10 @@
     "**/backups/**": true,
     "**/prisma/migrations/**": true,
     "**/dev-dist/**": true,
-    "**/*.log": true
+    "**/*.log": true,
+    "**/.pnpm-store/**": true,
+    "**/temp/**": true,
+    "**/.cache/**": true
   },
   "search.exclude": {
     "**/node_modules": true,
@@ -19,22 +22,32 @@
     "**/uploads": true,
     "**/backups": true,
     "**/.git": true,
-    "**/dev-dist": true
+    "**/dev-dist": true,
+    "**/temp": true,
+    "**/.cache": true,
+    "**/prisma/migrations": true
   },
   "files.exclude": {
-    "**/node_modules": false,
-    "**/.git": false,
+    "**/.git": true,
+    "**/node_modules": true,
     "**/dist": true,
-    "**/build": true
+    "**/build": true,
+    "**/dev-dist": true,
+    "**/.cache": true,
+    "**/temp": true
   },
   
-  // AUMENTO DE MEMÓRIA PARA TYPESCRIPT SERVER (4GB)
-  "typescript.tsserver.maxTsServerMemory": 4096,
+  // AUMENTO DE MEMÓRIA PARA TYPESCRIPT SERVER (12GB MÁXIMO)
+  "typescript.tsserver.maxTsServerMemory": 12288,
   "typescript.disableAutomaticTypeAcquisition": true,
   "typescript.tsserver.log": "off",
   "typescript.tsserver.useSyntaxServer": "auto",
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+  "typescript.tsserver.watchOptions": {
+    "excludeDirectories": ["**/node_modules", "**/dist", "**/build"]
+  },
   
-  // Melhorar performance do editor (OTIMIZADO)
+  // Melhorar performance do editor (MÁXIMO DESEMPENHO)
   "editor.quickSuggestions": {
     "other": true,
     "comments": false,
@@ -46,8 +59,15 @@
   "editor.inlayHints.enabled": "off",
   "editor.bracketPairColorization.enabled": true,
   "editor.guides.bracketPairs": "active",
-  "editor.semanticHighlighting.enabled": true,
-  "editor.suggest.preview": true,
+  "editor.semanticHighlighting.enabled": false,
+  "editor.suggest.preview": false,
+  "editor.suggest.shareSuggestSelections": false,
+  "editor.minimap.enabled": false,
+  "editor.renderWhitespace": "none",
+  "editor.renderControlCharacters": false,
+  "editor.smoothScrolling": false,
+  "editor.cursorBlinking": "solid",
+  "editor.cursorSmoothCaretAnimation": "off",
   
   // Git otimizações
   "git.autofetch": false,
@@ -69,14 +89,30 @@
   "javascript.suggest.enabled": true,
   "typescript.suggest.enabled": true,
   
-  // Otimizações de memória do VS Code
+  // Otimizações de memória do VS Code (AGRESSIVO)
   "files.autoSave": "onFocusChange",
   "files.hotExit": "onExitAndWindowClose",
   "window.restoreWindows": "none",
   "workbench.editor.limit.enabled": true,
-  "workbench.editor.limit.value": 10,
+  "workbench.editor.limit.value": 8,
   "workbench.editor.limit.perEditorGroup": true,
   "workbench.startupEditor": "none",
+  "workbench.editor.enablePreview": false,
+  "workbench.editor.closeOnFileDelete": true,
+  "workbench.editor.highlightModifiedTabs": true,
+  "workbench.list.smoothScrolling": false,
+  "workbench.tree.indent": 10,
+  
+  // Desabilitar features pesadas
+  "diffEditor.renderSideBySide": false,
+  "problems.decorations.enabled": true,
+  "outline.problems.enabled": true,
+  "breadcrumbs.enabled": true,
+  "telemetry.telemetryLevel": "off",
+  
+  // Limitar histórico
+  "scm.diffDecorations": "gutter",
+  "scm.diffDecorationsGutterWidth": 2,
   
   // Redis e ambiente
   "[dotenv]": {

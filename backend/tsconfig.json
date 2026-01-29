@@ -11,8 +11,8 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    "types": ["node"]
+    "types": ["node", "jest"]
   },
-  "include": ["src/**/*", "*.ts"],
+  "include": ["src/**/*", "__tests__/**/*", "*.ts"],
   "exclude": ["node_modules", "dist"]
 }

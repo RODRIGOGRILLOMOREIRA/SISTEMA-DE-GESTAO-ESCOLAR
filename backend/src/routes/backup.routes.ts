@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { backupService } from '../services/backup.service'
+import { logError, logInfo } from '../lib/logger'
 
 const router = Router()
 
@@ -19,7 +20,7 @@ router.get('/', async (req: Request, res: Response) => {
       })),
     })
   } catch (error) {
-    console.error('Erro ao listar backups:', error)
+    logError('Erro ao listar backups', error, { component: 'backup' })
     res.status(500).json({ error: 'Erro ao listar backups' })
   }
 })
@@ -88,7 +89,7 @@ router.delete('/clean', async (req: Request, res: Response) => {
       deletedCount,
     })
   } catch (error) {
-    console.error('Erro ao limpar backups:', error)
+    logError('Erro ao limpar backups', error, { component: 'backup' })
     res.status(500).json({ error: 'Erro ao limpar backups' })
   }
 })

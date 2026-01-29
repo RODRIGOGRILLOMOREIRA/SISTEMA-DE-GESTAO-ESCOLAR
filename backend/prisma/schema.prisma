@@ -8,33 +8,87 @@ datasource db {
 }
 
 model alunos {
-  id               String           @id
-  nome             String
-  cpf              String           @unique
-  dataNascimento   DateTime
-  email            String           @unique
-  telefone         String?
-  endereco         String?
-  responsavel      String
-  telefoneResp     String
-  turmaId          String?
-  numeroMatricula  String?
-  statusMatricula  String?          @default("ATIVO")
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime
-  turmas           turmas?          @relation(fields: [turmaId], references: [id])
-  frequencias      frequencias[]
-  matriculas       matriculas[]
-  notas            notas[]
-  presenca_aluno   PresencaAluno[]
-  notas_finais     notas_finais[]   @relation("NotasFinaisToAluno")
+  id              String           @id
+  nome            String
+  cpf             String           @unique
+  dataNascimento  DateTime
+  email           String           @unique
+  telefone        String?
+  endereco        String?
+  responsavel     String
+  telefoneResp    String
+  turmaId         String?
+  numeroMatricula String?
+  statusMatricula String?          @default("ATIVO")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime
+  turmas          turmas?          @relation(fields: [turmaId], references: [id])
+  frequencias     frequencias[]
+  matriculas      matriculas[]
+  notas           notas[]
+  notas_finais    notas_finais[]
+  presenca_aluno  presenca_aluno[]
 
-  // Índices para otimização de performance
-  @@index([turmaId])
-  @@index([statusMatricula])
-  @@index([turmaId, statusMatricula])
-  @@index([nome])
   @@index([createdAt])
+  @@index([nome])
+  @@index([statusMatricula])
+  @@index([turmaId])
+  @@index([turmaId, statusMatricula])
+}
+
+model api_keys {
+  id          String    @id
+  name        String
+  key         String    @unique
+  userId      String?
+  permissions String[]
+  rateLimit   Int       @default(100)
+  enabled     Boolean   @default(true)
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  usuarios    usuarios? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([enabled])
+  @@index([key])
+  @@index([userId])
+}
+
+model audit_logs {
+  id         String   @id
+  userId     String
+  userName   String
+  action     String
+  resource   String
+  resourceId String?
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  usuarios   usuarios @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([action])
+  @@index([createdAt])
+  @@index([resource])
+  @@index([userId])
+}
+
+model banco_horas {
+  id               String     @id
+  pessoaId         String
+  tipoPessoa       TipoPessoa
+  mes              Int
+  ano              Int
+  horasTrabalhadas Float      @default(0)
+  horasDevidas     Float      @default(0)
+  saldo            Float      @default(0)
+  observacao       String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime
+
+  @@unique([pessoaId, mes, ano])
+  @@index([pessoaId])
 }
 
 model calendario_escolar {
@@ -43,6 +97,60 @@ model calendario_escolar {
   createdAt          DateTime             @default(now())
   updatedAt          DateTime
   eventos_calendario eventos_calendario[]
+}
+
+model communication_channels {
+  id        String   @id
+  channel   String   @unique
+  provider  String
+  isActive  Boolean  @default(true)
+  config    Json
+  limits    Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  @@index([channel])
+  @@index([isActive])
+}
+
+model configuracao_jornada {
+  id                     String     @id
+  pessoaId               String     @unique
+  tipoPessoa             TipoPessoa
+  cargaHorariaSemanal    Int        @default(40)
+  cargaHorariaDiaria     Int        @default(8)
+  horarioEntrada         String?
+  horarioSaida           String?
+  horarioIntervaloInicio String?
+  horarioIntervaloFim    String?
+  diasTrabalho           String[]   @default(["SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA"])
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime
+
+  @@index([pessoaId])
+}
+
+model configuracao_notificacao {
+  id                  String                @id
+  usuarioId           String                @unique
+  tipoPerfil          TipoPerfilNotificacao
+  whatsappAtivo       Boolean               @default(true)
+  smsAtivo            Boolean               @default(false)
+  notificarFrequencia Boolean               @default(true)
+  notificarNotas      Boolean               @default(true)
+  notificarAlertas    Boolean               @default(true)
+  resumoDiario        Boolean               @default(false)
+  horarioInicio       String?               @default("08:00")
+  horarioFim          String?               @default("20:00")
+  frequenciaMensagens FrequenciaMensagens   @default(TODAS)
+  disciplinasIds      String?
+  turmasIds           String?
+  alunosIds           String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+
+  @@index([tipoPerfil])
+  @@index([usuarioId])
 }
 
 model configuracoes {
@@ -69,9 +177,9 @@ model disciplinas {
   disciplinas_turmas  disciplinas_turmas[]
   horarios_aula       horarios_aula[]
   notas               notas[]
+  notas_finais        notas_finais[]
   registro_frequencia registro_frequencia[]
   turmas              turmas[]              @relation("DisciplinaToTurma")
-  notas_finais        notas_finais[]        @relation("NotasFinaisToDisciplina")
 }
 
 model disciplinas_turmas {
@@ -89,17 +197,17 @@ model disciplinas_turmas {
 }
 
 model equipe_diretiva {
-  id                     String                   @id
-  nome                   String
-  cpf                    String
-  email                  String
-  telefone               String?
-  cargo                  String
-  cargaHorariaSemanal    Int?                     @default(40)
-  horarioEntradaPadrao   String?
-  horarioSaidaPadrao     String?
-  createdAt              DateTime                 @default(now())
-  updatedAt              DateTime
+  id                   String   @id
+  nome                 String
+  cpf                  String
+  email                String
+  telefone             String?
+  cargo                String
+  cargaHorariaSemanal  Int?     @default(40)
+  horarioEntradaPadrao String?
+  horarioSaidaPadrao   String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime
 }
 
 model eventos_calendario {
@@ -126,28 +234,27 @@ model frequencias {
   alunos     alunos   @relation(fields: [alunoId], references: [id])
   turmas     turmas   @relation(fields: [turmaId], references: [id])
 
-  // Índices para otimização de performance
-  @@index([alunoId])
-  @@index([turmaId])
-  @@index([data])
   @@index([alunoId, data])
-  @@index([turmaId, data])
+  @@index([alunoId])
+  @@index([data])
   @@index([presente])
+  @@index([turmaId, data])
+  @@index([turmaId])
 }
 
 model funcionarios {
-  id                     String                   @id
-  nome                   String
-  cpf                    String
-  email                  String
-  telefone               String?
-  cargo                  String
-  setor                  String?
-  cargaHorariaSemanal    Int?                     @default(40)
-  horarioEntradaPadrao   String?
-  horarioSaidaPadrao     String?
-  createdAt              DateTime                 @default(now())
-  updatedAt              DateTime
+  id                   String   @id
+  nome                 String
+  cpf                  String
+  email                String
+  telefone             String?
+  cargo                String
+  setor                String?
+  cargaHorariaSemanal  Int?     @default(40)
+  horarioEntradaPadrao String?
+  horarioSaidaPadrao   String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime
 }
 
 model grade_horaria {
@@ -177,6 +284,42 @@ model horarios_aula {
   registro_frequencia registro_frequencia[]
 }
 
+model log_notificacao {
+  id                String                @id
+  destinatarioId    String
+  tipoPerfil        TipoPerfilNotificacao
+  canal             CanalNotificacao
+  tipoEvento        TipoEventoNotificacao
+  conteudo          String
+  metadata          String?
+  status            StatusNotificacao     @default(PENDENTE)
+  tentativas        Int                   @default(0)
+  erroMsg           String?
+  enviadoEm         DateTime?
+  confirmarRecebido Boolean               @default(false)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime
+
+  @@index([canal])
+  @@index([createdAt])
+  @@index([destinatarioId])
+  @@index([destinatarioId, status])
+  @@index([status])
+  @@index([tipoEvento])
+}
+
+model maintenance_mode {
+  id          Int       @id @default(autoincrement())
+  enabled     Boolean?  @default(false)
+  message     String?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  updated_at  DateTime? @default(now()) @db.Timestamp(6)
+  start_time  DateTime? @db.Timestamp(6)
+  end_time    DateTime? @db.Timestamp(6)
+  reason      String?
+  allowed_ips String?
+}
+
 model matriculas {
   id            String   @id
   alunoId       String
@@ -187,6 +330,110 @@ model matriculas {
   updatedAt     DateTime
   alunos        alunos   @relation(fields: [alunoId], references: [id])
   turmas        turmas   @relation(fields: [turmaId], references: [id])
+}
+
+model message_analytics {
+  id              String   @id
+  date            DateTime @db.Date
+  channel         String
+  sent            Int      @default(0)
+  delivered       Int      @default(0)
+  failed          Int      @default(0)
+  read            Int      @default(0)
+  clicked         Int      @default(0)
+  averageDelivery Float?
+  cost            Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime
+
+  @@unique([date, channel])
+  @@index([channel])
+  @@index([date])
+}
+
+model message_schedules {
+  id                String            @id
+  templateId        String
+  channel           String
+  recipientType     String
+  recipientIds      Json?
+  scheduledFor      DateTime
+  recurrence        String?
+  isActive          Boolean           @default(true)
+  lastSentAt        DateTime?
+  nextSendAt        DateTime?
+  sentCount         Int               @default(0)
+  createdBy         String
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime
+  message_templates message_templates @relation(fields: [templateId], references: [id])
+
+  @@index([isActive])
+  @@index([nextSendAt])
+  @@index([scheduledFor])
+}
+
+model message_templates {
+  id                String              @id
+  name              String
+  category          String
+  channel           String
+  subject           String?
+  content           String
+  variables         Json
+  isActive          Boolean             @default(true)
+  createdBy         String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  message_schedules message_schedules[]
+  messages          messages[]
+
+  @@index([category])
+  @@index([channel])
+  @@index([isActive])
+}
+
+model messages {
+  id                String             @id
+  templateId        String?
+  channel           String
+  recipientType     String
+  recipientId       String?
+  recipient         String
+  subject           String?
+  content           String
+  status            String             @default("pending")
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  errorMessage      String?
+  metadata          Json?
+  sentBy            String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime
+  message_templates message_templates? @relation(fields: [templateId], references: [id])
+
+  @@index([channel])
+  @@index([createdAt])
+  @@index([recipientType])
+  @@index([sentAt])
+  @@index([status])
+}
+
+model ml_models {
+  id           String   @id
+  name         String   @unique
+  type         String
+  version      String
+  accuracy     Float?
+  parameters   Json
+  trainingData Json?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+
+  @@index([active])
+  @@index([type])
 }
 
 model notas {
@@ -207,15 +454,14 @@ model notas {
   alunos             alunos      @relation(fields: [alunoId], references: [id])
   disciplinas        disciplinas @relation(fields: [disciplinaId], references: [id])
 
-  // Índices para otimização de performance
-  @@index([alunoId])
-  @@index([disciplinaId])
-  @@index([trimestre])
-  @@index([alunoId, trimestre])
-  @@index([disciplinaId, trimestre])
-  @@index([alunoId, disciplinaId, trimestre])
-  @@index([createdAt])
   @@unique([alunoId, disciplinaId, trimestre, anoLetivo])
+  @@index([alunoId, disciplinaId, trimestre])
+  @@index([alunoId])
+  @@index([alunoId, trimestre])
+  @@index([createdAt])
+  @@index([disciplinaId])
+  @@index([disciplinaId, trimestre])
+  @@index([trimestre])
 }
 
 model notas_finais {
@@ -230,48 +476,76 @@ model notas_finais {
   trimestre1   Float?
   trimestre2   Float?
   trimestre3   Float?
-  aluno        alunos      @relation("NotasFinaisToAluno", fields: [alunoId], references: [id])
-  disciplina   disciplinas @relation("NotasFinaisToDisciplina", fields: [disciplinaId], references: [id])
+  alunos       alunos      @relation(fields: [alunoId], references: [id])
+  disciplinas  disciplinas @relation(fields: [disciplinaId], references: [id])
 
   @@unique([alunoId, disciplinaId, anoLetivo])
 }
 
-model PresencaAluno {
-  id                  String              @id @default(uuid())
+model permissions {
+  id               String             @id
+  name             String             @unique
+  description      String?
+  resource         String
+  action           String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  role_permissions role_permissions[]
+
+  @@index([action])
+  @@index([resource, action])
+  @@index([resource])
+}
+
+model presenca_aluno {
+  id                  String              @id
   registroId          String
   alunoId             String
   presente            Boolean             @default(true)
   justificativa       String?
   createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
+  updatedAt           DateTime
   aulaIndex           Int                 @default(0)
   alunos              alunos              @relation(fields: [alunoId], references: [id])
   registro_frequencia registro_frequencia @relation(fields: [registroId], references: [id], onDelete: Cascade)
 
   @@unique([registroId, alunoId, aulaIndex])
-  @@map("presenca_aluno")
 }
 
 model professores {
-  id                     String                   @id
-  nome                   String
-  cpf                    String
-  email                  String
-  telefone               String
-  especialidade          String?
-  createdAt              DateTime                 @default(now())
-  updatedAt              DateTime
-  area                   String?
-  componentes            String?
-  turmasVinculadas       String?
-  cargaHorariaSemanal    Int?                     @default(40)
-  horarioEntradaPadrao   String?
-  horarioSaidaPadrao     String?
-  disciplinas            disciplinas[]
-  disciplinas_turmas     disciplinas_turmas[]
-  horarios_aula          horarios_aula[]
-  registro_frequencia    registro_frequencia[]
-  turmas                 turmas[]
+  id                   String                @id
+  nome                 String
+  cpf                  String
+  email                String
+  telefone             String
+  especialidade        String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime
+  area                 String?
+  componentes          String?
+  turmasVinculadas     String?
+  cargaHorariaSemanal  Int?                  @default(40)
+  horarioEntradaPadrao String?
+  horarioSaidaPadrao   String?
+  disciplinas          disciplinas[]
+  disciplinas_turmas   disciplinas_turmas[]
+  horarios_aula        horarios_aula[]
+  registro_frequencia  registro_frequencia[]
+  turmas               turmas[]
+}
+
+model reconhecimento_facial {
+  id           String     @id
+  pessoaId     String     @unique
+  tipoPessoa   TipoPessoa
+  descritores  String
+  fotos        String[]
+  cadastradoEm DateTime   @default(now())
+  atualizadoEm DateTime
+  ativo        Boolean    @default(true)
+
+  @@index([pessoaId])
+  @@index([tipoPessoa])
 }
 
 model registro_frequencia {
@@ -285,11 +559,75 @@ model registro_frequencia {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime
   periodo        String?
-  presenca_aluno PresencaAluno[]
+  presenca_aluno presenca_aluno[]
   disciplinas    disciplinas      @relation(fields: [disciplinaId], references: [id])
   horarios_aula  horarios_aula?   @relation(fields: [horarioAulaId], references: [id])
   professores    professores      @relation(fields: [professorId], references: [id])
   turmas         turmas           @relation(fields: [turmaId], references: [id])
+}
+
+model registro_ponto {
+  id               String            @id
+  pessoaId         String
+  tipoPessoa       TipoPessoa
+  data             DateTime          @default(now())
+  horaRegistro     DateTime
+  tipoRegistro     TipoRegistroPonto
+  localizacao      String?
+  observacao       String?
+  aprovado         Boolean           @default(true)
+  fotoPath         String?
+  attestado        Boolean           @default(false)
+  reconhecimentoIA Boolean           @default(false)
+  confianca        Float?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime
+
+  @@index([pessoaId, data])
+  @@index([tipoPessoa])
+}
+
+model role_permissions {
+  id           String      @id
+  roleId       String
+  permissionId String
+  createdAt    DateTime    @default(now())
+  permissions  permissions @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  roles        roles       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([permissionId])
+  @@index([roleId])
+}
+
+model roles {
+  id               String             @id
+  name             String             @unique
+  description      String?
+  level            Int                @default(0)
+  isSystem         Boolean            @default(false)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  role_permissions role_permissions[]
+  user_roles       user_roles[]
+
+  @@index([level])
+}
+
+model student_predictions {
+  id              String   @id
+  studentId       String
+  predictionType  String
+  predictedValue  Float
+  confidence      Float
+  features        Json
+  modelVersion    String
+  recommendations Json?
+  createdAt       DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([predictionType])
+  @@index([studentId])
 }
 
 model turmas {
@@ -310,38 +648,101 @@ model turmas {
   professores         professores?          @relation(fields: [professorId], references: [id])
   disciplinas         disciplinas[]         @relation("DisciplinaToTurma")
 
-  // Índices para otimização de performance
-  @@index([professorId])
   @@index([anoLetivo])
-  @@index([nome])
   @@index([ano, periodo])
+  @@index([nome])
+  @@index([professorId])
+}
+
+model two_factor_auth {
+  id          String   @id
+  userId      String   @unique
+  secret      String
+  enabled     Boolean  @default(false)
+  backupCodes String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  usuarios    usuarios @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([enabled])
+  @@index([userId])
+}
+
+model two_factor_logs {
+  id        String   @id
+  userId    String
+  success   Boolean
+  method    String
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model user_roles {
+  id        String   @id
+  userId    String
+  roleId    String
+  userType  String
+  createdAt DateTime @default(now())
+  roles     roles    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  usuarios  usuarios @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([roleId])
+  @@index([userId])
+  @@index([userType])
 }
 
 model usuarios {
-  id               String          @id
+  id               String           @id
   nome             String
-  email            String          @unique
+  email            String           @unique
   senha            String
-  role             String          @default("PROFESSOR")
-  cargo            String?
-  isActive         Boolean         @default(true)
-  resetToken       String?
-  resetTokenExpira DateTime?
-  createdAt        DateTime        @default(now())
+  role             String           @default("PROFESSOR")
+  createdAt        DateTime         @default(now())
   updatedAt        DateTime
   lastLogin        DateTime?
   photoUrl         String?
   profileImage     String?
-  
-  // FASE 4: Relações RBAC e 2FA
-  twoFactorAuth    TwoFactorAuth?
-  apiKeys          ApiKey[]
-  auditLogs        AuditLog[]
-  userRoles        UserRole[]      // RBAC: Múltiplos roles por usuário
+  isActive         Boolean          @default(true)
+  cargo            String?
+  resetToken       String?
+  resetTokenExpira DateTime?
+  api_keys         api_keys[]
+  audit_logs       audit_logs[]
+  two_factor_auth  two_factor_auth?
+  user_roles       user_roles[]
 
   @@index([email])
   @@index([isActive])
   @@index([role])
+}
+
+model webhook_message {
+  id             String   @id
+  origem         String
+  remetenteId    String
+  destinatarioId String?
+  mensagem       String
+  metadata       String?
+  processado     Boolean  @default(false)
+  respostaIA     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime
+
+  @@index([createdAt])
+  @@index([processado])
+  @@index([remetenteId])
+}
+
+enum CanalNotificacao {
+  WHATSAPP
+  SMS
+  TELEGRAM
+  EMAIL
 }
 
 enum DiaSemana {
@@ -351,6 +752,19 @@ enum DiaSemana {
   QUINTA
   SEXTA
   SABADO
+}
+
+enum FrequenciaMensagens {
+  TODAS
+  ALERTAS
+  RESUMO
+}
+
+enum StatusNotificacao {
+  PENDENTE
+  ENVIADO
+  FALHA
+  ENTREGUE
 }
 
 enum TipoEvento {
@@ -368,6 +782,22 @@ enum TipoEvento {
   OUTRO
 }
 
+enum TipoEventoNotificacao {
+  NOTA_LANCADA
+  FREQUENCIA_FALTA
+  FREQUENCIA_PRESENCA
+  ALERTA_MEDIA_BAIXA
+  ALERTA_FREQUENCIA_BAIXA
+  RESUMO_DIARIO
+  MENSAGEM_IA
+}
+
+enum TipoPerfilNotificacao {
+  GESTAO
+  PROFESSOR
+  RESPONSAVEL
+}
+
 enum TipoPessoa {
   PROFESSOR
   FUNCIONARIO
@@ -379,475 +809,4 @@ enum TipoRegistroPonto {
   SAIDA
   INTERVALO_INICIO
   INTERVALO_FIM
-}
-
-model registro_ponto {
-  id                String             @id @default(uuid())
-  pessoaId          String
-  tipoPessoa        TipoPessoa
-  data              DateTime           @default(now())
-  horaRegistro      DateTime
-  tipoRegistro      TipoRegistroPonto
-  localizacao       String?
-  observacao        String?
-  aprovado          Boolean            @default(true)
-  fotoPath          String?
-  attestado         Boolean            @default(false)
-  reconhecimentoIA  Boolean            @default(false)
-  confianca         Float?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-
-  @@index([pessoaId, data])
-  @@index([tipoPessoa])
-}
-
-model configuracao_jornada {
-  id                     String            @id @default(uuid())
-  pessoaId               String            @unique
-  tipoPessoa             TipoPessoa
-  cargaHorariaSemanal    Int               @default(40)
-  cargaHorariaDiaria     Int               @default(8)
-  horarioEntrada         String?
-  horarioSaida           String?
-  horarioIntervaloInicio String?
-  horarioIntervaloFim    String?
-  diasTrabalho           String[]          @default(["SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA"])
-  createdAt              DateTime          @default(now())
-  updatedAt              DateTime          @updatedAt
-
-  @@index([pessoaId])
-}
-
-model banco_horas {
-  id               String      @id @default(uuid())
-  pessoaId         String
-  tipoPessoa       TipoPessoa
-  mes              Int
-  ano              Int
-  horasTrabalhadas Float       @default(0)
-  horasDevidas     Float       @default(0)
-  saldo            Float       @default(0)
-  observacao       String?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-
-  @@unique([pessoaId, mes, ano])
-  @@index([pessoaId])
-}
-
-model reconhecimento_facial {
-  id            String      @id @default(uuid())
-  pessoaId      String      @unique
-  tipoPessoa    TipoPessoa
-  descritores   String      // JSON array de descritores faciais
-  fotos         String[]    // URLs das fotos de cadastro
-  cadastradoEm  DateTime    @default(now())
-  atualizadoEm  DateTime    @updatedAt
-  ativo         Boolean     @default(true)
-
-  @@index([pessoaId])
-  @@index([tipoPessoa])
-}
-
-// Sistema de Notificações Inteligentes
-model configuracao_notificacao {
-  id                    String                 @id @default(uuid())
-  usuarioId             String                 @unique
-  tipoPerfil            TipoPerfilNotificacao  
-  whatsappAtivo         Boolean                @default(true)
-  smsAtivo              Boolean                @default(false)
-  notificarFrequencia   Boolean                @default(true)
-  notificarNotas        Boolean                @default(true)
-  notificarAlertas      Boolean                @default(true)
-  resumoDiario          Boolean                @default(false)
-  horarioInicio         String?                @default("08:00")
-  horarioFim            String?                @default("20:00")
-  frequenciaMensagens   FrequenciaMensagens    @default(TODAS)
-  // Filtros específicos (JSON)
-  disciplinasIds        String?                // JSON array para professores
-  turmasIds             String?                // JSON array para professores
-  alunosIds             String?                // JSON array para responsáveis
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-
-  @@index([usuarioId])
-  @@index([tipoPerfil])
-}
-
-model log_notificacao {
-  id                String                 @id @default(uuid())
-  destinatarioId    String
-  tipoPerfil        TipoPerfilNotificacao
-  canal             CanalNotificacao
-  tipoEvento        TipoEventoNotificacao
-  conteudo          String                 // Conteúdo da mensagem
-  metadata          String?                // JSON com dados extras (alunoId, disciplinaId, etc)
-  status            StatusNotificacao      @default(PENDENTE)
-  tentativas        Int                    @default(0)
-  erroMsg           String?
-  enviadoEm         DateTime?
-  confirmarRecebido Boolean                @default(false)
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
-
-  // Índices para otimização de performance
-  @@index([destinatarioId])
-  @@index([status])
-  @@index([createdAt])
-  @@index([destinatarioId, status])
-  @@index([tipoEvento])
-  @@index([canal])
-}
-
-model webhook_message {
-  id                String   @id @default(uuid())
-  origem            String   // whatsapp, telegram, sms
-  remetenteId       String   // Número ou ID do remetente
-  destinatarioId    String?  // ID do usuário no sistema
-  mensagem          String
-  metadata          String?  // JSON com dados extras
-  processado        Boolean  @default(false)
-  respostaIA        String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  @@index([remetenteId])
-  @@index([processado])
-  @@index([createdAt])
-}
-
-enum TipoPerfilNotificacao {
-  GESTAO
-  PROFESSOR
-  RESPONSAVEL
-}
-
-enum FrequenciaMensagens {
-  TODAS           // Cada evento em tempo real
-  ALERTAS         // Apenas alertas importantes
-  RESUMO          // Resumo diário
-}
-
-enum CanalNotificacao {
-  WHATSAPP
-  SMS
-  TELEGRAM
-  EMAIL
-}
-
-enum TipoEventoNotificacao {
-  NOTA_LANCADA
-  FREQUENCIA_FALTA
-  FREQUENCIA_PRESENCA
-  ALERTA_MEDIA_BAIXA
-  ALERTA_FREQUENCIA_BAIXA
-  RESUMO_DIARIO
-  MENSAGEM_IA
-}
-
-enum StatusNotificacao {
-  PENDENTE
-  ENVIADO
-  FALHA
-  ENTREGUE
-}
-
-model AuditLog {
-  id         String   @id @default(uuid())
-  userId     String
-  userName   String
-  action     String   // CREATE, UPDATE, DELETE, LOGIN, LOGOUT
-  resource   String   // ALUNO, TURMA, NOTA, FREQUENCIA, etc
-  resourceId String?
-  details    Json?
-  ipAddress  String?
-  userAgent  String?
-  createdAt  DateTime @default(now())
-
-  user usuarios @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([action])
-  @@index([resource])
-  @@index([createdAt])
-  @@map("audit_logs")
-}
-
-// ============================================
-// FASE 4: Two-Factor Authentication (2FA)
-// ============================================
-
-model TwoFactorAuth {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  secret      String   // TOTP secret
-  enabled     Boolean  @default(false)
-  backupCodes String[] // Códigos de backup para recuperação
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user usuarios @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([enabled])
-  @@map("two_factor_auth")
-}
-
-model TwoFactorLog {
-  id        String   @id @default(uuid())
-  userId    String
-  success   Boolean
-  method    String   // totp, backup_code
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([createdAt])
-  @@map("two_factor_logs")
-}
-
-// ============================================
-// FASE 4: API Keys para API Pública
-// ============================================
-
-model ApiKey {
-  id          String    @id @default(uuid())
-  name        String    // Nome identificador da chave
-  key         String    @unique // Hash da API key
-  userId      String?   // Usuário dono da key (opcional)
-  permissions String[]  // Permissões específicas da key
-  rateLimit   Int       @default(100) // Requests por minuto
-  enabled     Boolean   @default(true)
-  expiresAt   DateTime?
-  lastUsedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  user usuarios? @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([key])
-  @@index([userId])
-  @@index([enabled])
-  @@map("api_keys")
-}
-
-// ============================================
-// FASE 4: Machine Learning - Predições
-// ============================================
-
-model StudentPrediction {
-  id                 String   @id @default(uuid())
-  studentId          String   // ID do aluno
-  predictionType     String   // performance, dropout_risk, subject_recommendation
-  predictedValue     Float    // Valor numérico da predição (0-1 ou nota)
-  confidence         Float    // Nível de confiança (0-1)
-  features           Json     // Features usadas na predição
-  modelVersion       String   // Versão do modelo usado
-  recommendations    Json?    // Recomendações baseadas na predição
-  createdAt          DateTime @default(now())
-
-  @@index([studentId])
-  @@index([predictionType])
-  @@index([createdAt])
-  @@map("student_predictions")
-}
-
-model MLModel {
-  id             String   @id @default(uuid())
-  name           String   @unique // Nome do modelo
-  type           String   // performance_prediction, dropout_detection
-  version        String   // Versão do modelo
-  accuracy       Float?   // Acurácia do modelo
-  parameters     Json     // Hiperparâmetros do modelo
-  trainingData   Json?    // Metadados sobre os dados de treino
-  active         Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  @@index([type])
-  @@index([active])
-  @@map("ml_models")
-}
-
-// ============================================
-// RBAC - Role Based Access Control (FASE 4)
-// ============================================
-
-model Permission {
-  id          String   @id @default(uuid())
-  name        String   @unique // Ex: "alunos.create", "notas.update", "turmas.delete"
-  description String?  // Descrição da permissão
-  resource    String   // Recurso: "alunos", "notas", "turmas", etc
-  action      String   // Ação: "create", "read", "update", "delete", "list"
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  roles RolePermission[]
-
-  @@index([resource])
-  @@index([action])
-  @@index([resource, action])
-  @@map("permissions")
-}
-
-model Role {
-  id          String   @id @default(uuid())
-  name        String   @unique // Ex: "ADMIN", "PROFESSOR", "COORDENADOR"
-  description String?  // Descrição da role
-  level       Int      @default(0) // Nível hierárquico (maior = mais permissões)
-  isSystem    Boolean  @default(false) // Role do sistema (não pode ser deletada)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  permissions RolePermission[]
-  users       UserRole[]
-
-  @@index([level])
-  @@map("roles")
-}
-
-model RolePermission {
-  id           String   @id @default(uuid())
-  roleId       String
-  permissionId String
-  createdAt    DateTime @default(now())
-
-  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-
-  @@unique([roleId, permissionId])
-  @@index([roleId])
-  @@index([permissionId])
-  @@map("role_permissions")
-}
-
-model UserRole {
-  id        String   @id @default(uuid())
-  userId    String
-  roleId    String
-  userType  String   // "usuarios", "professor", "funcionario", "equipe_diretiva"
-  createdAt DateTime @default(now())
-
-  role    Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  usuario usuarios @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, roleId])
-  @@index([userId])
-  @@index([roleId])
-  @@index([userType])
-  @@map("user_roles")
-}
-
-// ==================== FASE 5: CENTRAL DE COMUNICAÇÃO UNIFICADA ====================
-
-model MessageTemplate {
-  id          String   @id @default(uuid())
-  name        String   // Nome do template
-  category    String   // Ex: "ACADEMICO", "FINANCEIRO", "EVENTOS", "AVISOS"
-  channel     String   // "whatsapp", "sms", "email", "push", "all"
-  subject     String?  // Para emails
-  content     String   @db.Text // Conteúdo com variáveis: {{nome}}, {{turma}}, etc
-  variables   Json     // Array de variáveis disponíveis
-  isActive    Boolean  @default(true)
-  createdBy   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  messages    Message[]
-  schedules   MessageSchedule[]
-
-  @@index([channel])
-  @@index([category])
-  @@index([isActive])
-  @@map("message_templates")
-}
-
-model Message {
-  id             String    @id @default(uuid())
-  templateId     String?
-  channel        String    // "whatsapp", "sms", "email", "push"
-  recipientType  String    // "aluno", "responsavel", "professor", "funcionario", "turma", "todos"
-  recipientId    String?   // ID do destinatário específico
-  recipient      String    // Email, telefone ou ID do dispositivo
-  subject        String?   // Para emails
-  content        String    @db.Text
-  status         String    @default("pending") // pending, sent, delivered, failed, read
-  sentAt         DateTime?
-  deliveredAt    DateTime?
-  readAt         DateTime?
-  errorMessage   String?   @db.Text
-  metadata       Json?     // Dados adicionais do provedor
-  sentBy         String    // ID do usuário que enviou
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  template       MessageTemplate? @relation(fields: [templateId], references: [id])
-
-  @@index([channel])
-  @@index([recipientType])
-  @@index([status])
-  @@index([sentAt])
-  @@index([createdAt])
-  @@map("messages")
-}
-
-model MessageSchedule {
-  id             String    @id @default(uuid())
-  templateId     String
-  channel        String    // "whatsapp", "sms", "email", "push", "all"
-  recipientType  String    // "aluno", "responsavel", "professor", "turma", "todos"
-  recipientIds   Json?     // Array de IDs específicos (null = todos)
-  scheduledFor   DateTime  // Data/hora do envio
-  recurrence     String?   // "daily", "weekly", "monthly", null
-  isActive       Boolean   @default(true)
-  lastSentAt     DateTime?
-  nextSendAt     DateTime?
-  sentCount      Int       @default(0)
-  createdBy      String
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  template       MessageTemplate @relation(fields: [templateId], references: [id])
-
-  @@index([scheduledFor])
-  @@index([isActive])
-  @@index([nextSendAt])
-  @@map("message_schedules")
-}
-
-model CommunicationChannel {
-  id          String   @id @default(uuid())
-  channel     String   @unique // "whatsapp", "sms", "email", "push"
-  provider    String   // "twilio", "sendgrid", "firebase", etc
-  isActive    Boolean  @default(true)
-  config      Json     // Configurações específicas do canal (API keys, etc - criptografadas)
-  limits      Json?    // Limites de envio (por dia, por mês, etc)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([channel])
-  @@index([isActive])
-  @@map("communication_channels")
-}
-
-model MessageAnalytics {
-  id              String   @id @default(uuid())
-  date            DateTime @db.Date
-  channel         String
-  sent            Int      @default(0)
-  delivered       Int      @default(0)
-  failed          Int      @default(0)
-  read            Int      @default(0)
-  clicked         Int      @default(0)
-  averageDelivery Float?   // Tempo médio de entrega em segundos
-  cost            Float?   // Custo total do dia
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@unique([date, channel])
-  @@index([date])
-  @@index([channel])
-  @@map("message_analytics")
 }

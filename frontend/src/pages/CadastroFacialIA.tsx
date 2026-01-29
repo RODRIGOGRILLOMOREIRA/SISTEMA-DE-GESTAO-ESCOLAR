@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import * as faceapi from 'face-api.js';
+import { loadFaceApi } from '../utils/faceApiLoader';
 import { api } from '../lib/api';
 import './CadastroFacialIA.css';
 
@@ -32,6 +32,7 @@ export default function CadastroFacialIA() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectionIntervalRef = useRef<number | null>(null);
+  const faceapiRef = useRef<typeof import('face-api.js') | null>(null);
 
   // Carregar modelos face-api.js
   useEffect(() => {
@@ -39,6 +40,11 @@ export default function CadastroFacialIA() {
       try {
         console.log('📦 Iniciando carregamento de modelos...');
         setStatus('📦 Carregando modelos de IA...');
+        
+        // Carregar face-api.js dinamicamente
+        const faceapi = await loadFaceApi();
+        faceapiRef.current = faceapi;
+        
         const MODEL_URL = '/models';
         
         console.log('📂 URL dos modelos:', MODEL_URL);
@@ -175,6 +181,9 @@ export default function CadastroFacialIA() {
 
       if (video.readyState === video.HAVE_ENOUGH_DATA) {
         try {
+          if (!faceapiRef.current) return;
+          const faceapi = faceapiRef.current;
+          
           const detection = await faceapi
             .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
               inputSize: 416,
@@ -263,6 +272,12 @@ export default function CadastroFacialIA() {
     try {
       setStatus('📸 Capturando foto e extraindo descritor...');
       console.log('🔍 Detectando rosto...');
+
+      if (!faceapiRef.current) {
+        setStatus('❌ Erro: face-api não carregado');
+        return;
+      }
+      const faceapi = faceapiRef.current;
 
       const detection = await faceapi
         .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({

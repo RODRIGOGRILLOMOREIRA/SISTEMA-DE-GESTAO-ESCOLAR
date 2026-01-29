@@ -5,6 +5,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
 import { turmasAPI, registroFrequenciaAPI, notasAPI, alunosAPI, api, Turma as TurmaAPI } from '../lib/api'
+import { extractData } from '../utils/apiHelpers'
 import BackButton from '../components/BackButton'
 import SeletorAnoLetivo from '../components/SeletorAnoLetivo'
 import { useAnoLetivo } from '../contexts/AnoLetivoContext'
@@ -117,16 +118,17 @@ const Relatorios = () => {
   const loadTurmas = async () => {
     try {
       setLoading(true)
-      const response = await turmasAPI.getAll()
+      const response = await turmasAPI.getAll(1, 100)
+      const todasTurmas = extractData(response.data)
       
-      console.log('📊 Turmas recebidas do backend:', response.data.map((t: TurmaAPI) => ({
+      console.log('📊 Turmas recebidas do backend:', todasTurmas.map((t: TurmaAPI) => ({
         nome: t.nome,
         ano: t.ano,
         periodo: t.periodo
       })))
       
       // Filtrar turmas por segmento
-      const turmasFiltradas = response.data.filter((t: TurmaAPI) => {
+      const turmasFiltradas = todasTurmas.filter((t: TurmaAPI) => {
         const ano = parseInt(t.ano?.toString() || '0')
         if (segmento === 'iniciais') {
           return ano >= 1 && ano <= 5

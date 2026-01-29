@@ -29,6 +29,7 @@ import { WebSocketProvider } from './contexts/WebSocketContext'
 import { Toaster } from './components/Toaster'
 import { EnhancedToastContainer } from './components/EnhancedToast'
 import { ScrollToTopButton } from './hooks/useSmoothScroll'
+import ErrorBoundary from './components/ErrorBoundary'
 import PrivateRoute from './components/PrivateRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -64,15 +65,16 @@ import ImportExcel from './pages/ImportExcel' // FASE 5: Importação de Excel
 
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <AnoLetivoProvider>
-          <WebSocketProvider>
-            <BrowserRouter>
-              <Toaster />
-              <EnhancedToastContainer />
-              <ScrollToTopButton />
-              <Routes>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <AnoLetivoProvider>
+            <WebSocketProvider>
+              <BrowserRouter>
+                <Toaster />
+                <EnhancedToastContainer />
+                <ScrollToTopButton />
+                <Routes>
                 {/* Rotas públicas */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
@@ -119,6 +121,7 @@ function App() {
         </AnoLetivoProvider>
       </AuthProvider>
     </ThemeProvider>
+    </ErrorBoundary>
   )
 }
 

@@ -15,23 +15,20 @@ async function main() {
     console.log('\n🗑️  Iniciando limpeza...\n');
     
     // Deletar em ordem (respeitando foreign keys)
+    console.log('  Deletando registros de frequência...');
+    await prisma.registro_frequencia.deleteMany({});
+    
     console.log('  Deletando frequências...');
     await prisma.frequencias.deleteMany({});
-    
-    console.log('  Deletando presenças de alunos...');
-    await prisma.presencaAluno.deleteMany({});
-    
-    console.log('  Deletando notas finais...');
-    await prisma.notas_finais.deleteMany({});
     
     console.log('  Deletando notas...');
     await prisma.notas.deleteMany({});
     
+    console.log('  Deletando notas finais...');
+    await prisma.notas_finais.deleteMany({});
+    
     console.log('  Deletando matrículas...');
     await prisma.matriculas.deleteMany({});
-    
-    console.log('  Deletando registros de frequência...');
-    await prisma.registro_frequencia.deleteMany({});
     
     console.log('  Deletando horários de aula...');
     await prisma.horarios_aula.deleteMany({});

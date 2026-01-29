@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { LogIn, Mail, Lock, School } from 'lucide-react'
 import { authAPI, configuracoesAPI, Configuracao } from '../lib/api'
+import { useAuth } from '../contexts/AuthContext'
 import TwoFactorModal from '../components/TwoFactorModal'
 import './Auth.css'
 
 const Login = () => {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [formData, setFormData] = useState({
     email: '',
     senha: '',
@@ -38,7 +40,11 @@ const Login = () => {
     setLoading(true)
 
     try {
+      console.log('🔐 Tentando login com:', { email: formData.email });
       const response = await authAPI.login(formData)
+      
+      console.log('✅ Resposta completa do backend:', response);
+      console.log('📝 Dados do login:', response.data);
       
       // Verificar se requer 2FA
       if (response.data.requires2FA) {
@@ -47,12 +53,15 @@ const Login = () => {
         return
       }
       
-      // Login normal (sem 2FA)
-      localStorage.setItem('token', response.data.token)
-      localStorage.setItem('user', JSON.stringify(response.data.usuario))
+      // Login normal (sem 2FA) - usar método do contexto
+      login(response.data.token, response.data.user)
+      console.log('✅ Login chamado, navegando para dashboard');
       navigate('/dashboard')
     } catch (error: any) {
-      console.error('Erro no login:', error)
+      console.error('❌ Erro COMPLETO no login:', error)
+      console.error('❌ Resposta do erro:', error.response)
+      console.error('❌ Dados do erro:', error.response?.data)
+      console.error('❌ Status do erro:', error.response?.status)
       setError(error.response?.data?.error || 'Erro ao fazer login')
     } finally {
       setLoading(false)
@@ -69,8 +78,9 @@ const Login = () => {
         twoFactorToken: code
       })
       
-      localStorage.setItem('token', response.data.token)
-      localStorage.setItem('user', JSON.stringify(response.data.usuario))
+      // Usar método do contexto
+      console.log('📝 Dados do login 2FA:', response.data);
+      login(response.data.token, response.data.user)
       navigate('/dashboard')
     } catch (error: any) {
       console.error('Erro na verificação 2FA:', error)

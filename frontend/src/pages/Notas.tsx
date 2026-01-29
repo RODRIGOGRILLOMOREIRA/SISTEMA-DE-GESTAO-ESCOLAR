@@ -8,6 +8,7 @@ import BackButton from '../components/BackButton'
 import { exportToExcel, formatNotasForExport } from '../utils/exportExcel'
 import { toast } from 'react-hot-toast'
 import { TableSkeleton } from '../components/skeletons'
+import { extractData } from '../utils/apiHelpers'
 import './ModernPages.css'
 import './Notas.css'
 import '../components/Modal.css'
@@ -120,12 +121,12 @@ const Notas = () => {
   const loadData = async () => {
     try {
       const [turmasRes, disciplinasRes] = await Promise.all([
-        turmasAPI.getAll(),
-        disciplinasAPI.getAll()
+        turmasAPI.getAll(1, 100),
+        disciplinasAPI.getAll(1, 100)
       ])
       
       // Se for professor (não admin), filtrar apenas suas turmas
-      let turmasParaExibir = turmasRes.data
+      let turmasParaExibir = extractData(turmasRes.data)
       if (user && isProfessor(user) && !isAdmin(user) && professorTurmas.length > 0) {
         turmasParaExibir = turmasRes.data.filter((t: Turma) => professorTurmas.includes(t.id))
       }
@@ -139,7 +140,7 @@ const Notas = () => {
       })
       
       // Ordenar disciplinas em ordem alfabética crescente (A → Z)
-      const disciplinasOrdenadas = disciplinasRes.data.sort((a, b) => {
+      const disciplinasOrdenadas = extractData(disciplinasRes.data).sort((a, b) => {
         return a.nome.localeCompare(b.nome)
       })
       
@@ -154,8 +155,9 @@ const Notas = () => {
 
   const loadAlunosByTurma = async () => {
     try {
-      const response = await alunosAPI.getAll()
-      const alunosFiltrados = response.data.filter((aluno: Aluno) => aluno.turmaId === selectedTurma)
+      const response = await alunosAPI.getAll(1, 1000)
+      const todosAlunos = extractData(response.data)
+      const alunosFiltrados = todosAlunos.filter((aluno: Aluno) => aluno.turmaId === selectedTurma)
       setAlunos(alunosFiltrados)
     } catch (error) {
       console.error('Erro ao carregar alunos:', error)

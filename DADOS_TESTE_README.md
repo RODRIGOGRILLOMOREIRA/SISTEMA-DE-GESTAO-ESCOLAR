@@ -98,6 +98,23 @@ Ver arquivo detalhado: [GUIA_DADOS_TESTE.md](GUIA_DADOS_TESTE.md)
 
 ## 🐛 Problemas Comuns
 
+**"JS heap out of memory" ou VS Code travando**
+```powershell
+# 1. Liberar memória imediatamente
+.\liberar-memoria-vscode.ps1
+
+# 2. Ou reiniciar VS Code
+.\reiniciar-vscode.ps1
+
+# 3. Depois executar seeds em etapas
+cd backend
+npm run seed:base
+# Aguardar concluir
+npm run seed:alunos
+# Aguardar concluir
+npm run seed:notas
+```
+
 **"Nenhuma turma encontrada"**
 ```bash
 # Execute na ordem correta:

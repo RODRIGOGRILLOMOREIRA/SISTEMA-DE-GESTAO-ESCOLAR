@@ -25,6 +25,10 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Validar variáveis de ambiente CRÍTICAS antes de continuar
+import { validateEnv } from './config/env';
+const env = validateEnv();
+
 import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
@@ -64,6 +68,8 @@ import { loggerMiddleware, log } from './lib/logger'; // Sistema de logs estrutu
 import { metricsMiddleware } from './lib/metrics'; // Sistema de métricas
 import { apiRateLimiter, securityMiddleware } from './middlewares/rate-limit'; // Rate limiting
 import redis from './lib/redis';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger'; // Swagger/OpenAPI
 
 // Inicializar workers e notificações apenas se Redis estiver disponível
 let redisAvailable = false;
@@ -195,6 +201,16 @@ app.use(maintenanceMiddleware);
 // Routes
 app.get('/', (req, res) => {
   res.json({ message: 'API Sistema de Gestão Escolar' });
+});
+
+// 📚 SWAGGER/OpenAPI - Documentação Interativa da API
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'SGE - API Documentation',
+}));
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
 });
 
 // FASE 4: Rotas de Observabilidade (sem rate limit)

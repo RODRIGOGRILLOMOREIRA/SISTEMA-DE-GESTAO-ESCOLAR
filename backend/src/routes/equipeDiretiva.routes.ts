@@ -24,8 +24,8 @@ equipeDiretivaRouter.get('/', async (req, res) => {
     // Descriptografar dados sensíveis
     const equipeDecrypted = equipe.map(membro => ({
       ...membro,
-      cpf: encryption.decrypt(membro.cpf),
-      telefone: membro.telefone ? encryption.decrypt(membro.telefone) : null,
+      cpf: encryption.safeDecrypt(membro.cpf),
+      telefone: membro.telefone ? encryption.safeDecrypt(membro.telefone) : null,
     }));
     
     res.json(equipeDecrypted);
@@ -48,8 +48,8 @@ equipeDiretivaRouter.get('/:id', async (req, res) => {
     // Descriptografar dados sensíveis
     const membroDecrypted = {
       ...membro,
-      cpf: encryption.decrypt(membro.cpf),
-      telefone: membro.telefone ? encryption.decrypt(membro.telefone) : null,
+      cpf: encryption.safeDecrypt(membro.cpf),
+      telefone: membro.telefone ? encryption.safeDecrypt(membro.telefone) : null,
     };
     
     res.json(membroDecrypted);

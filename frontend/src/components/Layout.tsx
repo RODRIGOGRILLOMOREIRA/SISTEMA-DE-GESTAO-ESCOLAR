@@ -55,6 +55,15 @@ const Layout = () => {
   const [showRateLimitWarning, setShowRateLimitWarning] = useState(false)
   const [rateLimitData, setRateLimitData] = useState({ remaining: 0, resetTime: 0 })
   
+  // Proteção contra usuário não autenticado
+  useEffect(() => {
+    if (!user) {
+      console.warn('Layout: Usuário não autenticado, redirecionando para login')
+      navigate('/login', { replace: true })
+      return
+    }
+  }, [user, navigate])
+  
   useEffect(() => {
     loadConfig()
     
@@ -64,14 +73,16 @@ const Layout = () => {
     }
     
     // Listener para rate limit warnings
-    const handleRateLimitWarning = (event: CustomEvent) => {
-      const { remaining, resetTime } = event.detail
+    const handleRateLimitWarning = (event: Event) => {
+      const customEvent = event as CustomEvent
+      const { remaining, resetTime } = customEvent.detail
       setRateLimitData({ remaining, resetTime })
       setShowRateLimitWarning(true)
     }
 
-    const handleRateLimitExceeded = (event: CustomEvent) => {
-      const { resetTime } = event.detail
+    const handleRateLimitExceeded = (event: Event) => {
+      const customEvent = event as CustomEvent
+      const { resetTime } = customEvent.detail
       setRateLimitData({ remaining: 0, resetTime })
       setShowRateLimitWarning(true)
       
@@ -80,13 +91,13 @@ const Layout = () => {
     }
     
     window.addEventListener('configUpdated', handleConfigUpdate)
-    window.addEventListener('rateLimitWarning', handleRateLimitWarning as EventListener)
-    window.addEventListener('rateLimitExceeded', handleRateLimitExceeded as EventListener)
+    window.addEventListener('rateLimitWarning', handleRateLimitWarning)
+    window.addEventListener('rateLimitExceeded', handleRateLimitExceeded)
     
     return () => {
       window.removeEventListener('configUpdated', handleConfigUpdate)
-      window.removeEventListener('rateLimitWarning', handleRateLimitWarning as EventListener)
-      window.removeEventListener('rateLimitExceeded', handleRateLimitExceeded as EventListener)
+      window.removeEventListener('rateLimitWarning', handleRateLimitWarning)
+      window.removeEventListener('rateLimitExceeded', handleRateLimitExceeded)
     }
   }, [])
 
@@ -113,8 +124,21 @@ const Layout = () => {
       const response = await configuracoesAPI.get()
       console.log('✅ Configurações recebidas:', response.data)
       setConfig(response.data)
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro ao carregar configurações:', error)
+      // Usar configuração padrão se houver erro
+      setConfig({
+        id: '',
+        nomeEscola: 'SGE',
+        redeEscolar: '',
+        endereco: '',
+        telefone: '',
+        email: '',
+        logoUrl: '',
+        temaModo: 'light',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
     }
   }
 

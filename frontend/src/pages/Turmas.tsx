@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Edit, X, Save, BookOpen, GraduationCap, ArrowLeft, Download } from 'lucide-react'
+import { Plus, X, Save, BookOpen, GraduationCap, ArrowLeft, Download } from 'lucide-react'
 import { turmasAPI, professoresAPI, Turma, Professor } from '../lib/api'
+import { extractData, extractTotal } from '../utils/apiHelpers'
 import BackButton from '../components/BackButton'
-import { VirtualizedTable } from '../components/VirtualizedTable'
-import { TableSkeleton } from '../components/skeletons/TableSkeleton'
 import { exportToExcel, formatTurmasForExport } from '../utils/exportExcel'
 import toast from 'react-hot-toast'
 import './CommonPages.css'
@@ -43,8 +42,10 @@ const Turmas = () => {
   const loadTurmas = async () => {
     try {
       const response = await turmasAPI.getAll()
-      setTurmas(response.data)
-      toast.success(`${response.data.length} turmas carregadas`)
+      const turmasData = extractData(response.data)
+      const total = extractTotal(response.data)
+      setTurmas(turmasData)
+      toast.success(`${total} turmas carregadas`)
     } catch (error) {
       console.error('Erro ao carregar turmas:', error)
       toast.error('Erro ao carregar turmas')
@@ -56,7 +57,7 @@ const Turmas = () => {
   const loadProfessores = async () => {
     try {
       const response = await professoresAPI.getAll()
-      setProfessores(response.data)
+      setProfessores(extractData(response.data))
     } catch (error) {
       console.error('Erro ao carregar professores:', error)
     }
@@ -195,7 +196,9 @@ const Turmas = () => {
       <div className="page-header">
         <h1>Turmas</h1>
       </div>
-      <TableSkeleton rows={6} columns={7} />
+      <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+        <p>Carregando turmas...</p>
+      </div>
     </div>
   )
 
@@ -255,81 +258,33 @@ const Turmas = () => {
         </div>
       ) : (
         <>
-
-          {turmasFiltradas.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-              <p>Nenhuma turma cadastrada nesta categoria.</p>
+          <div className="selection-section">
+            <div className="selection-header">
+              <GraduationCap size={24} className="selection-icon" />
+              <h2>Selecione a Turma</h2>
             </div>
-          ) : (
-            <VirtualizedTable
-              data={turmasFiltradas}
-              columns={[
-                {
-                  key: 'nome',
-                  label: 'Nome',
-                  render: (turma: Turma) => turma.nome
-                },
-                {
-                  key: 'ano',
-                  label: 'Ano',
-                  render: (turma: Turma) => turma.ano
-                },
-                {
-                  key: 'anoLetivo',
-                  label: 'Ano Letivo',
-                  render: (turma: Turma) => turma.anoLetivo
-                },
-                {
-                  key: 'periodo',
-                  label: 'Período',
-                  render: (turma: Turma) => turma.periodo
-                },
-                {
-                  key: 'professor',
-                  label: 'Professor',
-                  render: (turma: Turma) => turma.professor?.nome || '-'
-                },
-                {
-                  key: 'alunos',
-                  label: 'Qtd. Alunos',
-                  render: (turma: Turma) => turma.alunos?.length || 0
-                },
-                {
-                  key: 'actions',
-                  label: 'Ações',
-                  sortable: false,
-                  render: (turma: Turma) => (
-                    <div className="action-buttons">
-                      <button 
-                        className="btn-icon" 
-                        title="Editar"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          openModal(turma)
-                        }}
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button 
-                        className="btn-icon btn-danger" 
-                        title="Excluir"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDelete(turma.id)
-                        }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+            {turmasFiltradas.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                <p>Nenhuma turma cadastrada nesta categoria.</p>
+              </div>
+            ) : (
+              <div className="selection-grid">
+                {turmasFiltradas.map((turma) => (
+                  <button
+                    key={turma.id}
+                    className="selection-btn"
+                    onClick={() => openModal(turma)}
+                  >
+                    <div className="selection-btn-content">
+                      <span className="selection-btn-title">
+                        {turma.nome}
+                      </span>
                     </div>
-                  )
-                }
-              ]}
-              searchable={true}
-              searchKeys={['nome', 'periodo']}
-              emptyMessage="Nenhuma turma encontrada"
-              onRowClick={(turma) => openModal(turma)}
-            />
-          )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </>
       )}
 

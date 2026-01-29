@@ -1,4 +1,0 @@
-Salve a chave no seu gerenciador de senhas:
-- 1Password / LastPass / Bitwarden
-- Título: "Sistema Gestão Escolar - Encryption Key"
-- Chave: 7663e1d90c53ec8a5eb8b71011bb9cc0948b3c92306929086cbfc96c80043b4d

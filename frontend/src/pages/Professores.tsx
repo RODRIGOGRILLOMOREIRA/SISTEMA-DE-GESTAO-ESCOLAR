@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, Edit, X, Save, Download } from 'lucide-react'
 import { professoresAPI, turmasAPI, disciplinasAPI, Professor, Turma, Disciplina } from '../lib/api'
+import { extractData } from '../utils/apiHelpers'
 import BackButton from '../components/BackButton'
 import { exportToExcel } from '../utils/exportExcel'
 import toast from 'react-hot-toast'
@@ -43,7 +44,7 @@ const Professores = () => {
   const loadProfessores = async () => {
     try {
       const response = await professoresAPI.getAll()
-      setProfessores(response.data)
+      setProfessores(extractData(response.data))
     } catch (error) {
       console.error('Erro ao carregar professores:', error)
     } finally {
@@ -54,7 +55,8 @@ const Professores = () => {
   const loadTurmas = async () => {
     try {
       const response = await turmasAPI.getAll()
-      const turmasOrdenadas = response.data.sort((a, b) => a.ano - b.ano)
+      const turmasData = extractData(response.data)
+      const turmasOrdenadas = turmasData.sort((a, b) => a.ano - b.ano)
       setTurmas(turmasOrdenadas)
     } catch (error) {
       console.error('Erro ao carregar turmas:', error)
@@ -64,7 +66,8 @@ const Professores = () => {
   const loadDisciplinas = async () => {
     try {
       const response = await disciplinasAPI.getAll()
-      const disciplinasOrdenadas = response.data.sort((a, b) => a.nome.localeCompare(b.nome))
+      const disciplinasData = extractData(response.data)
+      const disciplinasOrdenadas = disciplinasData.sort((a, b) => a.nome.localeCompare(b.nome))
       setDisciplinas(disciplinasOrdenadas)
     } catch (error) {
       console.error('Erro ao carregar disciplinas:', error)

@@ -88,12 +88,12 @@ export const listarAlunos = async (req: Request, res: Response) => {
       prisma.alunos.count({ where }),
     ]);
 
-    // Descriptografar dados sensíveis
+    // Descriptografar dados sensíveis de forma segura
     const alunosDecrypted = alunos.map(aluno => ({
       ...aluno,
-      cpf: encryption.decrypt(aluno.cpf),
-      telefone: aluno.telefone ? encryption.decrypt(aluno.telefone) : null,
-      telefoneResp: encryption.decrypt(aluno.telefoneResp),
+      cpf: encryption.safeDecrypt(aluno.cpf),
+      telefone: aluno.telefone ? encryption.safeDecrypt(aluno.telefone) : null,
+      telefoneResp: encryption.safeDecrypt(aluno.telefoneResp),
     }));
 
     const response = paginatedResponse(alunosDecrypted, total, pagination.page, pagination.limit);

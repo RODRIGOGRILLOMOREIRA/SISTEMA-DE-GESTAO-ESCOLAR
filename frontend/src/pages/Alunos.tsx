@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, Edit, X, Save, BookOpen, ArrowLeft, Download } from 'lucide-react'
 import { alunosAPI, turmasAPI, Aluno, Turma } from '../lib/api'
+import { extractData, extractTotal } from '../utils/apiHelpers'
 import BackButton from '../components/BackButton'
 import { VirtualizedTable } from '../components/VirtualizedTable'
 import { TableSkeleton } from '../components/skeletons/TableSkeleton'
@@ -55,9 +56,11 @@ const Alunos = () => {
 
   const loadAlunos = async () => {
     try {
-      const response = await alunosAPI.getAll()
-      setAlunos(response.data)
-      toast.success(`${response.data.length} alunos carregados`)
+      const response = await alunosAPI.getAll(1, 1000)
+      const alunos = extractData(response.data)
+      const total = extractTotal(response.data)
+      setAlunos(alunos)
+      toast.success(`${total} alunos carregados`)
     } catch (error) {
       console.error('Erro ao carregar alunos:', error)
       toast.error('Erro ao carregar alunos')
@@ -69,7 +72,7 @@ const Alunos = () => {
   const loadTurmas = async () => {
     try {
       const response = await turmasAPI.getAll()
-      setTurmas(response.data)
+      setTurmas(extractData(response.data))
     } catch (error) {
       console.error('Erro ao carregar turmas:', error)
     }

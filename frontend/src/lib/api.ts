@@ -75,6 +75,14 @@ api.interceptors.response.use(
       }));
     }
     
+    // Se erro 401 (Unauthorized) e não for a rota de login, redirecionar para login
+    if (error.response?.status === 401 && !error.config.url?.includes('/auth/login')) {
+      console.warn('Token inválido ou expirado, redirecionando para login');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -161,9 +169,20 @@ export interface Frequencia {
   turma?: Turma;
 }
 
+// Paginated Response
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
 // API Services
 export const alunosAPI = {
-  getAll: () => api.get<Aluno[]>('/alunos'),
+  getAll: (page = 1, limit = 1000) => api.get<PaginatedResponse<Aluno>>(`/alunos?page=${page}&limit=${limit}`),
   getById: (id: string) => api.get<Aluno>(`/alunos/${id}`),
   getByTurma: (turmaId: string) => api.get<Aluno[]>(`/alunos/turma/${turmaId}`),
   create: (data: Omit<Aluno, 'id'>) => api.post<Aluno>('/alunos', data),
@@ -172,7 +191,7 @@ export const alunosAPI = {
 };
 
 export const professoresAPI = {
-  getAll: () => api.get<Professor[]>('/professores'),
+  getAll: (page = 1, limit = 500) => api.get<PaginatedResponse<Professor>>(`/professores?page=${page}&limit=${limit}`),
   getById: (id: string) => api.get<Professor>(`/professores/${id}`),
   create: (data: Omit<Professor, 'id'>) => api.post<Professor>('/professores', data),
   update: (id: string, data: Partial<Professor>) => api.put<Professor>(`/professores/${id}`, data),
@@ -180,7 +199,7 @@ export const professoresAPI = {
 };
 
 export const turmasAPI = {
-  getAll: () => api.get<Turma[]>('/turmas'),
+  getAll: (page = 1, limit = 100) => api.get<PaginatedResponse<Turma>>(`/turmas?page=${page}&limit=${limit}`),
   getById: (id: string) => api.get<Turma>(`/turmas/${id}`),
   create: (data: Omit<Turma, 'id'>) => api.post<Turma>('/turmas', data),
   update: (id: string, data: Partial<Turma>) => api.put<Turma>(`/turmas/${id}`, data),
@@ -188,7 +207,7 @@ export const turmasAPI = {
 };
 
 export const disciplinasAPI = {
-  getAll: () => api.get<Disciplina[]>('/disciplinas'),
+  getAll: (page = 1, limit = 100) => api.get<PaginatedResponse<Disciplina>>(`/disciplinas?page=${page}&limit=${limit}`),
   getById: (id: string) => api.get<Disciplina>(`/disciplinas/${id}`),
   create: (data: Omit<Disciplina, 'id'>) => api.post<Disciplina>('/disciplinas', data),
   update: (id: string, data: Partial<Disciplina>) => api.put<Disciplina>(`/disciplinas/${id}`, data),
@@ -264,8 +283,11 @@ export interface Usuario {
 }
 
 export interface AuthResponse {
+  success: boolean;
   token: string;
-  usuario: Usuario;
+  refreshToken?: string;
+  user: Usuario;
+  requires2FA?: boolean;
 }
 
 export const authAPI = {

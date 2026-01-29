@@ -208,4 +208,49 @@ export const securityLogger = log.child({ type: 'security' });
  */
 export const performanceLogger = log.child({ type: 'performance' });
 
+/**
+ * Helpers para substituir console.log/error/warn
+ * Facilita migração gradual para logs estruturados
+ */
+
+interface LogContext {
+  component?: string;
+  userId?: string;
+  [key: string]: any;
+}
+
+/**
+ * Substituto estruturado para console.log
+ */
+export function logInfo(message: string, context?: LogContext) {
+  log.info(context || {}, message);
+}
+
+/**
+ * Substituto estruturado para console.error
+ */
+export function logError(message: string, error?: unknown, context?: LogContext) {
+  const errorData = error instanceof Error ? {
+    message: error.message,
+    stack: error.stack,
+    name: error.name
+  } : { error };
+  
+  log.error({ ...context, err: errorData }, message);
+}
+
+/**
+ * Substituto estruturado para console.warn
+ */
+export function logWarn(message: string, context?: LogContext) {
+  log.warn(context || {}, message);
+}
+
+/**
+ * Log de debug (apenas em desenvolvimento)
+ */
+export function logDebug(message: string, context?: LogContext) {
+  log.debug(context || {}, message);
+}
+
 export default log;

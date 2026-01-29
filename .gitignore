@@ -154,6 +154,10 @@ $RECYCLE.BIN/
 .parcel-cache/
 .vite/
 .eslintcache
+*.cache
+dev-dist/
+backend/.tsbuildinfo
+frontend/.tsbuildinfo
 
 # ===================
 # TEMPORÁRIOS
@@ -164,3 +168,13 @@ temp/
 *.temp
 *.bak
 *.backup
+
+# ===================
+# OTIMIZAÇÃO VS CODE
+# ===================
+# Evita monitoramento de arquivos grandes
+*.map
+*.bundle.js
+*.min.js
+*.chunk.js
+*.worker.js

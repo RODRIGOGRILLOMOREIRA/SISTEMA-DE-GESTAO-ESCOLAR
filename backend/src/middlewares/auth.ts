@@ -7,7 +7,18 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { log } from '../lib/logger';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret-key-change-in-production';
+// ⚠️  CRÍTICO: JWT_SECRET deve estar definido no .env
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error('❌ ERRO CRÍTICO: JWT_SECRET não está definido no arquivo .env');
+  console.error('💡 Gere uma chave: node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
+  process.exit(1);
+}
+
+if (JWT_SECRET.length < 32) {
+  console.warn('⚠️  AVISO: JWT_SECRET deve ter pelo menos 32 caracteres para segurança adequada');
+}
 
 interface JWTPayload {
   userId: string;

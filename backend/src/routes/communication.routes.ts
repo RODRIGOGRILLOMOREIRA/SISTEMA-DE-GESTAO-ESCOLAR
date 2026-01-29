@@ -2,14 +2,34 @@ import { Router } from 'express';
 import { authMiddleware } from '../middlewares/auth';
 import { requireRole } from '../middlewares/rbac.middleware';
 import { PrismaClient } from '@prisma/client';
+import { logInfo, logError } from '../lib/logger';
 
 const router = Router();
 const prisma = new PrismaClient() as any; // Cast para contornar cache do TypeScript
 
 /**
- * @route POST /api/communication/templates
- * @desc Criar novo template de mensagem
+ * POST /api/communication/templates
+ * @description Cria um novo template de mensagem para comunicação padronizada
  * @access Private - ADMIN, COORDENADOR, DIRETOR
+ * @param {string} req.body.name - Nome identificador do template
+ * @param {string} req.body.category - Categoria (NOTIFICATION, ALERT, REMINDER, etc.)
+ * @param {string} req.body.channel - Canal (EMAIL, SMS, PUSH, WHATSAPP)
+ * @param {string} [req.body.subject] - Assunto (para email)
+ * @param {string} req.body.content - Conteúdo do template
+ * @param {Array} [req.body.variables] - Lista de variáveis dinâmicas
+ * @returns {Object} 201 - Template criado com sucesso
+ * @returns {Object} 400 - Campos obrigatórios ausentes
+ * @returns {Object} 500 - Erro ao criar template
+ * @example
+ * // Request
+ * {
+ *   "name": "Aviso de Falta",
+ *   "category": "ALERT",
+ *   "channel": "EMAIL",
+ *   "subject": "Notificação de Faltas",
+ *   "content": "O aluno {{nome}} teve {{faltas}} faltas",
+ *   "variables": ["nome", "faltas"]
+ * }
  */
 router.post('/templates', authMiddleware, requireRole(['ADMIN', 'COORDENADOR', 'DIRETOR']), async (req, res) => {
   try {
@@ -40,7 +60,7 @@ router.post('/templates', authMiddleware, requireRole(['ADMIN', 'COORDENADOR', '
       template
     });
   } catch (error) {
-    console.error('Erro ao criar template:', error);
+    logError('communication.routes', 'Erro ao criar template', { error });
     res.status(500).json({
       success: false,
       message: 'Erro ao criar template',
@@ -73,7 +93,7 @@ router.get('/templates', authMiddleware, requireRole(['ADMIN', 'COORDENADOR', 'D
       total: templates.length
     });
   } catch (error) {
-    console.error('Erro ao listar templates:', error);
+    logError('communication.routes', 'Erro ao listar templates', { error });
     res.status(500).json({
       success: false,
       message: 'Erro ao listar templates'

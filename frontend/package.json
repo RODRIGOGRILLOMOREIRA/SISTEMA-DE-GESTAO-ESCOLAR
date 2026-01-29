@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "set NODE_OPTIONS=--max-old-space-size=4096 && vite",
-    "build": "set NODE_OPTIONS=--max-old-space-size=4096 && tsc && vite build",
+    "dev": "set NODE_OPTIONS=--max-old-space-size=8192 && vite",
+    "build": "set NODE_OPTIONS=--max-old-space-size=8192 && tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -39,7 +39,9 @@
     "@types/react-dom": "^18.2.17",
     "@types/recharts": "^1.8.29",
     "@vitejs/plugin-react": "^4.2.1",
+    "stream-browserify": "^3.0.0",
     "typescript": "^5.3.3",
+    "util": "^0.12.5",
     "vite": "^5.0.8"
   }
 }

@@ -138,7 +138,7 @@ async function criarEquipeDiretiva() {
         nome: diretor.nome,
         email: diretor.email,
         senha: await bcrypt.hash('Direcao@2025', 10),
-        role: 'DIRETOR',
+        role: 'DIRECAO',
         updatedAt: new Date()
       }
     });

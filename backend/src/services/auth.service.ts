@@ -18,7 +18,15 @@ import db from '../lib/db';
 import hybridRedis from '../lib/redis-hybrid';
 import { log, securityLogger } from '../lib/logger';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'seu-secret-super-secreto-aqui-123';
+// ⚠️  CRÍTICO: JWT_SECRET deve estar definido no .env
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error('❌ ERRO CRÍTICO: JWT_SECRET não está definido no arquivo .env');
+  console.error('💡 Gere uma chave: node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
+  process.exit(1);
+}
+
 const JWT_EXPIRES_IN = '7d';
 const BCRYPT_ROUNDS = 10;
 
@@ -37,6 +45,32 @@ interface AuthResult {
   error?: string;
 }
 
+/**
+ * Serviço de Autenticação Profissional
+ * 
+ * @class AuthService
+ * @description Sistema robusto de autenticação com:
+ * - Suporte Prisma + fallback pg nativo
+ * - Hash bcrypt seguro (10 rounds)
+ * - JWT com refresh tokens
+ * - Rate limiting inteligente
+ * - Audit log completo
+ * - 2FA opcional
+ * - Session management no Redis
+ * 
+ * @example
+ * ```typescript
+ * const result = await authService.login({
+ *   email: 'user@escola.com',
+ *   senha: 'senha123'
+ * }, '192.168.1.1');
+ * 
+ * if (result.success) {
+ *   // Login bem-sucedido
+ *   const { token, user } = result;
+ * }
+ * ```
+ */
 class AuthService {
   /**
    * Buscar usuário (com fallback Prisma → pg)
