@@ -1,0 +1,945 @@
+.notificacoes-config {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-title svg {
+  color: var(--primary-color);
+}
+
+.header-title h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: var(--text-primary);
+}
+
+.header-title p {
+  margin: 0.25rem 0 0 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* Mensagens */
+.message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  animation: slideIn 0.3s ease;
+}
+
+.message-success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+.message-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Grid de Configurações */
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .config-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.config-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.config-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+:root[data-theme="dark"] .config-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.config-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1.5rem 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+/* Canal de Comunicação */
+.canal-options {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.canal-btn {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.canal-btn:hover {
+  border-color: var(--primary-color);
+  background: var(--primary-light);
+}
+
+.canal-btn.active {
+  border-color: var(--primary-color);
+  background: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.canal-btn svg {
+  color: var(--primary-color);
+  transition: transform 0.2s ease;
+}
+
+.canal-btn:hover svg {
+  transform: scale(1.1);
+}
+
+.canal-btn.active svg {
+  transform: scale(1.15);
+}
+
+.canal-btn strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.canal-btn small {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+/* Formulário */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-hint {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Checkboxes */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 0.75rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.checkbox-label:hover {
+  background: var(--hover-bg);
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-top: 0.25rem;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.checkbox-label input[type="checkbox"]:checked {
+  transform: scale(1.1);
+}
+
+.checkbox-label:active input[type="checkbox"] {
+  transform: scale(0.95);
+}
+
+.checkbox-label strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.checkbox-label small {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+/* Dias da Semana */
+.dias-semana {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dia-btn {
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dia-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: var(--primary-color);
+  opacity: 0.3;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.dia-btn:active::before {
+  width: 100%;
+  height: 100%;
+}
+
+.dia-btn:hover {
+  border-color: var(--primary-color);
+  background: var(--primary-light);
+  transform: translateY(-2px);
+}
+
+.dia-btn.active {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: white;
+  transform: scale(1.05);
+}
+
+/* Instruções Telegram */
+.telegram-instructions {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #dbeafe;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+}
+
+.telegram-instructions h4 {
+  margin: 0 0 0.75rem 0;
+  color: #1e40af;
+  font-size: 0.95rem;
+}
+
+.telegram-instructions ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #1e3a8a;
+  font-size: 0.9rem;
+}
+
+.telegram-instructions li {
+  margin-bottom: 0.5rem;
+}
+
+.telegram-instructions code {
+  padding: 0.2rem 0.4rem;
+  background: white;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+}
+
+/* Ações */
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-bottom: 2rem;
+}
+
+.btn-test,
+.btn-save {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-test {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-test:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.btn-save {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-test:disabled,
+.btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Status */
+.status-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.status-dot.active {
+  background: #10b981;
+}
+
+.status-dot.inactive {
+  background: #ef4444;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.status-indicator strong {
+  color: var(--text-primary);
+}
+
+.status-indicator span {
+  color: var(--text-secondary);
+}
+
+.btn-toggle {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  background: var(--primary-color);
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-toggle:hover {
+  background: var(--primary-dark);
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+
+/* Notebooks e Tablets Landscape (1024px - 1440px) */
+@media (max-width: 1440px) {
+  .notificacoes-config {
+    padding: 1.5rem;
+  }
+  
+  .header-title h1 {
+    font-size: 1.6rem;
+  }
+  
+  .config-card {
+    padding: 1.25rem;
+  }
+}
+
+/* Tablets Portrait (768px - 1024px) */
+@media (max-width: 1024px) {
+  .notificacoes-config {
+    padding: 1.25rem;
+  }
+  
+  .header-title h1 {
+    font-size: 1.5rem;
+  }
+  
+  .config-card h3 {
+    font-size: 1rem;
+  }
+  
+  .canal-btn {
+    padding: 0.875rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .dias-semana {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .actions {
+    gap: 0.75rem;
+  }
+}
+
+/* Tablets Small e Celulares Landscape (600px - 768px) */
+@media (max-width: 768px) {
+  .notificacoes-config {
+    padding: 1rem;
+  }
+  
+  .header-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .header-title h1 {
+    font-size: 1.4rem;
+  }
+  
+  .header-title svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .config-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .config-card {
+    padding: 1rem;
+  }
+  
+  .config-card h3 {
+    font-size: 0.95rem;
+  }
+
+  .canal-btn {
+    padding: 0.75rem;
+  }
+  
+  .canal-btn strong {
+    font-size: 0.9rem;
+  }
+  
+  .canal-btn small {
+    font-size: 0.8rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dias-semana {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+  }
+  
+  .dia-btn {
+    padding: 0.625rem;
+    font-size: 0.85rem;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .btn-test,
+  .btn-save {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem 1.25rem;
+  }
+
+  .status-card {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+    padding: 1.25rem;
+  }
+
+  .btn-toggle {
+    width: 100%;
+  }
+  
+  .telegram-instructions {
+    padding: 0.875rem;
+  }
+  
+  .telegram-instructions h4 {
+    font-size: 0.9rem;
+  }
+  
+  .telegram-instructions ol {
+    font-size: 0.85rem;
+    padding-left: 1rem;
+  }
+}
+
+/* Celulares Portrait (até 600px) */
+@media (max-width: 600px) {
+  .notificacoes-config {
+    padding: 0.75rem;
+  }
+  
+  .header-title h1 {
+    font-size: 1.3rem;
+  }
+  
+  .header-title p {
+    font-size: 0.85rem;
+  }
+  
+  .message {
+    padding: 0.875rem;
+    font-size: 0.9rem;
+  }
+  
+  .config-card {
+    padding: 0.875rem;
+    border-radius: 10px;
+  }
+  
+  .config-card h3 {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  
+  .canal-options {
+    gap: 0.625rem;
+  }
+  
+  .canal-btn {
+    padding: 0.625rem;
+    gap: 0.75rem;
+  }
+  
+  .canal-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .form-input,
+  .form-select {
+    padding: 0.625rem;
+    font-size: 0.9rem;
+  }
+  
+  .checkbox-label {
+    padding: 0.625rem;
+  }
+  
+  .checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .dias-semana {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.375rem;
+  }
+  
+  .dia-btn {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.8rem;
+  }
+  
+  .btn-test,
+  .btn-save {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* Celulares Pequenos (até 375px) */
+@media (max-width: 375px) {
+  .notificacoes-config {
+    padding: 0.5rem;
+  }
+  
+  .header-title h1 {
+    font-size: 1.2rem;
+  }
+  
+  .config-card {
+    padding: 0.75rem;
+  }
+  
+  .dias-semana {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.35rem;
+  }
+  
+  .dia-btn {
+    padding: 0.5rem 0.2rem;
+    font-size: 0.75rem;
+  }
+  
+  .canal-btn {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .telegram-instructions ol {
+    font-size: 0.8rem;
+  }
+}
+
+/* Orientação Landscape para Celulares e Tablets */
+@media (max-height: 600px) and (orientation: landscape) {
+  .notificacoes-config {
+    padding: 0.75rem;
+  }
+  
+  .page-header {
+    margin-bottom: 1rem;
+  }
+  
+  .header-title h1 {
+    font-size: 1.3rem;
+  }
+  
+  .config-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .config-card {
+    padding: 1rem;
+  }
+  
+  .message {
+    padding: 0.75rem;
+  }
+  
+  .actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+  
+  .btn-test,
+  .btn-save {
+    width: auto;
+    padding: 0.625rem 1rem;
+  }
+}
+
+/* Touch-friendly: aumenta áreas de toque em dispositivos móveis */
+@media (hover: none) and (pointer: coarse) {
+  .canal-btn {
+    min-height: 48px;
+  }
+  
+  .dia-btn {
+    min-height: 44px;
+  }
+  
+  .btn-test,
+  .btn-save {
+    min-height: 48px;
+  }
+  
+  .checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .form-input,
+  .form-select {
+    min-height: 48px;
+  }
+}
+
+/* High DPI / Retina Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .config-card {
+    border-width: 0.5px;
+  }
+  
+  .canal-btn,
+  .dia-btn {
+    border-width: 1.5px;
+  }
+}
+
+/* Preferências de movimento reduzido (acessibilidade) */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .dia-btn::before {
+    display: none;
+  }
+}
+
+/* Dark Mode */
+:root[data-theme="dark"] {
+  --card-bg: #1f2937;
+  --bg-primary: #111827;
+  --border-color: #374151;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --hover-bg: #374151;
+  --primary-light: rgba(96, 165, 250, 0.1);
+  --primary-dark: #2563eb;
+}
+
+:root[data-theme="dark"] .canal-btn {
+  background: #1f2937;
+  border-color: #4b5563;
+}
+
+:root[data-theme="dark"] .canal-btn:hover {
+  background: #374151;
+  border-color: #60a5fa;
+}
+
+:root[data-theme="dark"] .canal-btn.active {
+  background: rgba(96, 165, 250, 0.15);
+  border-color: #60a5fa;
+}
+
+:root[data-theme="dark"] .form-input,
+:root[data-theme="dark"] .form-select {
+  background: #1f2937;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+:root[data-theme="dark"] .form-input:focus,
+:root[data-theme="dark"] .form-select:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+}
+
+:root[data-theme="dark"] .dia-btn {
+  background: #1f2937;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+:root[data-theme="dark"] .dia-btn:hover {
+  background: #374151;
+  border-color: #60a5fa;
+}
+
+:root[data-theme="dark"] .dia-btn.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+:root[data-theme="dark"] .btn-test {
+  background: #374151;
+  color: #f9fafb;
+  border-color: #4b5563;
+}
+
+:root[data-theme="dark"] .btn-test:hover:not(:disabled) {
+  background: #4b5563;
+}
+
+:root[data-theme="dark"] .btn-save {
+  background: #3b82f6;
+  color: white;
+}
+
+:root[data-theme="dark"] .btn-save:hover:not(:disabled) {
+  background: #2563eb;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+:root[data-theme="dark"] .telegram-instructions {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+}
+
+:root[data-theme="dark"] .telegram-instructions h4 {
+  color: #60a5fa;
+}
+
+:root[data-theme="dark"] .telegram-instructions ol {
+  color: #93c5fd;
+}
+
+:root[data-theme="dark"] .telegram-instructions code {
+  background: #0f172a;
+  color: #e5e7eb;
+  border: 1px solid #374151;
+}
+
+:root[data-theme="dark"] .message-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: #10b981;
+}
+
+:root[data-theme="dark"] .message-error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: #ef4444;
+}
+
+:root[data-theme="dark"] .checkbox-label:hover {
+  background: #374151;
+}
+
+:root[data-theme="dark"] .status-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+:root[data-theme="dark"] .btn-toggle {
+  background: #3b82f6;
+}
+
+:root[data-theme="dark"] .btn-toggle:hover {
+  background: #2563eb;
+}

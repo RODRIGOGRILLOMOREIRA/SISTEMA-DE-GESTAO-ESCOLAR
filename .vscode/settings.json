@@ -1,0 +1,85 @@
+{
+  // Otimizações para prevenir crashes do VS Code
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/uploads/**": true,
+    "**/backups/**": true,
+    "**/prisma/migrations/**": true,
+    "**/dev-dist/**": true,
+    "**/*.log": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/uploads": true,
+    "**/backups": true,
+    "**/.git": true,
+    "**/dev-dist": true
+  },
+  "files.exclude": {
+    "**/node_modules": false,
+    "**/.git": false,
+    "**/dist": true,
+    "**/build": true
+  },
+  
+  // AUMENTO DE MEMÓRIA PARA TYPESCRIPT SERVER (4GB)
+  "typescript.tsserver.maxTsServerMemory": 4096,
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "typescript.tsserver.log": "off",
+  "typescript.tsserver.useSyntaxServer": "auto",
+  
+  // Melhorar performance do editor (OTIMIZADO)
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": false
+  },
+  "editor.suggestOnTriggerCharacters": true,
+  "editor.parameterHints.enabled": true,
+  "editor.suggest.localityBonus": true,
+  "editor.inlayHints.enabled": "off",
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "editor.semanticHighlighting.enabled": true,
+  "editor.suggest.preview": true,
+  
+  // Git otimizações
+  "git.autofetch": false,
+  "git.autorefresh": true,
+  "git.enableSmartCommit": true,
+  "git.postCommitCommand": "none",
+  
+  // Extensões
+  "extensions.autoUpdate": false,
+  "extensions.autoCheckUpdates": false,
+  
+  // Terminal
+  "terminal.integrated.enablePersistentSessions": false,
+  "terminal.integrated.persistentSessionReviveProcess": "never",
+  
+  // TypeScript/JavaScript (REATIVADO COM LIMITES)
+  "javascript.updateImportsOnFileMove.enabled": "never",
+  "typescript.updateImportsOnFileMove.enabled": "never",
+  "javascript.suggest.enabled": true,
+  "typescript.suggest.enabled": true,
+  
+  // Otimizações de memória do VS Code
+  "files.autoSave": "onFocusChange",
+  "files.hotExit": "onExitAndWindowClose",
+  "window.restoreWindows": "none",
+  "workbench.editor.limit.enabled": true,
+  "workbench.editor.limit.value": 10,
+  "workbench.editor.limit.perEditorGroup": true,
+  "workbench.startupEditor": "none",
+  
+  // Redis e ambiente
+  "[dotenv]": {
+    "editor.defaultFormatter": "vscode.plain-text"
+  }
+}
