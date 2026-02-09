@@ -1,0 +1,84 @@
+# ========================================
+# DEPENDABOT - Atualizações Automáticas
+# Copyright (c) 2026 SGE - PROPRIETARY
+# ========================================
+#
+# Monitora dependências e cria PRs automáticos para:
+# - Vulnerabilidades de segurança
+# - Atualizações de versões
+#
+# Documentação: https://docs.github.com/en/code-security/dependabot
+
+version: 2
+
+updates:
+  # ============================
+  # BACKEND (Node.js)
+  # ============================
+  - package-ecosystem: "npm"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "RODRIGOGRILLOMOREIRA"
+    assignees:
+      - "RODRIGOGRILLOMOREIRA"
+    labels:
+      - "dependencies"
+      - "backend"
+      - "security"
+    commit-message:
+      prefix: "chore(backend)"
+      include: "scope"
+    # Priorizar atualizações de segurança
+    versioning-strategy: increase-if-necessary
+    # Ignorar atualizações de major version (breaking changes)
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # ============================
+  # FRONTEND (Node.js)
+  # ============================
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "RODRIGOGRILLOMOREIRA"
+    assignees:
+      - "RODRIGOGRILLOMOREIRA"
+    labels:
+      - "dependencies"
+      - "frontend"
+      - "security"
+    commit-message:
+      prefix: "chore(frontend)"
+      include: "scope"
+    versioning-strategy: increase-if-necessary
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # ============================
+  # GITHUB ACTIONS
+  # ============================
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    reviewers:
+      - "RODRIGOGRILLOMOREIRA"
+    labels:
+      - "dependencies"
+      - "ci-cd"
+    commit-message:
+      prefix: "chore(ci)"

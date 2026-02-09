@@ -1,0 +1,1078 @@
+/* Importando estilos base */
+@import '../pages/Notas.css';
+
+.frequencia-container {
+  padding: 24px;
+}
+
+.btn-back-freq {
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-back-freq:hover {
+  background: var(--primary-color);
+  color: white;
+  transform: translateX(-4px);
+}
+
+.frequencia-header {
+  margin-bottom: 24px;
+}
+
+.frequencia-header h2 {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  margin-bottom: 24px;
+  font-weight: 700;
+}
+
+/* Info Section - Inspirado em Notas */
+.info-section {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 197, 253, 0.05) 100%);
+  border: 2px solid rgba(59, 130, 246, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+[data-theme="dark"] .info-section {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 197, 253, 0.08) 100%);
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+.info-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.info-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .info-card {
+  background: var(--secondary-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.info-card label {
+  display: block;
+  font-size: 0.813rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.info-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  padding: 8px 0;
+}
+
+.select-control,
+.date-control,
+.number-control {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+[data-theme="dark"] .select-control,
+[data-theme="dark"] .date-control,
+[data-theme="dark"] .number-control {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.select-control:focus,
+.date-control:focus,
+.number-control:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.select-control:hover,
+.date-control:hover,
+.number-control:hover {
+  border-color: var(--primary-color);
+}
+
+.number-control {
+  text-align: center;
+  font-size: 1.2rem;
+}
+
+/* Título do Período */
+.periodo-info {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 197, 253, 0.1) 100%);
+  border-left: 4px solid var(--primary-color);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+.periodo-info h3 {
+  color: var(--primary-color);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+[data-theme="dark"] .periodo-info {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+/* Tabs de Visualização */
+.visualizacao-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 4px;
+}
+
+.tab-btn {
+  padding: 12px 24px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tab-btn:hover {
+  color: var(--primary-color);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.tab-btn.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+/* Tabela de Frequência */
+.frequencia-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.frequencia-table thead tr:first-child th {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #4f86f7 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 16px 12px;
+  text-align: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.frequencia-table thead tr:first-child th:last-child {
+  border-right: none;
+}
+
+.frequencia-table.resumo thead tr:nth-child(2) th {
+  background: linear-gradient(135deg, #4f86f7 0%, #2563eb 100%);
+  color: white;
+  font-weight: 500;
+  font-size: 0.813rem;
+  padding: 12px 8px;
+  text-align: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.frequencia-table.resumo thead tr:nth-child(2) th:last-child {
+  border-right: none;
+}
+
+.frequencia-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.frequencia-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.frequencia-table tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .frequencia-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.frequencia-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.frequencia-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.numero-cell {
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 50px;
+}
+
+.aluno-nome {
+  text-align: left !important;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding-left: 16px !important;
+}
+
+.aulas-cell {
+  width: 120px;
+}
+
+.input-aulas {
+  width: 70px;
+  padding: 8px 12px;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  background: white;
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .input-aulas {
+  background: var(--secondary-bg);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.input-aulas:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.presenca-cell,
+.falta-cell {
+  width: 120px;
+}
+
+.btn-presenca,
+.btn-falta {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  border: 3px solid;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+[data-theme="dark"] .btn-presenca,
+[data-theme="dark"] .btn-falta {
+  background: var(--secondary-bg);
+}
+
+.btn-presenca {
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+.btn-presenca:hover {
+  border-color: #10b981;
+  color: #10b981;
+  transform: scale(1.1);
+}
+
+.btn-presenca.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: #10b981;
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-falta {
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+.btn-falta:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  transform: scale(1.1);
+}
+
+.btn-falta.active {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: #ef4444;
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Botões Mini para Múltiplas Aulas */
+.btn-presenca-mini,
+.btn-falta-mini {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 2px solid;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+[data-theme="dark"] .btn-presenca-mini,
+[data-theme="dark"] .btn-falta-mini {
+  background: var(--secondary-bg);
+}
+
+.btn-presenca-mini {
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+.btn-presenca-mini:hover {
+  border-color: #10b981;
+  color: #10b981;
+  transform: scale(1.05);
+}
+
+.btn-presenca-mini.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: #10b981;
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.btn-falta-mini {
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+.btn-falta-mini:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  transform: scale(1.05);
+}
+
+.btn-falta-mini.active {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: #ef4444;
+  color: white;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+
+/* Células de Resumo */
+.presenca-count,
+.presenca-aulas,
+.falta-count,
+.falta-aulas {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.presenca-count,
+.presenca-aulas {
+  color: #10b981;
+}
+
+.falta-count,
+.falta-aulas {
+  color: #ef4444;
+}
+
+.percentual-cell {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.percentual.ok {
+  color: #10b981;
+}
+
+.percentual.baixo {
+  color: #ef4444;
+}
+
+/* Actions Container */
+.actions-container {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-salvar {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #4f86f7 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-salvar:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4f86f7 0%, #2563eb 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.btn-salvar:disabled {
+  background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .frequencia-table {
+    font-size: 0.9rem;
+  }
+
+  .btn-presenca,
+  .btn-falta {
+    width: 45px;
+    height: 45px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .info-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .info-section {
+    padding: 16px;
+  }
+
+  .info-cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .info-card {
+    padding: 12px;
+  }
+
+  .visualizacao-tabs {
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .tab-btn {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .frequencia-table {
+    font-size: 0.85rem;
+  }
+
+  .btn-presenca,
+  .btn-falta {
+    width: 40px;
+    height: 40px;
+    font-size: 0.95rem;
+  }
+
+  .actions-container {
+    justify-content: center;
+  }
+
+  .btn-salvar {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Toggle Desktop/Mobile */
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .mobile-only {
+    display: block !important;
+  }
+
+  .frequencia-container {
+    padding: 1rem;
+  }
+
+  .frequencia-header h2 {
+    font-size: 1.25rem;
+  }
+
+  /* Mobile Frequencia Cards */
+  .mobile-frequencia-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  /* Frequências já salvas */
+  .frequencias-salvas-mobile {
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(6, 182, 212, 0.1));
+    border: 2px solid rgba(34, 211, 238, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  [data-theme="dark"] .frequencias-salvas-mobile {
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.15), rgba(6, 182, 212, 0.15));
+    border-color: rgba(34, 211, 238, 0.4);
+  }
+
+  .frequencias-salvas-titulo {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0891b2;
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  [data-theme="dark"] .frequencias-salvas-titulo {
+    color: #22d3ee;
+  }
+
+  .frequencia-editavel-card {
+    background: white;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  [data-theme="dark"] .frequencia-editavel-card {
+    background: var(--secondary-bg);
+  }
+
+  .aulas-badge {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* Cards compactos de alunos dentro das frequências */
+  .aluno-mini-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 8px;
+  }
+
+  [data-theme="dark"] .aluno-mini-card {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .aluno-mini-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .aluno-mini-numero {
+    background: var(--primary-color);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .aluno-mini-nome {
+    flex: 1;
+    font-size: 0.85rem;
+  }
+
+  .aulas-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    gap: 6px;
+  }
+
+  .aula-mini-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .aula-mini-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+
+  .aula-mini-buttons {
+    display: flex;
+    gap: 4px;
+  }
+
+  .btn-mini-p,
+  .btn-mini-f {
+    flex: 1;
+    padding: 6px;
+    border-radius: 6px;
+    border: 2px solid;
+    background: white;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  [data-theme="dark"] .btn-mini-p,
+  [data-theme="dark"] .btn-mini-f {
+    background: var(--card-bg);
+  }
+
+  .btn-mini-p {
+    border-color: #10b981;
+    color: #10b981;
+  }
+
+  .btn-mini-p.active {
+    background: #10b981;
+    color: white;
+  }
+
+  .btn-mini-f {
+    border-color: #ef4444;
+    color: #ef4444;
+  }
+
+  .btn-mini-f.active {
+    background: #ef4444;
+    color: white;
+  }
+
+  .frequencia-salva-card {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  [data-theme="dark"] .frequencia-salva-card {
+    background: var(--secondary-bg);
+  }
+
+  .frequencia-salva-card:last-child {
+    margin-bottom: 0;
+  }
+
+  .frequencia-salva-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .disciplina-badge {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .professor-badge {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .frequencia-salva-info {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .frequencia-salva-info span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Título do novo registro */
+  .novo-registro-titulo {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+  }
+
+  .selecione-disciplina-mobile {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .selecione-disciplina-mobile p {
+    margin: 0;
+  }
+
+  .aluno-card-mobile {
+    background: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .aluno-card-header {
+    background: linear-gradient(135deg, var(--primary-color), #2563eb);
+    color: white;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+  }
+
+  .aluno-numero {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .aluno-nome-mobile {
+    font-size: 1rem;
+    flex: 1;
+  }
+
+  .aulas-grid-mobile {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .aula-item-mobile {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  [data-theme="dark"] .aula-item-mobile {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .aula-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .aula-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .btn-mobile-presenca,
+  .btn-mobile-falta {
+    padding: 12px;
+    border-radius: 8px;
+    border: 2px solid;
+    background: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  [data-theme="dark"] .btn-mobile-presenca,
+  [data-theme="dark"] .btn-mobile-falta {
+    background: var(--secondary-bg);
+  }
+
+  .btn-mobile-presenca {
+    border-color: #10b981;
+    color: #10b981;
+  }
+
+  .btn-mobile-presenca.active {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border-color: #10b981;
+  }
+
+  .btn-mobile-falta {
+    border-color: #ef4444;
+    color: #ef4444;
+  }
+
+  .btn-mobile-falta.active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border-color: #ef4444;
+  }
+
+  .actions-container-mobile {
+    margin-top: 20px;
+    padding: 0 16px 16px;
+  }
+
+  .btn-salvar-mobile {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--primary-color), #2563eb);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    transition: all 0.3s;
+  }
+
+  .btn-salvar-mobile:active {
+    transform: scale(0.98);
+  }
+
+  .btn-salvar-mobile:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* Filtros em coluna */
+  .filtros-frequencia {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .filtros-frequencia select,
+  .filtros-frequencia input {
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  /* Visualização tabs */
+  .visualizacao-tabs {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tab-btn {
+    flex: 1;
+    min-width: calc(50% - 0.25rem);
+  }
+
+  /* Info cards */
+  .info-section {
+    padding: 12px;
+  }
+
+  .info-card {
+    padding: 10px;
+  }
+
+  .info-card-title {
+    font-size: 0.8rem;
+  }
+
+  .info-card-value {
+    font-size: 1.25rem;
+  }
+}
+
+/* Tablet e acima - mostrar desktop */
+@media (min-width: 641px) {
+  .desktop-only {
+    display: block !important;
+  }
+  
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .frequencia-container {
+    padding: 0.75rem;
+  }
+
+  .frequencia-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .frequencia-table {
+    min-width: 500px;
+    font-size: 0.75rem;
+  }
+
+  .btn-presenca,
+  .btn-falta {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+
+  .tab-btn {
+    font-size: 0.8rem;
+    padding: 8px 12px;
+  }
+}
+
+/* ========================================
+   BOTÃO AULAS DADAS - AMARELO
+   ======================================== */
+.btn-aulas-dadas {
+  width: 100%;
+  padding: 16px;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  color: white;
+  fontSize: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(251, 191, 36, 0.4);
+  transition: all 0.3s ease;
+  animation: pulseYellow 2s ease-in-out infinite;
+}
+
+.btn-aulas-dadas:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.6);
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.btn-aulas-dadas:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(251, 191, 36, 0.4);
+}
+
+@keyframes pulseYellow {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(251, 191, 36, 0.4);
+  }
+  50% {
+    box-shadow: 0 6px 25px rgba(251, 191, 36, 0.6);
+  }
+}
+
+body.dark-theme .btn-aulas-dadas {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border-color: #d97706;
+  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4);
+}
+
+body.dark-theme .btn-aulas-dadas:hover {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.6);
+}
