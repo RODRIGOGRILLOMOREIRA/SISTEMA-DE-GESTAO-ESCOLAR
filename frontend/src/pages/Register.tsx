@@ -11,6 +11,7 @@ const Register = () => {
     email: '',
     senha: '',
     confirmarSenha: '',
+    cargo: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -36,6 +37,7 @@ const Register = () => {
         nome: formData.nome,
         email: formData.email,
         senha: formData.senha,
+        cargo: formData.cargo || undefined,
       })
       localStorage.setItem('token', response.data.token)
       localStorage.setItem('user', JSON.stringify(response.data.usuario))
@@ -95,6 +97,28 @@ const Register = () => {
               placeholder="seu@email.com"
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="cargo">
+              <User size={18} />
+              Cargo/Função
+            </label>
+            <select
+              id="cargo"
+              value={formData.cargo}
+              onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
+              required
+            >
+              <option value="">Selecione seu cargo</option>
+              <option value="Professor">Professor</option>
+              <option value="Funcionário">Funcionário</option>
+              <option value="Diretor">Diretor</option>
+              <option value="Vice-Diretor">Vice-Diretor</option>
+              <option value="Coordenador">Coordenador</option>
+              <option value="Secretário">Secretário</option>
+              <option value="Outro">Outro</option>
+            </select>
           </div>
 
           <div className="form-group">

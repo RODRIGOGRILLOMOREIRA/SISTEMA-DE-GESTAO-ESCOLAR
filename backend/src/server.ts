@@ -1,43 +1,299 @@
-import express from 'express';
-import cors from 'cors';
+/**
+ * ========================================
+ * SISTEMA DE GESTÃO ESCOLAR (SGE)
+ * Backend API Server
+ * ========================================
+ * 
+ * @copyright Copyright (c) 2026 Rodrigo Grillo Moreira
+ * @license PROPRIETARY - Todos os direitos reservados
+ * 
+ * CONFIDENCIAL E PROPRIETÁRIO
+ * 
+ * Este código é propriedade exclusiva e contém informações
+ * confidenciais. Uso não autorizado, cópia, modificação ou
+ * distribuição são estritamente proibidos e sujeitos a
+ * ações legais.
+ * 
+ * Licenciado para: [Cliente/Instituição]
+ * 
+ * @author Rodrigo Grillo Moreira
+ * @version 1.0.0
+ * @since 2026-01-10
+ */
+
+// Carregar variáveis de ambiente ANTES de qualquer outro import
 import dotenv from 'dotenv';
+dotenv.config();
+
+// Validar variáveis de ambiente CRÍTICAS antes de continuar
+import { validateEnv } from './config/env';
+const env = validateEnv();
+
+import express from 'express';
+import { createServer } from 'http';
+import cors from 'cors';
+import { initializeWebSocket } from './lib/websocket';
 import { authRouter } from './routes/auth.routes';
 import { alunosRouter } from './routes/alunos.routes';
 import { professoresRouter } from './routes/professores.routes';
 import { turmasRouter } from './routes/turmas.routes';
 import { disciplinasRouter } from './routes/disciplinas.routes';
+import { disciplinaTurmaRouter } from './routes/disciplinaTurma.routes';
 import { notasRouter } from './routes/notas.routes';
 import { frequenciasRouter } from './routes/frequencias.routes';
 import { configuracoesRouter } from './routes/configuracoes.routes';
+import { equipeDiretivaRouter } from './routes/equipeDiretiva.routes';
+import { funcionariosRouter } from './routes/funcionarios.routes';
+import { calendarioRouter } from './routes/calendario.routes';
+import { gradeHorariaRouter } from './routes/grade-horaria.routes';
+import { frequenciaRouter } from './routes/frequencia.routes';
+import { pontoRouter } from './routes/ponto.routes';
+import reconhecimentoFacialRouter from './routes/reconhecimento-facial.routes';
+import { notificacoesRouter } from './routes/notificacoes.routes';
+import { queuesRouter } from './routes/queues.routes';
+import auditRouter from './routes/audit.routes';
+import backupRouter from './routes/backup.routes';
+import maintenanceRouter from './routes/maintenance.routes';
+import healthRouter from './routes/health.routes';
+import metricsRouter from './routes/metrics.routes';
+import twoFactorRouter from './routes/two-factor.routes';
+import { rbacRouter } from './routes/rbac.routes'; // FASE 4: RBAC Granular
+import { dropoutPredictionRouter } from './routes/dropout-prediction.routes'; // FASE 3: Predição de Evasão
+import communicationRouter from './routes/communication.routes'; // FASE 5: Central de Comunicação
+import excelImportRouter from './routes/excel-import.routes'; // FASE 5: Importação de Excel
+import realtimeRouter from './routes/realtime.routes'; // RECURSOS EM TEMPO REAL
+import { backupService } from './services/backup.service'; // Serviço de backup
+import { maintenanceMiddleware } from './middlewares/maintenance'; // Middleware de manutenção
+import { loggerMiddleware, log } from './lib/logger'; // Sistema de logs estruturados
+import { metricsMiddleware } from './lib/metrics'; // Sistema de métricas
+import { apiRateLimiter, securityMiddleware } from './middlewares/rate-limit'; // Rate limiting
+import redis from './lib/redis';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger'; // Swagger/OpenAPI
 
-dotenv.config();
+// Inicializar workers e notificações apenas se Redis estiver disponível
+let redisAvailable = false;
+let workersInitialized = false;
+
+/**
+ * Inicialização profissional do sistema Redis + Filas + Workers
+ * Executa de forma assíncrona sem bloquear o startup do servidor
+ */
+(async () => {
+  try {
+    // Passo 1: Inicializar Redis Híbrido
+    log.info({ component: 'startup' }, 'Inicializando Redis híbrido...');
+    await redis.initialize();
+    
+    // Passo 2: Verificar conectividade
+    const client = await redis.getClient();
+    await client.ping();
+    redisAvailable = true;
+    log.info({ component: 'redis' }, '✅ Redis híbrido conectado com sucesso');
+    
+    // Passo 3: Inicializar Filas Bull
+    log.info({ component: 'startup' }, 'Inicializando sistema de filas...');
+    const { initializeQueues, getNotificationQueue, areQueuesReady } = require('./queues');
+    const queuesReady = await initializeQueues();
+    
+    if (!queuesReady) {
+      log.warn({ component: 'queues' }, 'Filas não disponíveis - continuando sem sistema de filas');
+      return;
+    }
+    
+    log.info({ component: 'queues' }, '✅ Sistema de filas Bull inicializado');
+    
+    // Passo 4: Inicializar Serviços de Notificação
+    try {
+      require('./services/notification.service');
+      log.info({ component: 'notifications' }, '✅ Notification Service: Listeners configurados');
+    } catch (error: any) {
+      log.warn({ component: 'notifications', err: error }, 'Erro ao carregar notification service');
+    }
+    
+    // Passo 5: Registrar Workers (com delay para garantir que tudo está pronto)
+    setTimeout(async () => {
+      try {
+        if (!areQueuesReady()) {
+          log.warn({ component: 'workers' }, 'Filas não estão prontas - workers não serão registrados');
+          return;
+        }
+        
+        const notificationQueue = getNotificationQueue();
+        if (!notificationQueue) {
+          log.warn({ component: 'workers' }, 'notificationQueue não disponível');
+          return;
+        }
+        
+        const { processNotification } = require('./workers/notification.worker');
+        
+        // Registrar worker com concorrência de 10 jobs
+        notificationQueue.process(10, processNotification);
+        workersInitialized = true;
+        
+        log.info({ 
+          component: 'workers', 
+          queue: 'notifications', 
+          concurrency: 10 
+        }, '✅ Notification Worker registrado');
+        
+        log.info({ component: 'workers' }, '✅ Sistema de workers ativo e funcional');
+        
+      } catch (error: any) {
+        log.error({ component: 'workers', err: error }, 'Erro ao registrar workers');
+      }
+    }, 1000); // Delay de 1 segundo para garantir que tudo está estável
+    
+  } catch (error: any) {
+    log.warn({ 
+      component: 'startup', 
+      err: error 
+    }, 'Redis/Filas não disponíveis - Sistema operando em modo básico');
+    log.info({ 
+      component: 'system' 
+    }, '⚠️  Funcionalidades dependentes de Redis/Filas estão desabilitadas');
+  }
+})();
 
 const app = express();
+const httpServer = createServer(app); // Criar HTTP Server para WebSocket
 const PORT = process.env.PORT || 3333;
 
 // Middlewares
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173'
+  origin: (origin, callback) => {
+    // Permite qualquer origem da rede local ou localhost
+    const allowedPatterns = [
+      /^http:\/\/localhost:\d+$/,
+      /^http:\/\/127\.0\.0\.1:\d+$/,
+      /^http:\/\/192\.168\.\d+\.\d+:\d+$/,
+      /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,
+    ];
+    
+    if (!origin || allowedPatterns.some(pattern => pattern.test(origin))) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Permitir todas as origens em desenvolvimento
+    }
+  },
+  credentials: true
 }));
+
+// FASE 4: Middlewares de Observabilidade e Segurança
+app.use(loggerMiddleware); // Logs estruturados com correlation ID
+app.use(metricsMiddleware); // Coleta de métricas Prometheus
+app.use(securityMiddleware); // Verificação de IPs bloqueados
+
+// Desabilitar cache para garantir sincronização entre dispositivos
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
 // Aumentar limite para aceitar imagens em base64
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Middleware de modo de manutenção (aplicado globalmente)
+app.use(maintenanceMiddleware);
 
 // Routes
 app.get('/', (req, res) => {
   res.json({ message: 'API Sistema de Gestão Escolar' });
 });
 
+// 📚 SWAGGER/OpenAPI - Documentação Interativa da API
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'SGE - API Documentation',
+}));
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
+// FASE 4: Rotas de Observabilidade (sem rate limit)
+app.use('/api/health', healthRouter); // Health checks
+app.use('/api', metricsRouter); // Métricas Prometheus
+
+// FASE 4: Aplicar rate limiting nas rotas da API
+app.use('/api', apiRateLimiter); // Rate limit global para a API
+
 app.use('/api/auth', authRouter);
 app.use('/api/alunos', alunosRouter);
 app.use('/api/professores', professoresRouter);
 app.use('/api/turmas', turmasRouter);
 app.use('/api/disciplinas', disciplinasRouter);
+app.use('/api/disciplinas-turmas', disciplinaTurmaRouter);
 app.use('/api/notas', notasRouter);
 app.use('/api/frequencias', frequenciasRouter);
 app.use('/api/configuracoes', configuracoesRouter);
+app.use('/api/equipe-diretiva', equipeDiretivaRouter);
+app.use('/api/funcionarios', funcionariosRouter);
+app.use('/api/calendario', calendarioRouter);
+app.use('/api/grade-horaria', gradeHorariaRouter);
+app.use('/api/registro-frequencia', frequenciaRouter);
+app.use('/api/ponto', pontoRouter);
+app.use('/api/reconhecimento-facial', reconhecimentoFacialRouter);
+app.use('/api/notificacoes', notificacoesRouter);
+app.use('/api/two-factor', twoFactorRouter); // FASE 4: Autenticação 2FA
+app.use('/api/rbac', rbacRouter); // FASE 4: RBAC Granular
+app.use('/api/dropout-prediction', dropoutPredictionRouter); // FASE 3: Predição de Evasão
+app.use('/api/communication', communicationRouter); // FASE 5: Central de Comunicação Unificada
+app.use('/api/excel-import', excelImportRouter); // FASE 5: Importação de Excel
+app.use('/api/queues', queuesRouter); // Dashboard de filas
+app.use('/api/audit', auditRouter); // Logs de auditoria
+app.use('/api/backup', backupRouter); // Backup automático
+app.use('/api/maintenance', maintenanceRouter); // Modo de manutenção
+
+// RECURSOS EM TEMPO REAL
+app.use('/api/realtime', realtimeRouter); // Gamificação, Busca, Presença, Chat
+
+// Inicializar WebSocket Server
+const io = initializeWebSocket(httpServer);
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+const port = typeof PORT === 'string' ? parseInt(PORT) : PORT;
+httpServer.listen(port, '0.0.0.0', async () => {
+  log.info({ 
+    component: 'server',
+    port: PORT,
+    env: process.env.NODE_ENV || 'development'
+  }, `Servidor iniciado na porta ${PORT}`);
+  
+  log.info({ 
+    component: 'server',
+    ip: '192.168.5.19',
+    port: PORT 
+  }, 'Acesse de outros dispositivos: http://192.168.5.19:' + PORT);
+  
+  if (workersInitialized) {
+    log.info({ component: 'workers' }, 'Bull Queue workers ativos');
+    log.info({ component: 'workers', queue: 'notifications', concurrency: 10 }, 'Notifications Worker: 10 jobs concorrentes');
+    log.info({ component: 'workers', queue: 'reports', concurrency: 3 }, 'Reports Worker: 3 jobs concorrentes');
+  }
+  
+  // Inicializar serviço de backup automático
+  try {
+    await backupService.initialize();
+    log.info({ component: 'backup' }, 'Serviço de backup inicializado');
+  } catch (error: any) {
+    log.error({ component: 'backup', err: error }, 'Erro ao inicializar serviço de backup');
+  }
+  
+  // RECURSOS EM TEMPO REAL
+  log.info({ component: 'realtime' }, '🚀 WebSocket: Notificações em tempo real ativo');
+  log.info({ component: 'realtime' }, '🎮 Gamificação: Pontos, badges e rankings');
+  log.info({ component: 'realtime' }, '👥 Presença Online: Who\'s online + last seen');
+  log.info({ component: 'realtime' }, '💬 Chat: Mensagens instantâneas');
+  log.info({ component: 'realtime' }, '🔍 Busca: Autocomplete em tempo real');
+  log.info({ component: 'realtime' }, '📊 Dashboard: Atualização ao vivo');
+
+  // FASE 4: Informações sobre novas funcionalidades
+  log.info({ component: 'fase4' }, '🔐 Segurança: Rate limiting ativo');
+  log.info({ component: 'fase4' }, '📊 Observabilidade: Logs estruturados (Pino)');
+  log.info({ component: 'fase4' }, '📈 Métricas: Prometheus em /api/metrics');
+  log.info({ component: 'fase4' }, '🏥 Health checks: /api/health, /api/health/live, /api/health/ready');
+  log.info({ component: 'fase4' }, '✅ Sistema pronto para produção');
 });
