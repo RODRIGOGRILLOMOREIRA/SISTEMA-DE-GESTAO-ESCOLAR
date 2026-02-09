@@ -1,7 +1,25 @@
 import axios from 'axios';
 
+// Detectar se está acessando via rede local ou localhost
+const getBaseURL = () => {
+  const hostname = window.location.hostname;
+  
+  // Se acessar via IP da rede (ex: 192.168.x.x), usar o mesmo IP para o backend
+  if (hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+    return `http://${hostname}:3333/api`;
+  }
+  
+  // Se acessar via localhost, usar localhost
+  return import.meta.env.VITE_API_URL || 'http://localhost:3333/api';
+};
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3333/api',
+  baseURL: getBaseURL(),
+  headers: {
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  }
 });
 
 // Interceptor para adicionar token e debug
@@ -25,10 +43,38 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     console.log('✅ Response:', response.config.url, response.data);
+    
+    // Fase 4: Capturar headers de rate limit
+    const rateLimitRemaining = response.headers['x-ratelimit-remaining'];
+    const rateLimitReset = response.headers['x-ratelimit-reset'];
+    
+    if (rateLimitRemaining !== undefined && rateLimitReset !== undefined) {
+      const remaining = parseInt(rateLimitRemaining);
+      const resetTime = parseInt(rateLimitReset) * 1000; // Converter para ms
+      
+      // Emitir evento se estiver próximo do limite (menos de 20 requisições restantes)
+      if (remaining < 20) {
+        window.dispatchEvent(new CustomEvent('rateLimitWarning', {
+          detail: { remaining, resetTime }
+        }));
+      }
+    }
+    
     return response;
   },
   (error) => {
     console.error('❌ Response Error:', error.response?.status, error.response?.data);
+    
+    // Fase 4: Detectar erro 429 (Too Many Requests)
+    if (error.response?.status === 429) {
+      const retryAfter = error.response.headers['retry-after'];
+      const resetTime = retryAfter ? Date.now() + (parseInt(retryAfter) * 1000) : Date.now() + 60000;
+      
+      window.dispatchEvent(new CustomEvent('rateLimitExceeded', {
+        detail: { resetTime }
+      }));
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -46,6 +92,8 @@ export interface Aluno {
   telefoneResp: string;
   turmaId?: string;
   turma?: Turma;
+  numeroMatricula?: string;
+  statusMatricula?: string;
 }
 
 export interface Professor {
@@ -55,16 +103,21 @@ export interface Professor {
   email: string;
   telefone: string;
   especialidade: string;
+  area?: string;
+  componentes?: string;
+  turmasVinculadas?: string;
 }
 
 export interface Turma {
   id: string;
   nome: string;
   ano: number;
+  anoLetivo: number;
   periodo: string;
   professorId?: string;
   professor?: Professor;
   alunos?: Aluno[];
+  disciplinas?: Disciplina[];
 }
 
 export interface Disciplina {
@@ -72,6 +125,17 @@ export interface Disciplina {
   nome: string;
   cargaHoraria: number;
   professorId?: string;
+  professor?: Professor;
+  turmas?: Turma[];
+}
+
+export interface DisciplinaTurma {
+  id: string;
+  disciplinaId: string;
+  turmaId: string;
+  professorId?: string;
+  disciplina?: Disciplina;
+  turma?: Turma;
   professor?: Professor;
 }
 
@@ -101,6 +165,7 @@ export interface Frequencia {
 export const alunosAPI = {
   getAll: () => api.get<Aluno[]>('/alunos'),
   getById: (id: string) => api.get<Aluno>(`/alunos/${id}`),
+  getByTurma: (turmaId: string) => api.get<Aluno[]>(`/alunos/turma/${turmaId}`),
   create: (data: Omit<Aluno, 'id'>) => api.post<Aluno>('/alunos', data),
   update: (id: string, data: Partial<Aluno>) => api.put<Aluno>(`/alunos/${id}`, data),
   delete: (id: string) => api.delete(`/alunos/${id}`),
@@ -130,9 +195,22 @@ export const disciplinasAPI = {
   delete: (id: string) => api.delete(`/disciplinas/${id}`),
 };
 
+export const disciplinaTurmaAPI = {
+  getAll: (params?: { turmaId?: string; disciplinaId?: string }) => 
+    api.get<DisciplinaTurma[]>('/disciplinas-turmas', { params }),
+  getById: (id: string) => api.get<DisciplinaTurma>(`/disciplinas-turmas/${id}`),
+  create: (data: { disciplinaId: string; turmaId: string; professorId?: string }) => 
+    api.post<DisciplinaTurma>('/disciplinas-turmas', data),
+  update: (id: string, data: { professorId?: string }) => 
+    api.put<DisciplinaTurma>(`/disciplinas-turmas/${id}`, data),
+  delete: (id: string) => api.delete(`/disciplinas-turmas/${id}`),
+};
+
 export const notasAPI = {
   getAll: () => api.get<Nota[]>('/notas'),
   getByAluno: (alunoId: string) => api.get<Nota[]>(`/notas/aluno/${alunoId}`),
+  getByTurma: (turmaId: string, anoLetivo?: number) => 
+    api.get<Nota[]>(`/notas/turma/${turmaId}`, { params: { anoLetivo } }),
   create: (data: Omit<Nota, 'id'>) => api.post<Nota>('/notas', data),
   update: (id: string, data: Partial<Nota>) => api.put<Nota>(`/notas/${id}`, data),
   delete: (id: string) => api.delete(`/notas/${id}`),
@@ -168,6 +246,7 @@ export const configuracoesAPI = {
 export interface LoginData {
   email: string;
   senha: string;
+  twoFactorToken?: string; // FASE 4: Token 2FA opcional
 }
 
 export interface RegisterData {
@@ -181,6 +260,7 @@ export interface Usuario {
   nome: string;
   email: string;
   tipo: string;
+  cargo?: string;
 }
 
 export interface AuthResponse {
@@ -197,4 +277,161 @@ export const authAPI = {
   resetPasswordDirect: (data: { email: string; novaSenha: string }) => 
     api.post('/auth/reset-password-direct', data),
   me: () => api.get<Usuario>('/auth/me'),
+};
+
+// Equipe Diretiva Types
+export interface EquipeDiretiva {
+  id: string;
+  nome: string;
+  cpf: string;
+  email: string;
+  telefone?: string;
+  cargo: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const equipeDiretivaAPI = {
+  getAll: () => api.get<EquipeDiretiva[]>('/equipe-diretiva'),
+  getById: (id: string) => api.get<EquipeDiretiva>(`/equipe-diretiva/${id}`),
+  create: (data: Omit<EquipeDiretiva, 'id' | 'createdAt' | 'updatedAt'>) => 
+    api.post<EquipeDiretiva>('/equipe-diretiva', data),
+  update: (id: string, data: Partial<EquipeDiretiva>) => 
+    api.put<EquipeDiretiva>(`/equipe-diretiva/${id}`, data),
+  delete: (id: string) => api.delete(`/equipe-diretiva/${id}`),
+};
+
+// Funcionários Types
+export interface Funcionario {
+  id: string;
+  nome: string;
+  cpf: string;
+  email: string;
+  telefone?: string;
+  cargo: string;
+  setor?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const funcionariosAPI = {
+  getAll: () => api.get<Funcionario[]>('/funcionarios'),
+  getById: (id: string) => api.get<Funcionario>(`/funcionarios/${id}`),
+  create: (data: Omit<Funcionario, 'id' | 'createdAt' | 'updatedAt'>) => 
+    api.post<Funcionario>('/funcionarios', data),
+  update: (id: string, data: Partial<Funcionario>) => 
+    api.put<Funcionario>(`/funcionarios/${id}`, data),
+  delete: (id: string) => api.delete(`/funcionarios/${id}`),
+};
+
+// Registro de Frequência
+export const registroFrequenciaAPI = {
+  getByTurmaAndPeriodo: (turmaId: string, dataInicio: string, dataFim: string) =>
+    api.get(`/registro-frequencia/turma/${turmaId}`, {
+      params: { dataInicio, dataFim }
+    }),
+};
+
+// Notificações Types
+export interface ConfiguracaoNotificacao {
+  id?: string;
+  usuarioId: number;
+  tipo: 'RESPONSAVEL' | 'PROFESSOR' | 'GESTAO';
+  canal: 'WHATSAPP' | 'TELEGRAM' | 'SMS';
+  telefone: string;
+  telegramChatId?: string;
+  notificarFrequencia: boolean;
+  notificarNotas: boolean;
+  notificarAlertas: boolean;
+  horarioInicio: string;
+  horarioFim: string;
+  diasSemana: string[];
+  resumoDiario: boolean;
+  frequenciaMensagens: 'TODAS' | 'ALERTAS' | 'RESUMO';
+  ativo: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface HistoricoNotificacao {
+  id: string;
+  usuarioId: number;
+  tipo: 'FREQUENCIA' | 'NOTA' | 'ALERTA' | 'CHAT' | 'RESUMO';
+  canal: 'WHATSAPP' | 'TELEGRAM' | 'SMS';
+  telefone: string;
+  mensagem: string;
+  status: 'PENDENTE' | 'ENVIADA' | 'ENTREGUE' | 'LIDA' | 'FALHA';
+  tentativas: number;
+  metadata?: any;
+  enviadoEm?: string;
+  entreguEm?: string;
+  lidoEm?: string;
+  erroMensagem?: string;
+  createdAt: string;
+}
+
+export interface TesteNotificacao {
+  telefone: string;
+  canal: 'WHATSAPP' | 'TELEGRAM' | 'SMS';
+  mensagem: string;
+}
+
+export interface StatusSistema {
+  notificacoesAtivas: boolean;
+  modoTeste: boolean;
+  canaisDisponiveis: {
+    whatsapp: boolean;
+    telegram: boolean;
+    sms: boolean;
+  };
+  iaDisponivel: boolean;
+  webhooksConfigurados: {
+    whatsapp: boolean;
+    telegram: boolean;
+  };
+  filaAtiva: boolean;
+  ultimaExecucao?: string;
+}
+
+export const notificacoesAPI = {
+  // Configuração
+  getConfig: (usuarioId: number) => 
+    api.get<{ success: boolean; configuracao: ConfiguracaoNotificacao }>(`/notificacoes/configuracao/${usuarioId}`),
+  
+  saveConfig: (data: ConfiguracaoNotificacao) => 
+    api.post<{ success: boolean; configuracao: ConfiguracaoNotificacao }>('/notificacoes/configuracao', data),
+  
+  deleteConfig: (usuarioId: number) => 
+    api.delete<{ success: boolean; message: string }>(`/notificacoes/configuracao/${usuarioId}`),
+  
+  // Teste
+  testNotification: (data: TesteNotificacao) => 
+    api.post<{ success: boolean; message: string; resultado: any }>('/notificacoes/teste', data),
+  
+  // Histórico
+  getHistorico: (params?: { 
+    usuarioId?: number; 
+    tipo?: string; 
+    canal?: string; 
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }) => 
+    api.get<{ success: boolean; total: number; historico: HistoricoNotificacao[] }>('/notificacoes/historico', { params }),
+  
+  // Estatísticas
+  getEstatisticas: (params: { 
+    dataInicio: string; 
+    dataFim: string; 
+    usuarioId?: number;
+  }) => 
+    api.get<{ success: boolean; periodo: any; estatisticas: any }>('/notificacoes/estatisticas', { params }),
+  
+  // Status do sistema
+  getStatus: () => 
+    api.get<{ success: boolean; status: StatusSistema }>('/notificacoes/status'),
+  
+  // Chat IA
+  chat: (data: { usuarioId: number; mensagem: string; contexto?: any }) => 
+    api.post<{ success: boolean; resposta: string; timestamp: string }>('/notificacoes/chat', data),
 };

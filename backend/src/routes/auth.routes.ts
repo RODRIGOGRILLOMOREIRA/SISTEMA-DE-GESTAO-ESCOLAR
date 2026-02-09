@@ -3,6 +3,11 @@ import { prisma } from '../lib/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import crypto from 'crypto';
+import { log, securityLogger } from '../lib/logger';
+import { recordLoginAttempt } from '../lib/metrics';
+import { authRateLimiter, registerAuthFailure, clearAuthFailures } from '../middlewares/rate-limit';
+import twoFactorService from '../services/two-factor.service';
 
 export const authRouter = Router();
 
@@ -12,6 +17,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'seu-secret-super-secreto-aqui-123'
 const loginSchema = z.object({
   email: z.string().email(),
   senha: z.string().min(6),
+  twoFactorToken: z.string().optional(), // Token 2FA (se habilitado)
 });
 
 const registerSchema = z.object({
@@ -19,6 +25,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   senha: z.string().min(6),
   tipo: z.enum(['admin', 'usuario']).optional(),
+  cargo: z.string().optional(),
 });
 
 const resetPasswordRequestSchema = z.object({
@@ -31,39 +38,120 @@ const resetPasswordSchema = z.object({
 });
 
 // POST /api/auth/login
-authRouter.post('/login', async (req, res) => {
+authRouter.post('/login', authRateLimiter, async (req, res) => {
+  const ip = req.ip || req.socket.remoteAddress;
+  
   try {
-    const { email, senha } = loginSchema.parse(req.body);
+    log.info({ event: 'login_attempt', email: req.body.email, ip }, 'Tentativa de login');
+    const { email, senha, twoFactorToken } = loginSchema.parse(req.body);
 
-    // Buscar usuário
-    const usuario = await prisma.usuario.findUnique({
-      where: { email },
-    });
+    // Buscar usuário (com fallback caso 2FA não esteja configurado)
+    let usuario;
+    try {
+      usuario = await prisma.usuarios.findUnique({
+        where: { email },
+        include: {
+          twoFactorAuth: true // Incluir informações de 2FA
+        }
+      });
+    } catch (relationError) {
+      // Fallback: se a relação 2FA não existir, buscar apenas o usuário
+      log.warn({ event: 'relation_error', err: relationError }, '2FA relation error, falling back');
+      usuario = await prisma.usuarios.findUnique({
+        where: { email }
+      });
+    }
+
+    log.debug({ event: 'user_lookup', email, found: !!usuario }, 'Busca de usuário');
 
     if (!usuario) {
+      securityLogger.warn({ event: 'login_failed', email, ip, reason: 'user_not_found' }, 'Usuário não encontrado');
+      await registerAuthFailure(ip);
+      recordLoginAttempt(false);
       return res.status(401).json({ error: 'Email ou senha inválidos' });
     }
 
     if (!usuario.ativo) {
+      securityLogger.warn({ event: 'login_failed', email, ip, reason: 'user_inactive' }, 'Usuário inativo');
+      await registerAuthFailure(ip);
+      recordLoginAttempt(false);
       return res.status(401).json({ error: 'Usuário inativo' });
     }
 
     // Verificar senha
+    log.debug({ event: 'password_check', email }, 'Verificando senha');
     const senhaValida = await bcrypt.compare(senha, usuario.senha);
+    
     if (!senhaValida) {
+      securityLogger.warn({ event: 'login_failed', email, ip, reason: 'invalid_password' }, 'Senha inválida');
+      await registerAuthFailure(ip);
+      recordLoginAttempt(false);
       return res.status(401).json({ error: 'Email ou senha inválidos' });
     }
+
+    // FASE 4: Verificar 2FA se habilitado (com tratamento de erro robusto)
+    try {
+      if (usuario.twoFactorAuth?.enabled) {
+        if (!twoFactorToken) {
+          // Senha correta, mas precisa de 2FA
+          log.info({ event: 'login_2fa_required', userId: usuario.id, email }, 'Login requer 2FA');
+          return res.status(200).json({ 
+            requires2FA: true,
+            message: 'Digite o código do seu aplicativo autenticador' 
+          });
+        }
+
+        // Verificar token 2FA
+        const tokenValido = await twoFactorService.verifyToken(usuario.id, twoFactorToken);
+        
+        if (!tokenValido) {
+          securityLogger.warn({ 
+            event: 'login_2fa_failed', 
+            userId: usuario.id, 
+            email, 
+            ip 
+          }, 'Token 2FA inválido');
+          await registerAuthFailure(ip);
+          recordLoginAttempt(false);
+          return res.status(401).json({ error: 'Código 2FA inválido' });
+        }
+
+        securityLogger.info({ 
+          event: 'login_2fa_success', 
+          userId: usuario.id, 
+          email, 
+          ip 
+        }, '2FA verificado com sucesso');
+      }
+    } catch (twoFactorError: any) {
+      // Se houver erro no 2FA (serviço não disponível, etc), apenas loga e continua
+      log.warn({ event: '2fa_error', err: twoFactorError }, 'Erro no 2FA, continuando sem verificação');
+    }
+
+    // Limpar falhas de autenticação após login bem-sucedido
+    await clearAuthFailures(ip);
+    recordLoginAttempt(true);
 
     // Gerar token JWT
     const token = jwt.sign(
       { 
+        userId: usuario.id, // FASE 4: Padronizar como userId
         id: usuario.id, 
         email: usuario.email,
-        tipo: usuario.tipo 
+        tipo: usuario.tipo,
+        cargo: usuario.cargo
       },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
+
+    securityLogger.info({ 
+      event: 'login_success', 
+      userId: usuario.id, 
+      email, 
+      ip,
+      userAgent: req.headers['user-agent']
+    }, 'Login realizado com sucesso');
 
     // Retornar dados do usuário (sem a senha)
     res.json({
@@ -73,13 +161,15 @@ authRouter.post('/login', async (req, res) => {
         nome: usuario.nome,
         email: usuario.email,
         tipo: usuario.tipo,
+        cargo: usuario.cargo,
       },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      log.warn({ event: 'validation_error', errors: error.errors }, 'Erro de validação no login');
       return res.status(400).json({ error: error.errors });
     }
-    console.error('Erro no login:', error);
+    log.error({ err: error, event: 'login_error' }, 'Erro no processo de login');
     res.status(500).json({ error: 'Erro ao fazer login' });
   }
 });
@@ -90,7 +180,7 @@ authRouter.post('/register', async (req, res) => {
     const data = registerSchema.parse(req.body);
 
     // Verificar se o email já existe
-    const usuarioExistente = await prisma.usuario.findUnique({
+    const usuarioExistente = await prisma.usuarios.findUnique({
       where: { email: data.email },
     });
 
@@ -102,12 +192,15 @@ authRouter.post('/register', async (req, res) => {
     const senhaHash = await bcrypt.hash(data.senha, 10);
 
     // Criar usuário
-    const usuario = await prisma.usuario.create({
+    const usuario = await prisma.usuarios.create({
       data: {
+        id: crypto.randomUUID(),
         nome: data.nome,
         email: data.email,
         senha: senhaHash,
         tipo: 'USUARIO',
+        cargo: data.cargo || null,
+        updatedAt: new Date(),
       },
     });
 
@@ -116,7 +209,8 @@ authRouter.post('/register', async (req, res) => {
       { 
         id: usuario.id, 
         email: usuario.email,
-        tipo: usuario.tipo 
+        tipo: usuario.tipo,
+        cargo: usuario.cargo
       },
       JWT_SECRET,
       { expiresIn: '7d' }
@@ -129,6 +223,7 @@ authRouter.post('/register', async (req, res) => {
         nome: usuario.nome,
         email: usuario.email,
         tipo: usuario.tipo,
+        cargo: usuario.cargo,
       },
     });
   } catch (error) {
@@ -145,7 +240,7 @@ authRouter.post('/forgot-password', async (req, res) => {
   try {
     const { email } = resetPasswordRequestSchema.parse(req.body);
 
-    const usuario = await prisma.usuario.findUnique({
+    const usuario = await prisma.usuarios.findUnique({
       where: { email },
     });
 
@@ -164,7 +259,7 @@ authRouter.post('/forgot-password', async (req, res) => {
     const resetTokenExpira = new Date(Date.now() + 3600000); // 1 hora
 
     // Salvar token no banco
-    await prisma.usuario.update({
+    await prisma.usuarios.update({
       where: { id: usuario.id },
       data: {
         resetToken,
@@ -199,7 +294,7 @@ authRouter.post('/reset-password', async (req, res) => {
     }
 
     // Buscar usuário
-    const usuario = await prisma.usuario.findUnique({
+    const usuario = await prisma.usuarios.findUnique({
       where: { id: decoded.id },
     });
 
@@ -213,7 +308,7 @@ authRouter.post('/reset-password', async (req, res) => {
 
     // Atualizar senha
     const senhaHash = await bcrypt.hash(novaSenha, 10);
-    await prisma.usuario.update({
+    await prisma.usuarios.update({
       where: { id: usuario.id },
       data: {
         senha: senhaHash,
@@ -246,7 +341,7 @@ authRouter.post('/reset-password-direct', async (req, res) => {
     }
 
     // Buscar usuário pelo email
-    const usuario = await prisma.usuario.findUnique({
+    const usuario = await prisma.usuarios.findUnique({
       where: { email },
     });
 
@@ -258,7 +353,7 @@ authRouter.post('/reset-password-direct', async (req, res) => {
     const senhaHash = await bcrypt.hash(novaSenha, 10);
 
     // Atualizar senha
-    await prisma.usuario.update({
+    await prisma.usuarios.update({
       where: { id: usuario.id },
       data: {
         senha: senhaHash,
@@ -283,7 +378,7 @@ authRouter.get('/me', async (req, res) => {
 
     const decoded: any = jwt.verify(token, JWT_SECRET);
     
-    const usuario = await prisma.usuario.findUnique({
+    const usuario = await prisma.usuarios.findUnique({
       where: { id: decoded.id },
       select: {
         id: true,
@@ -303,3 +398,5 @@ authRouter.get('/me', async (req, res) => {
     res.status(401).json({ error: 'Token inválido' });
   }
 });
+
+
