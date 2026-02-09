@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Build output
+dist/
+
+# Uploads (runtime)
+uploads/*
+!uploads/.gitkeep
+
+# Backups (database dumps)
+backups/*
+!backups/.gitkeep
+
+# Debug/Dev files
+*.sql
+check-*.ts
+check-*.js
+fix-*.ts
+fix-*.js
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ⚠️ Backup sensível de chaves de segurança - NUNCA COMMITAR!
+SECURITY_KEYS_BACKUP.txt

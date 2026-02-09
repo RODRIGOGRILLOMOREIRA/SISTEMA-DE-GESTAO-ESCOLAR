@@ -1,0 +1,22 @@
+# Arquivos e pastas que o VS Code deve ignorar completamente
+node_modules/
+**/node_modules/**
+dist/
+build/
+**/.git/objects/**
+**/.git/subtree-cache/**
+uploads/
+backups/
+temp/
+.cache/
+*.log
+*.bak
+*.tmp
+*.temp
+.env
+.env.*
+dev-dist/
+prisma/migrations/
+**/*.map
+**/*.min.js
+**/*.bundle.js
