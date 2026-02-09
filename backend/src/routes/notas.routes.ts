@@ -1,22 +1,362 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
+import crypto from 'crypto';
+import { audit } from '../middlewares/audit';
+import eventsService from '../services/events.service';
 
 export const notasRouter = Router();
 
 const notaSchema = z.object({
   alunoId: z.string(),
   disciplinaId: z.string(),
-  nota: z.number().min(0).max(10),
-  bimestre: z.number().int().min(1).max(4),
-  observacao: z.string().optional(),
+  trimestre: z.number().int().min(1).max(3),
+  anoLetivo: z.number().int().optional().default(new Date().getFullYear()),
+  avaliacao01: z.number().min(0).max(10).nullable().optional(),
+  avaliacao02: z.number().min(0).max(10).nullable().optional(),
+  avaliacao03: z.number().min(0).max(10).nullable().optional(),
+  avaliacaoEAC: z.number().min(0).max(10).nullable().optional(),
+  observacao: z.string().optional().nullable(),
+});
+
+// Função para calcular a média do Momento 1
+function calcularMediaM1(av1: number | null, av2: number | null, av3: number | null): number | null {
+  if (av1 !== null && av2 !== null && av3 !== null) {
+    return parseFloat((av1 + av2 + av3).toFixed(2));
+  }
+  return null;
+}
+
+// Função para calcular a nota final do trimestre (maior entre M1 e EAC)
+function calcularNotaFinalTrimestre(mediaM1: number | null, avaliacaoEAC: number | null): number | null {
+  if (mediaM1 !== null && avaliacaoEAC !== null) {
+    return Math.max(mediaM1, avaliacaoEAC);
+  }
+  if (mediaM1 !== null) return mediaM1;
+  if (avaliacaoEAC !== null) return avaliacaoEAC;
+  return null;
+}
+
+// Função para calcular a média final anual
+// Lógica proporcional: usa apenas os trimestres lançados
+function calcularMediaFinal(t1: number | null | undefined, t2: number | null | undefined, t3: number | null | undefined): number | null {
+  // Se todos os 3 trimestres foram lançados: Média Final
+  if (t1 !== null && t1 !== undefined && t2 !== null && t2 !== undefined && t3 !== null && t3 !== undefined) {
+    const mediaFinal = (t1 * 3 + t2 * 3 + t3 * 4) / 10
+    return parseFloat(mediaFinal.toFixed(2))
+  }
+  
+  // Se T1 e T2 foram lançados: Média Parcial proporcional
+  if (t1 !== null && t1 !== undefined && t2 !== null && t2 !== undefined) {
+    const mediaParcial = (t1 * 3 + t2 * 3) / 6
+    return parseFloat(mediaParcial.toFixed(2))
+  }
+  
+  // Se apenas T1 foi lançado: retorna T1
+  if (t1 !== null && t1 !== undefined) {
+    return parseFloat(t1.toFixed(2))
+  }
+  
+  return null
+}
+
+// Função para determinar status de aprovação
+function determinarStatusAprovacao(media: number | null): { aprovado: boolean; status: string; cor: string } {
+  if (media === null) {
+    return { aprovado: false, status: 'Pendente', cor: 'gray' };
+  }
+  
+  if (media >= 8.0) {
+    return { aprovado: true, status: 'Aprovado Excelente', cor: 'green-dark' };
+  } else if (media >= 6.0) {
+    return { aprovado: true, status: 'Aprovado - Pode Evoluir', cor: 'green-light' };
+  } else if (media >= 4.0) {
+    return { aprovado: false, status: 'Reprovado - Pode Evoluir', cor: 'yellow' };
+  } else {
+    return { aprovado: false, status: 'Reprovado - Intervenção Urgente', cor: 'red' };
+  }
+}
+
+// Função para atualizar a nota final do aluno na disciplina
+async function atualizarNotaFinal(alunoId: string, disciplinaId: string, anoLetivo: number = new Date().getFullYear()) {
+  // Buscar todas as notas dos 3 trimestres para o ano letivo específico
+  const notas = await prisma.notas.findMany({
+    where: {
+      alunoId,
+      disciplinaId,
+      anoLetivo
+    },
+    orderBy: { trimestre: 'asc' }
+  });
+
+  const notaTri1 = notas.find(n => n.trimestre === 1);
+  const notaTri2 = notas.find(n => n.trimestre === 2);
+  const notaTri3 = notas.find(n => n.trimestre === 3);
+
+  const t1 = notaTri1?.notaFinalTrimestre;
+  const t2 = notaTri2?.notaFinalTrimestre;
+  const t3 = notaTri3?.notaFinalTrimestre;
+
+  const mediaFinal = calcularMediaFinal(t1, t2, t3);
+  const statusInfo = determinarStatusAprovacao(mediaFinal);
+  const aprovado = statusInfo.aprovado;
+
+  // Upsert na tabela NotaFinal
+  await prisma.notas_finais.upsert({
+    where: {
+      alunoId_disciplinaId_anoLetivo: {
+        alunoId,
+        disciplinaId,
+        anoLetivo
+      }
+    },
+    update: {
+      trimestre1: t1,
+      trimestre2: t2,
+      trimestre3: t3,
+      mediaFinal,
+      aprovado,
+      updatedAt: new Date()
+    },
+    create: {
+      id: crypto.randomUUID(),
+      alunoId,
+      disciplinaId,
+      anoLetivo,
+      trimestre1: t1,
+      trimestre2: t2,
+      trimestre3: t3,
+      mediaFinal,
+      aprovado,
+      updatedAt: new Date(),
+    },
+  });
+
+  return { trimestre1: t1, trimestre2: t2, trimestre3: t3, mediaFinal, aprovado };
+}
+
+// GET todas as notas de um aluno em uma disciplina
+notasRouter.get('/aluno/:alunoId/disciplina/:disciplinaId', async (req, res) => {
+  try {
+    const { alunoId, disciplinaId } = req.params;
+    const anoLetivo = req.query.anoLetivo ? parseInt(req.query.anoLetivo as string) : new Date().getFullYear();
+
+    const notas = await prisma.notas.findMany({
+      where: { 
+        alunoId, 
+        disciplinaId,
+        anoLetivo 
+      },
+      orderBy: { trimestre: 'asc' }
+    });
+
+    const notaFinal = await prisma.notas_finais.findUnique({
+      where: {
+        alunoId_disciplinaId_anoLetivo: { 
+          alunoId, 
+          disciplinaId,
+          anoLetivo 
+        }
+      }
+    });
+
+    res.json({ notas, notaFinal });
+  } catch (error) {
+    console.error('Erro ao buscar notas:', error);
+    res.status(500).json({ error: 'Erro ao buscar notas' });
+  }
+});
+
+// GET nota final de um aluno
+notasRouter.get('/final/aluno/:alunoId', async (req, res) => {
+  try {
+    const notasFinais = await prisma.notas_finais.findMany({
+      where: { alunoId: req.params.alunoId }
+    });
+    res.json(notasFinais);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar notas finais' });
+  }
+});
+
+// GET todas as notas finais de um aluno (para boletim)
+notasRouter.get('/aluno/:alunoId', async (req, res) => {
+  try {
+    const { alunoId } = req.params;
+    const anoLetivo = req.query.anoLetivo ? parseInt(req.query.anoLetivo as string) : new Date().getFullYear();
+    
+    console.log('📊 GET /notas/aluno/:alunoId', { alunoId, anoLetivo });
+
+    // Buscar todas as notas finais do aluno para o ano letivo específico
+    const notasFinais = await prisma.notas_finais.findMany({
+      where: {
+        alunoId,
+        anoLetivo
+      }
+    });
+
+    console.log('✅ Notas finais encontradas:', notasFinais.length);
+
+    // Buscar disciplinas manualmente
+    const disciplinasIds = [...new Set(notasFinais.map(nf => nf.disciplinaId))];
+    const disciplinas = await prisma.disciplinas.findMany({
+      where: {
+        id: { in: disciplinasIds }
+      }
+    });
+
+    // Juntar dados
+    const notasComDisciplinas = notasFinais.map(nf => {
+      const disciplina = disciplinas.find(d => d.id === nf.disciplinaId);
+      return {
+        ...nf,
+        disciplina: disciplina || null
+      };
+    });
+
+    console.log('✅ Dados com disciplinas:', notasComDisciplinas.length);
+
+    res.json(notasComDisciplinas);
+  } catch (error) {
+    console.error('❌ Erro ao buscar notas do aluno:', error);
+    res.status(500).json({ error: 'Erro ao buscar notas do aluno' });
+  }
+});
+
+// POST/PUT salvar ou atualizar nota (Upsert)
+notasRouter.post('/salvar', audit.create('NOTA'), async (req, res) => {
+  try {
+    const data = notaSchema.parse(req.body);
+    const anoLetivo = data.anoLetivo || new Date().getFullYear();
+    
+    // Calcular média M1
+    const mediaM1 = calcularMediaM1(
+      data.avaliacao01 ?? null,
+      data.avaliacao02 ?? null,
+      data.avaliacao03 ?? null
+    );
+
+    // Calcular nota final do trimestre
+    const notaFinalTrimestre = calcularNotaFinalTrimestre(
+      mediaM1,
+      data.avaliacaoEAC ?? null
+    );
+
+    // Upsert na tabela Nota
+    const nota = await prisma.notas.upsert({
+      where: {
+        alunoId_disciplinaId_trimestre_anoLetivo: {
+          alunoId: data.alunoId,
+          disciplinaId: data.disciplinaId,
+          trimestre: data.trimestre,
+          anoLetivo
+        }
+      },
+      update: {
+        avaliacao01: data.avaliacao01 ?? null,
+        avaliacao02: data.avaliacao02 ?? null,
+        avaliacao03: data.avaliacao03 ?? null,
+        mediaM1,
+        avaliacaoEAC: data.avaliacaoEAC ?? null,
+        notaFinalTrimestre,
+        observacao: data.observacao ?? null,
+        updatedAt: new Date()
+      },
+      create: {
+        id: crypto.randomUUID(),
+        alunoId: data.alunoId,
+        disciplinaId: data.disciplinaId,
+        trimestre: data.trimestre,
+        anoLetivo,
+        avaliacao01: data.avaliacao01 ?? null,
+        avaliacao02: data.avaliacao02 ?? null,
+        avaliacao03: data.avaliacao03 ?? null,
+        mediaM1,
+        avaliacaoEAC: data.avaliacaoEAC ?? null,
+        notaFinalTrimestre,
+        observacao: data.observacao ?? null,
+        updatedAt: new Date(),
+      },
+      include: { alunos: true, disciplinas: true
+      }
+    });
+
+    // Atualizar nota final anual
+    const notaFinal = await atualizarNotaFinal(data.alunoId, data.disciplinaId, anoLetivo);
+
+    // 🔔 DISPARAR EVENTO DE NOTIFICAÇÃO
+    try {
+      // Buscar dados completos para notificação
+      const aluno = await prisma.alunos.findUnique({ where: { id: data.alunoId } });
+      const disciplina = await prisma.disciplinas.findUnique({
+        where: { id: data.disciplinaId },
+        include: { professores: true }
+      });
+      const turma = aluno?.turmaId ? await prisma.turmas.findUnique({ where: { id: aluno.turmaId } }) : null;
+
+      // Determinar qual avaliação foi lançada
+      let tipoAvaliacao = 'Avaliação';
+      let notaLancada = 0;
+      let peso = undefined;
+      
+      if (data.avaliacaoEAC !== null && data.avaliacaoEAC !== undefined) {
+        tipoAvaliacao = 'Avaliação EAC';
+        notaLancada = data.avaliacaoEAC;
+      } else if (data.avaliacao03 !== null && data.avaliacao03 !== undefined) {
+        tipoAvaliacao = 'Avaliação 03';
+        notaLancada = data.avaliacao03;
+      } else if (data.avaliacao02 !== null && data.avaliacao02 !== undefined) {
+        tipoAvaliacao = 'Avaliação 02';
+        notaLancada = data.avaliacao02;
+      } else if (data.avaliacao01 !== null && data.avaliacao01 !== undefined) {
+        tipoAvaliacao = 'Avaliação 01';
+        notaLancada = data.avaliacao01;
+      }
+
+      if (aluno && disciplina) {
+        eventsService.emitirNotaLancada({
+          alunoId: aluno.id,
+          alunoNome: aluno.nome,
+          disciplinaId: disciplina.id,
+          disciplinaNome: disciplina.nome,
+          trimestre: data.trimestre,
+          tipoAvaliacao,
+          nota: notaLancada,
+          peso,
+          mediaAtual: notaFinal?.mediaFinal || undefined,
+          mediaMinima: 6.0,
+          anoLetivo,
+          professorId: disciplina.professorId || '',
+          professorNome: disciplina.professores?.nome || 'Professor',
+          turmaId: turma?.id || '',
+          turmaNome: turma?.nome || 'Turma'
+        });
+      }
+    } catch (notifError) {
+      console.error('⚠️ Erro ao disparar evento de nota:', notifError);
+      // Não falha a requisição se notificação falhar
+    }
+
+    res.json({ nota, notaFinal });
+  } catch (error) {
+    console.error('Erro ao salvar nota:', error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Dados inválidos', details: error.errors });
+    }
+    res.status(500).json({ error: 'Erro ao salvar nota' });
+  }
 });
 
 // GET todas as notas
 notasRouter.get('/', async (req, res) => {
   try {
-    const notas = await prisma.nota.findMany({
-      include: { aluno: true, disciplina: true }
+    const notas = await prisma.notas.findMany({
+      include: { alunos: true, disciplinas: true },
+      orderBy: [
+        { alunoId: 'asc' },
+        { disciplinaId: 'asc' },
+        { trimestre: 'asc' }
+      ]
     });
     res.json(notas);
   } catch (error) {
@@ -24,62 +364,118 @@ notasRouter.get('/', async (req, res) => {
   }
 });
 
-// GET notas de um aluno
-notasRouter.get('/aluno/:alunoId', async (req, res) => {
+// GET /api/notas/turma/:turmaId - Buscar notas de uma turma
+notasRouter.get('/turma/:turmaId', async (req, res) => {
   try {
-    const notas = await prisma.nota.findMany({
-      where: { alunoId: req.params.alunoId },
-      include: { disciplina: true }
-    });
-    res.json(notas);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao buscar notas do aluno' });
-  }
-});
+    const { turmaId } = req.params;
+    const anoLetivo = req.query.anoLetivo ? parseInt(req.query.anoLetivo as string) : new Date().getFullYear();
 
-// POST criar nota
-notasRouter.post('/', async (req, res) => {
-  try {
-    const data = notaSchema.parse(req.body);
-    
-    const nota = await prisma.nota.create({
-      data
+    // Buscar alunos da turma
+    const alunos = await prisma.alunos.findMany({
+      where: { turmaId }
     });
-    
-    res.status(201).json(nota);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+
+    if (alunos.length === 0) {
+      return res.json([]);
     }
-    res.status(500).json({ error: 'Erro ao criar nota' });
-  }
-});
 
-// PUT atualizar nota
-notasRouter.put('/:id', async (req, res) => {
-  try {
-    const data = notaSchema.partial().parse(req.body);
-    
-    const nota = await prisma.nota.update({
-      where: { id: req.params.id },
-      data
+    const alunoIds = alunos.map(a => a.id);
+
+    // Buscar todas as notas dos alunos da turma para o ano letivo específico
+    const notas = await prisma.notas.findMany({
+      where: {
+        alunoId: {
+          in: alunoIds
+        },
+        anoLetivo
+      },
+      include: {
+        alunos: true,
+        disciplinas: true
+      },
+      orderBy: [
+        { alunoId: 'asc' },
+        { disciplinaId: 'asc' },
+        { trimestre: 'asc' }
+      ]
     });
-    
-    res.json(nota);
+
+    // Transformar para incluir o período no formato esperado pelo frontend
+    const notasFormatadas = notas.map(nota => ({
+      ...nota,
+      periodo: nota.trimestre === 1 ? 'trim1' : nota.trimestre === 2 ? 'trim2' : nota.trimestre === 3 ? 'trim3' : 'final',
+      valor: nota.notaFinalTrimestre || 0
+    }));
+
+    // Adicionar notas finais do ano letivo específico
+    const notasFinaisDB = await prisma.notas_finais.findMany({
+      where: {
+        alunoId: {
+          in: alunoIds
+        },
+        anoLetivo
+      }
+    });
+
+    const notasFinaisFormatadas = notasFinaisDB.map(nf => {
+      const aluno = alunos.find(a => a.id === nf.alunoId);
+      return {
+        id: nf.id,
+        alunoId: nf.alunoId,
+        disciplinaId: nf.disciplinaId,
+        periodo: 'final',
+        valor: nf.mediaFinal || 0,
+        alunos: aluno
+      };
+    });
+
+    const todasNotas = [...notasFormatadas, ...notasFinaisFormatadas];
+
+    console.log('📊 GET /notas/turma/:turmaId', {
+      turmaId,
+      anoLetivo,
+      alunosNaTurma: alunos.length,
+      notasEncontradas: notas.length,
+      notasFinais: notasFinaisDB.length,
+      totalNotas: todasNotas.length,
+      amostra: todasNotas.length > 0 ? {
+        alunoId: todasNotas[0].alunoId,
+        alunoNome: todasNotas[0].alunos?.nome,
+        disciplinaId: todasNotas[0].disciplinaId,
+        periodo: todasNotas[0].periodo,
+        valor: todasNotas[0].valor
+      } : null
+    });
+
+    res.json(todasNotas);
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao atualizar nota' });
+    console.error('Erro ao buscar notas da turma:', error);
+    res.status(500).json({ error: 'Erro ao buscar notas da turma' });
   }
 });
 
 // DELETE nota
-notasRouter.delete('/:id', async (req, res) => {
+notasRouter.delete('/:id', audit.delete('NOTA'), async (req, res) => {
   try {
-    await prisma.nota.delete({
+    const nota = await prisma.notas.findUnique({
       where: { id: req.params.id }
     });
-    
+
+    if (!nota) {
+      return res.status(404).json({ error: 'Nota não encontrada' });
+    }
+
+    await prisma.notas.delete({
+      where: { id: req.params.id }
+    });
+
+    // Atualizar nota final após deletar
+    await atualizarNotaFinal(nota.alunoId, nota.disciplinaId);
+
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Erro ao deletar nota' });
   }
 });
+
+
