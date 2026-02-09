@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 export const authRouter = Router();
 
@@ -19,6 +20,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   senha: z.string().min(6),
   tipo: z.enum(['admin', 'usuario']).optional(),
+  cargo: z.string().optional(),
 });
 
 const resetPasswordRequestSchema = z.object({
@@ -33,24 +35,33 @@ const resetPasswordSchema = z.object({
 // POST /api/auth/login
 authRouter.post('/login', async (req, res) => {
   try {
+    console.log('📥 Login request:', { email: req.body.email, senha: '***' });
     const { email, senha } = loginSchema.parse(req.body);
 
     // Buscar usuário
-    const usuario = await prisma.usuario.findUnique({
+    const usuario = await prisma.usuarios.findUnique({
       where: { email },
     });
 
+    console.log('👤 Usuário encontrado:', usuario ? 'Sim' : 'Não');
+
     if (!usuario) {
+      console.log('❌ Usuário não encontrado');
       return res.status(401).json({ error: 'Email ou senha inválidos' });
     }
 
     if (!usuario.ativo) {
+      console.log('❌ Usuário inativo');
       return res.status(401).json({ error: 'Usuário inativo' });
     }
 
     // Verificar senha
+    console.log('🔐 Verificando senha...');
     const senhaValida = await bcrypt.compare(senha, usuario.senha);
+    console.log('✓ Senha válida:', senhaValida);
+    
     if (!senhaValida) {
+      console.log('❌ Senha inválida');
       return res.status(401).json({ error: 'Email ou senha inválidos' });
     }
 
@@ -59,7 +70,8 @@ authRouter.post('/login', async (req, res) => {
       { 
         id: usuario.id, 
         email: usuario.email,
-        tipo: usuario.tipo 
+        tipo: usuario.tipo,
+        cargo: usuario.cargo
       },
       JWT_SECRET,
       { expiresIn: '7d' }
@@ -73,6 +85,7 @@ authRouter.post('/login', async (req, res) => {
         nome: usuario.nome,
         email: usuario.email,
         tipo: usuario.tipo,
+        cargo: usuario.cargo,
       },
     });
   } catch (error) {
@@ -90,7 +103,7 @@ authRouter.post('/register', async (req, res) => {
     const data = registerSchema.parse(req.body);
 
     // Verificar se o email já existe
-    const usuarioExistente = await prisma.usuario.findUnique({
+    const usuarioExistente = await prisma.usuarios.findUnique({
       where: { email: data.email },
     });
 
@@ -102,12 +115,15 @@ authRouter.post('/register', async (req, res) => {
     const senhaHash = await bcrypt.hash(data.senha, 10);
 
     // Criar usuário
-    const usuario = await prisma.usuario.create({
+    const usuario = await prisma.usuarios.create({
       data: {
+        id: crypto.randomUUID(),
         nome: data.nome,
         email: data.email,
         senha: senhaHash,
         tipo: 'USUARIO',
+        cargo: data.cargo || null,
+        updatedAt: new Date(),
       },
     });
 
@@ -116,7 +132,8 @@ authRouter.post('/register', async (req, res) => {
       { 
         id: usuario.id, 
         email: usuario.email,
-        tipo: usuario.tipo 
+        tipo: usuario.tipo,
+        cargo: usuario.cargo
       },
       JWT_SECRET,
       { expiresIn: '7d' }
@@ -129,6 +146,7 @@ authRouter.post('/register', async (req, res) => {
         nome: usuario.nome,
         email: usuario.email,
         tipo: usuario.tipo,
+        cargo: usuario.cargo,
       },
     });
   } catch (error) {
@@ -145,7 +163,7 @@ authRouter.post('/forgot-password', async (req, res) => {
   try {
     const { email } = resetPasswordRequestSchema.parse(req.body);
 
-    const usuario = await prisma.usuario.findUnique({
+    const usuario = await prisma.usuarios.findUnique({
       where: { email },
     });
 
@@ -164,7 +182,7 @@ authRouter.post('/forgot-password', async (req, res) => {
     const resetTokenExpira = new Date(Date.now() + 3600000); // 1 hora
 
     // Salvar token no banco
-    await prisma.usuario.update({
+    await prisma.usuarios.update({
       where: { id: usuario.id },
       data: {
         resetToken,
@@ -199,7 +217,7 @@ authRouter.post('/reset-password', async (req, res) => {
     }
 
     // Buscar usuário
-    const usuario = await prisma.usuario.findUnique({
+    const usuario = await prisma.usuarios.findUnique({
       where: { id: decoded.id },
     });
 
@@ -213,7 +231,7 @@ authRouter.post('/reset-password', async (req, res) => {
 
     // Atualizar senha
     const senhaHash = await bcrypt.hash(novaSenha, 10);
-    await prisma.usuario.update({
+    await prisma.usuarios.update({
       where: { id: usuario.id },
       data: {
         senha: senhaHash,
@@ -246,7 +264,7 @@ authRouter.post('/reset-password-direct', async (req, res) => {
     }
 
     // Buscar usuário pelo email
-    const usuario = await prisma.usuario.findUnique({
+    const usuario = await prisma.usuarios.findUnique({
       where: { email },
     });
 
@@ -258,7 +276,7 @@ authRouter.post('/reset-password-direct', async (req, res) => {
     const senhaHash = await bcrypt.hash(novaSenha, 10);
 
     // Atualizar senha
-    await prisma.usuario.update({
+    await prisma.usuarios.update({
       where: { id: usuario.id },
       data: {
         senha: senhaHash,
@@ -283,7 +301,7 @@ authRouter.get('/me', async (req, res) => {
 
     const decoded: any = jwt.verify(token, JWT_SECRET);
     
-    const usuario = await prisma.usuario.findUnique({
+    const usuario = await prisma.usuarios.findUnique({
       where: { id: decoded.id },
       select: {
         id: true,
@@ -303,3 +321,5 @@ authRouter.get('/me', async (req, res) => {
     res.status(401).json({ error: 'Token inválido' });
   }
 });
+
+

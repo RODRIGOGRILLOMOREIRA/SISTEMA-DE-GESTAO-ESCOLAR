@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Save, Upload, Moon, Sun } from 'lucide-react'
+import { Save, Upload, Moon, Sun, Calendar } from 'lucide-react'
 import { configuracoesAPI, Configuracao } from '../lib/api'
 import { useTheme } from '../contexts/ThemeContext'
+import { useAnoLetivo } from '../contexts/AnoLetivoContext'
+import SeletorAnoLetivo from '../components/SeletorAnoLetivo'
+import './ModernPages.css'
 import './Configuracoes.css'
 
 const Configuracoes = () => {
   const { theme, setTheme } = useTheme()
+  const { anoLetivo, setAnoLetivo } = useAnoLetivo()
   const [config, setConfig] = useState<Configuracao>({
     id: '',
     nomeEscola: '',
@@ -85,6 +89,9 @@ const Configuracoes = () => {
       // Recarregar a página para aplicar mudanças
       await loadConfig()
       
+      // Disparar evento para atualizar o Layout
+      window.dispatchEvent(new Event('configUpdated'))
+      
     } catch (error: any) {
       console.error('❌ Erro ao salvar configurações:', error)
       console.error('Detalhes do erro:', error.response?.data)
@@ -112,6 +119,32 @@ const Configuracoes = () => {
       <div className="config-container">
         <form onSubmit={handleSubmit} className="config-form">
           
+          {/* Ano Letivo Ativo - Primeira Seção */}
+          <div className="config-section ano-letivo-section-config">
+            <h2>
+              <Calendar size={24} />
+              Ano Letivo Ativo
+            </h2>
+            <p className="section-description">
+              O ano letivo selecionado será aplicado em todo o sistema (Notas, Frequências, Boletim, Relatórios, etc.)
+            </p>
+            <div className="ano-letivo-selector-wrapper">
+              <SeletorAnoLetivo
+                anoSelecionado={anoLetivo}
+                onAnoChange={setAnoLetivo}
+              />
+            </div>
+            <div className="ano-letivo-info">
+              <span className="info-badge">
+                📌 Ano Letivo Atual: <strong>{anoLetivo}</strong>
+              </span>
+              <p className="info-text">
+                Todas as páginas do sistema utilizarão este ano letivo automaticamente.
+                Para visualizar ou editar dados de outros anos, altere aqui.
+              </p>
+            </div>
+          </div>
+
           {/* Logo Section */}
           <div className="config-section">
             <h2>Logo da Escola</h2>

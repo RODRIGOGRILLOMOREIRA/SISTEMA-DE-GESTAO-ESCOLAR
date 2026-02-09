@@ -4,10 +4,39 @@
   box-sizing: border-box;
 }
 
+/* Default Variables */
+:root {
+  --bg-primary: #cbd5e1;
+  --bg-secondary: #e2e8f0;
+  --card-bg: #ffffff;
+  --input-bg: #ffffff;
+  --background-color: #e2e8f0;
+  
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-light: #dbeafe;
+  
+  --secondary-bg: #f1f5f9;
+  
+  --success-color: #10b981;
+  --success-hover: #059669;
+  
+  --border-color: #94a3b8;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  
+  --sidebar-bg: #1e293b;
+  --sidebar-text: #cbd5e1;
+  --sidebar-hover: #334155;
+  --sidebar-active: #3b82f6;
+}
+
 /* Light Theme (Default) */
 :root[data-theme="light"] {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
+  --bg-primary: #cbd5e1;
+  --bg-secondary: #e2e8f0;
   --card-bg: #ffffff;
   --input-bg: #ffffff;
   
@@ -23,7 +52,7 @@
   --success-color: #10b981;
   --success-hover: #059669;
   
-  --border-color: #e2e8f0;
+  --border-color: #94a3b8;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   
   --sidebar-bg: #1e293b;
@@ -66,11 +95,371 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-primary);
+  background-color: #d0d0d0;
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+[data-theme="dark"] body {
+  background-color: var(--bg-primary);
+}
+
 #root {
   min-height: 100vh;
+}
+
+/* ========================================
+   RESPONSIVIDADE GLOBAL
+======================================== */
+
+/* Base - Mobile First */
+html {
+  font-size: 16px;
+}
+
+/* Garantir que imagens e mídias sejam responsivas */
+img, video, iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Tabelas responsivas */
+table {
+  width: 100%;
+  overflow-x: auto;
+  display: block;
+}
+
+@media (min-width: 768px) {
+  table {
+    display: table;
+  }
+}
+
+/* Inputs e botões responsivos */
+input, select, textarea, button {
+  max-width: 100%;
+  font-size: 16px; /* Previne zoom no iOS */
+}
+
+/* Containers responsivos */
+.container {
+  width: 100%;
+  padding: 0 16px;
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+}
+
+/* Utilitários de responsividade */
+.hide-mobile {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .hide-mobile {
+    display: block;
+  }
+  .hide-desktop {
+    display: none;
+  }
+}
+
+/* Grid responsivo */
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Flex responsivo */
+.flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .flex-row-md {
+    flex-direction: row;
+  }
+}
+
+/* Espaçamentos responsivos */
+@media (max-width: 640px) {
+  .p-mobile {
+    padding: 12px !important;
+  }
+  .m-mobile {
+    margin: 12px !important;
+  }
+}
+
+/* ========================================
+   GARANTIA DE RESPONSIVIDADE UNIVERSAL
+======================================== */
+
+/* Prevenir overflow horizontal */
+* {
+  max-width: 100%;
+}
+
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Garantir que elementos flex não quebrem o layout */
+.flex,
+.flex-row,
+.flex-col {
+  min-width: 0;
+}
+
+/* Tabelas sempre responsivas */
+table {
+  table-layout: auto;
+}
+
+/* Inputs e selects sempre acessíveis no mobile */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea,
+  button {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: 8px;
+      display: block !important;
+      visibility: visible !important;
+    }
+
+    /* Form groups sempre visíveis */
+    .form-group,
+    .form-row,
+    .filtros-section,
+    .filters-section {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 0.75rem !important;
+      width: 100% !important;
+    }
+
+    .form-group label {
+      display: block !important;
+      margin-bottom: 0.5rem !important;
+      font-weight: 600 !important;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      display: block !important;
+      width: 100% !important;
+      padding: 12px !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Prevenir zoom em inputs no iOS */
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    input[type="password"],
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+
+    /* Scroll suave em containers */
+    .table-container,
+    .scroll-container {
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+
+    /* Botões sempre clicáveis */
+    button,
+    .btn,
+    .btn-primary,
+    .btn-secondary,
+    a {
+      min-height: 44px;
+      min-width: 44px;
+      touch-action: manipulation;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    padding: 0.75rem !important;
+  }
+
+  .modal {
+    max-height: 90vh;
+  }
+}
+
+/* Garantir visibilidade de todos os elementos importantes */
+@media (max-width: 640px) {
+  /* Headers sempre visíveis */
+  h1, h2, h3, h4, h5, h6 {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Imagens responsivas */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Cards e containers */
+  .card,
+  .box,
+  .container {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  /* Listas e grids */
+  ul, ol {
+    padding-left: 1.5rem;
+  }
+
+  /* Espaçamentos reduzidos */
+  .page,
+  .content {
+    padding: clamp(0.5rem, 2vw, 1rem);
+  }
+
+  /* ========================================
+     SELEÇÃO DE TURMAS E BOTÕES - UNIVERSAL
+  ======================================== */
+  
+  /* Forçar visibilidade de grids de seleção */
+  .turmas-grid,
+  .selection-grid,
+  .nivel-ensino-buttons {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+    visibility: visible !important;
+  }
+
+  /* Forçar visibilidade de cards/botões */
+  .turma-card,
+  .turma-btn,
+  .selection-btn,
+  .selection-button,
+  .btn-nivel-ensino {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    min-height: 70px !important;
+    max-width: none !important;
+    padding: 1rem !important;
+    margin: 0 !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 1rem !important;
+    box-sizing: border-box !important;
+    text-align: left !important;
+  }
+
+  /* Ícones dos cards */
+  .turma-card-icon,
+  .turma-icon,
+  .selection-btn-icon,
+  .selection-icon {
+    flex-shrink: 0 !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Conteúdo dos cards */
+  .turma-info,
+  .turma-content,
+  .selection-btn-content,
+  .selection-content {
+    flex: 1 !important;
+    text-align: left !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+  }
+
+  /* Textos dos cards */
+  .turma-nome,
+  .selection-btn-title,
+  .selection-title {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    text-align: left !important;
+    margin: 0 !important;
+  }
+
+  .turma-detalhes,
+  .turma-ano,
+  .turma-periodo,
+  .selection-btn-desc,
+  .selection-desc {
+    font-size: 0.85rem !important;
+    text-align: left !important;
+    margin: 0 !important;
+    opacity: 0.9;
+  }
 }

@@ -1,21 +1,25 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 export const professoresRouter = Router();
 
 const professorSchema = z.object({
   nome: z.string().min(3),
-  cpf: z.string().length(11),
+  cpf: z.string().min(11).max(14),
   email: z.string().email(),
   telefone: z.string(),
-  especialidade: z.string(),
+  especialidade: z.string().optional(),
+  area: z.enum(['Anos Iniciais', 'Anos Finais', 'Ambos']),
+  componentes: z.string().optional(),
+  turmasVinculadas: z.string().optional(),
 });
 
 // GET todos os professores
 professoresRouter.get('/', async (req, res) => {
   try {
-    const professores = await prisma.professor.findMany({
+    const professores = await prisma.professores.findMany({
       include: { disciplinas: true, turmas: true }
     });
     res.json(professores);
@@ -27,7 +31,7 @@ professoresRouter.get('/', async (req, res) => {
 // GET professor por ID
 professoresRouter.get('/:id', async (req, res) => {
   try {
-    const professor = await prisma.professor.findUnique({
+    const professor = await prisma.professores.findUnique({
       where: { id: req.params.id },
       include: { disciplinas: true, turmas: true }
     });
@@ -47,15 +51,67 @@ professoresRouter.post('/', async (req, res) => {
   try {
     const data = professorSchema.parse(req.body);
     
-    const professor = await prisma.professor.create({
-      data
+    const professor = await prisma.professores.create({
+      data: {
+        id: crypto.randomUUID(),
+        nome: data.nome,
+        cpf: data.cpf,
+        email: data.email,
+        telefone: data.telefone,
+        area: data.area,
+        updatedAt: new Date(),
+        ...(data.especialidade && { especialidade: data.especialidade }),
+        ...(data.componentes && { componentes: data.componentes }),
+        ...(data.turmasVinculadas && { turmasVinculadas: data.turmasVinculadas }),
+      }
     });
+
+    // Se componentes e turmas foram fornecidos, criar DisciplinaTurma
+    if (data.componentes && data.turmasVinculadas) {
+      const componentes = JSON.parse(data.componentes) as string[];
+      const turmasIds = JSON.parse(data.turmasVinculadas) as string[];
+
+      // Buscar IDs das disciplinas pelos nomes
+      const disciplinas = await prisma.disciplinas.findMany({
+        where: { nome: { in: componentes } }
+      });
+
+      // Criar DisciplinaTurma para cada combinação disciplina x turma
+      const disciplinaTurmasData = [];
+      for (const disciplina of disciplinas) {
+        for (const turmaId of turmasIds) {
+          disciplinaTurmasData.push({
+            id: crypto.randomUUID(),
+            disciplinaId: disciplina.id,
+            turmaId: turmaId,
+            professorId: professor.id,
+            updatedAt: new Date(),
+          });
+        }
+      }
+
+      if (disciplinaTurmasData.length > 0) {
+        await prisma.disciplinas_turmas.createMany({
+          data: disciplinaTurmasData,
+          skipDuplicates: true
+        });
+      }
+      
+      // Atualizar professorId nas turmas vinculadas
+      if (turmasIds.length > 0) {
+        await prisma.turmas.updateMany({
+          where: { id: { in: turmasIds } },
+          data: { professorId: professor.id }
+        });
+      }
+    }
     
     res.status(201).json(professor);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
+    console.error('Erro ao criar professor:', error);
     res.status(500).json({ error: 'Erro ao criar professor' });
   }
 });
@@ -64,14 +120,67 @@ professoresRouter.post('/', async (req, res) => {
 professoresRouter.put('/:id', async (req, res) => {
   try {
     const data = professorSchema.partial().parse(req.body);
+    const professorId = req.params.id;
     
-    const professor = await prisma.professor.update({
-      where: { id: req.params.id },
+    const professor = await prisma.professores.update({
+      where: { id: professorId },
       data
     });
+
+    // Se componentes e turmas foram fornecidos, recriar disciplinas_turmas
+    if (data.componentes && data.turmasVinculadas) {
+      const componentes = JSON.parse(data.componentes) as string[];
+      const turmasIds = JSON.parse(data.turmasVinculadas) as string[];
+
+      // Remover professorId das turmas antigas deste professor
+      await prisma.turmas.updateMany({
+        where: { professorId },
+        data: { professorId: null }
+      });
+      
+      // Remover disciplinas_turmas antigas deste professor
+      await prisma.disciplinas_turmas.deleteMany({
+        where: { professorId }
+      });
+
+      // Buscar IDs das disciplinas pelos nomes
+      const disciplinas = await prisma.disciplinas.findMany({
+        where: { nome: { in: componentes } }
+      });
+
+      // Criar novas disciplinas_turmas
+      const disciplinaTurmasData = [];
+      for (const disciplina of disciplinas) {
+        for (const turmaId of turmasIds) {
+          disciplinaTurmasData.push({
+            id: crypto.randomUUID(),
+            disciplinaId: disciplina.id,
+            turmaId: turmaId,
+            professorId,
+            updatedAt: new Date(),
+          });
+        }
+      }
+
+      if (disciplinaTurmasData.length > 0) {
+        await prisma.disciplinas_turmas.createMany({
+          data: disciplinaTurmasData,
+          skipDuplicates: true
+        });
+      }
+      
+      // Atualizar professorId nas novas turmas vinculadas
+      if (turmasIds.length > 0) {
+        await prisma.turmas.updateMany({
+          where: { id: { in: turmasIds } },
+          data: { professorId: professorId }
+        });
+      }
+    }
     
     res.json(professor);
   } catch (error) {
+    console.error('Erro ao atualizar professor:', error);
     res.status(500).json({ error: 'Erro ao atualizar professor' });
   }
 });
@@ -79,7 +188,7 @@ professoresRouter.put('/:id', async (req, res) => {
 // DELETE professor
 professoresRouter.delete('/:id', async (req, res) => {
   try {
-    await prisma.professor.delete({
+    await prisma.professores.delete({
       where: { id: req.params.id }
     });
     
@@ -88,3 +197,5 @@ professoresRouter.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Erro ao deletar professor' });
   }
 });
+
+

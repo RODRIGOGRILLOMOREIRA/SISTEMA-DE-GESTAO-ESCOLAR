@@ -2,12 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { LogIn, Mail, Lock, School } from 'lucide-react'
 import { authAPI, configuracoesAPI, Configuracao } from '../lib/api'
-import { useTheme } from '../contexts/ThemeContext'
 import './Auth.css'
 
 const Login = () => {
   const navigate = useNavigate()
-  const { theme } = useTheme()
   const [formData, setFormData] = useState({
     email: '',
     senha: '',
