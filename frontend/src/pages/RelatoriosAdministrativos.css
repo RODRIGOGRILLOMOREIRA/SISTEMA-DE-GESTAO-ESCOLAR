@@ -1,0 +1,75 @@
+/* Relatórios Administrativos - Grid Layout */
+.relatorios-administrativos-grid {
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 2rem auto;
+}
+
+/* Botão de Download dentro do card */
+.btn-download {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  margin-top: 1rem;
+  background: linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 12px rgba(0, 188, 212, 0.3);
+}
+
+.btn-download:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 188, 212, 0.5);
+  background: linear-gradient(135deg, #00ACC1 0%, #0097A7 100%);
+}
+
+.btn-download:active {
+  transform: translateY(0);
+}
+
+.btn-download:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsivo - Tablet */
+@media (max-width: 1024px) {
+  .relatorios-administrativos-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1.25rem;
+  }
+}
+
+/* Responsivo - Mobile */
+@media (max-width: 640px) {
+  .relatorios-administrativos-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+  
+  .btn-download {
+    font-size: 0.85rem;
+    padding: 0.65rem 1.25rem;
+  }
+}
+
+/* Dark Mode */
+[data-theme="dark"] .btn-download {
+  background: linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .btn-download:hover {
+  border-color: white;
+  box-shadow: 0 6px 25px rgba(0, 188, 212, 0.6);
+}

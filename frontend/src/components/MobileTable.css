@@ -1,0 +1,117 @@
+/* ========================================
+   MOBILE TABLE - Cards para Mobile
+======================================== */
+
+.mobile-table-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Cards Mobile */
+.mobile-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+.mobile-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  min-height: 44px; /* Touch target WCAG */
+}
+
+.mobile-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.mobile-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  gap: 12px;
+}
+
+.mobile-card-row:last-child {
+  border-bottom: none;
+}
+
+.mobile-card-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 13px;
+  flex-shrink: 0;
+  min-width: 100px;
+}
+
+.mobile-card-value {
+  color: var(--text-primary);
+  font-size: 14px;
+  text-align: right;
+  flex: 1;
+  word-break: break-word;
+}
+
+/* Desktop Table */
+.desktop-table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+}
+
+.desktop-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.desktop-table thead {
+  background: var(--secondary-bg);
+}
+
+.desktop-table th {
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 14px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.desktop-table td {
+  padding: 16px;
+  color: var(--text-primary);
+  font-size: 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.desktop-table tbody tr:hover {
+  background: var(--secondary-bg);
+  cursor: pointer;
+}
+
+.desktop-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Responsividade */
+@media (max-width: 767px) {
+  .desktop-table-container {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-cards-container {
+    display: none;
+  }
+}
