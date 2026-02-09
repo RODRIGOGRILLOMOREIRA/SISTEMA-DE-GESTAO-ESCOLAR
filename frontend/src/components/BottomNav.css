@@ -1,0 +1,201 @@
+/* Bottom Navigation - Mobile Only */
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .bottom-nav {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-top: 2px solid rgba(0, 188, 212, 0.3);
+    z-index: 1000;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 20px rgba(0, 188, 212, 0.2);
+  }
+
+  [data-theme="light"] .bottom-nav {
+    background: rgba(248, 250, 252, 0.95);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+  }
+
+  .bottom-nav-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .bottom-nav-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    min-width: 60px;
+  }
+
+  [data-theme="light"] .bottom-nav-item {
+    color: rgba(15, 23, 42, 0.6);
+  }
+
+  .bottom-nav-item:active {
+    transform: scale(0.92);
+  }
+
+  .bottom-nav-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .bottom-nav-item:active .bottom-nav-icon-wrapper {
+    transform: scale(1.15);
+  }
+
+  .bottom-nav-item.active .bottom-nav-icon-wrapper {
+    animation: iconPop 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes iconPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2) rotate(5deg); }
+    100% { transform: scale(1); }
+  }
+
+  .bottom-nav-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 2px solid rgba(15, 23, 42, 0.95);
+    animation: badgePulse 2s infinite;
+  }
+
+  [data-theme="light"] .bottom-nav-badge {
+    border-color: rgba(248, 250, 252, 0.95);
+  }
+
+  @keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  .bottom-nav-label {
+    font-size: 11px;
+    font-weight: 500;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+
+  /* Active State */
+  .bottom-nav-item.active {
+    color: #00BCD4;
+    background: rgba(0, 188, 212, 0.1);
+  }
+
+  .bottom-nav-item.active .bottom-nav-label {
+    font-weight: 700;
+  }
+
+  /* Active Indicator */
+  .bottom-nav-indicator {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 3px;
+    background: linear-gradient(90deg, #00BCD4, #00ACC1);
+    border-radius: 0 0 3px 3px;
+    animation: slideDown 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 188, 212, 0.5);
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  /* Hover/Touch feedback */
+  @media (hover: hover) {
+    .bottom-nav-item:hover:not(.active) {
+      color: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    [data-theme="light"] .bottom-nav-item:hover:not(.active) {
+      color: rgba(15, 23, 42, 0.9);
+      background: rgba(15, 23, 42, 0.05);
+    }
+  }
+
+  /* Ripple effect */
+  .bottom-nav-item::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(0, 188, 212, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s, height 0.4s;
+  }
+
+  .bottom-nav-item:active::after {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+/* Tablets em modo portrait */
+@media (min-width: 641px) and (max-width: 768px) and (orientation: portrait) {
+  .bottom-nav {
+    display: block;
+  }
+  
+  .bottom-nav-item {
+    min-width: 80px;
+  }
+  
+  .bottom-nav-icon-wrapper svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .bottom-nav-label {
+    font-size: 12px;
+  }
+}

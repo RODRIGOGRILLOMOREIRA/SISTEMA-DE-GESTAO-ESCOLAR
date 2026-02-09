@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # REDIS LOCAL - Desenvolvimento
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: sge-redis-local
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass Dev@Redis123
+    networks:
+      - sge-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "Dev@Redis123", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ==========================================
+  # POSTGRESQL - Banco de Dados
+  # ==========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: sge-postgres
+    environment:
+      POSTGRES_USER: sge_user
+      POSTGRES_PASSWORD: sge_password
+      POSTGRES_DB: sge_db
+    ports:
+      - "5433:5432"  # Porta 5433 externa para evitar conflito com PostgreSQL local
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - sge-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sge_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # REDIS COMMANDER - Interface Web para Redis
+  # ==========================================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: sge-redis-ui
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:Dev@Redis123
+    ports:
+      - "8081:8081"
+    networks:
+      - sge-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # ==========================================
+  # PGADMIN - Interface Web para PostgreSQL (Opcional)
+  # ==========================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: sge-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@escola.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    networks:
+      - sge-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    profiles:
+      - tools  # Só inicia se você quiser: docker-compose --profile tools up
+
+volumes:
+  redis_data:
+    driver: local
+  postgres_data:
+    driver: local
+
+networks:
+  sge-network:
+    driver: bridge

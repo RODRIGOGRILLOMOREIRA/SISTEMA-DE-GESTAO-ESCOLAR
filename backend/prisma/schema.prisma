@@ -7,143 +7,806 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Usuario {
-  id              String            @id @default(uuid())
+model alunos {
+  id              String           @id
   nome            String
-  email           String            @unique
-  senha           String
-  tipo            String            @default("USUARIO") // ADMIN, USUARIO
-  ativo           Boolean           @default(true)
-  resetToken      String?
-  resetTokenExpira DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@map("usuarios")
-}
-
-model Aluno {
-  id              String            @id @default(uuid())
-  nome            String
-  cpf             String            @unique
+  cpf             String           @unique
   dataNascimento  DateTime
-  email           String            @unique
+  email           String           @unique
   telefone        String?
   endereco        String?
   responsavel     String
   telefoneResp    String
   turmaId         String?
-  turma           Turma?            @relation(fields: [turmaId], references: [id])
-  matriculas      Matricula[]
-  notas           Nota[]
-  frequencias     Frequencia[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  numeroMatricula String?
+  statusMatricula String?          @default("ATIVO")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime
+  turmas          turmas?          @relation(fields: [turmaId], references: [id])
+  frequencias     frequencias[]
+  matriculas      matriculas[]
+  notas           notas[]
+  notas_finais    notas_finais[]
+  presenca_aluno  presenca_aluno[]
 
-  @@map("alunos")
+  @@index([createdAt])
+  @@index([nome])
+  @@index([statusMatricula])
+  @@index([turmaId])
+  @@index([turmaId, statusMatricula])
 }
 
-model Professor {
-  id              String            @id @default(uuid())
-  nome            String
-  cpf             String            @unique
-  email           String            @unique
-  telefone        String
-  especialidade   String
-  disciplinas     Disciplina[]
-  turmas          Turma[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+model api_keys {
+  id          String    @id
+  name        String
+  key         String    @unique
+  userId      String?
+  permissions String[]
+  rateLimit   Int       @default(100)
+  enabled     Boolean   @default(true)
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  usuarios    usuarios? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("professores")
+  @@index([enabled])
+  @@index([key])
+  @@index([userId])
 }
 
-model Turma {
-  id              String            @id @default(uuid())
-  nome            String
-  ano             Int
-  periodo         String            // Manhã, Tarde, Noite
-  professorId     String?
-  professor       Professor?        @relation(fields: [professorId], references: [id])
-  alunos          Aluno[]
-  disciplinas     Disciplina[]
-  matriculas      Matricula[]
-  frequencias     Frequencia[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+model audit_logs {
+  id         String   @id
+  userId     String
+  userName   String
+  action     String
+  resource   String
+  resourceId String?
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  usuarios   usuarios @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("turmas")
+  @@index([action])
+  @@index([createdAt])
+  @@index([resource])
+  @@index([userId])
 }
 
-model Disciplina {
-  id              String            @id @default(uuid())
-  nome            String
-  cargaHoraria    Int
-  professorId     String?
-  professor       Professor?        @relation(fields: [professorId], references: [id])
-  turmas          Turma[]
-  notas           Nota[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+model banco_horas {
+  id               String     @id
+  pessoaId         String
+  tipoPessoa       TipoPessoa
+  mes              Int
+  ano              Int
+  horasTrabalhadas Float      @default(0)
+  horasDevidas     Float      @default(0)
+  saldo            Float      @default(0)
+  observacao       String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime
 
-  @@map("disciplinas")
+  @@unique([pessoaId, mes, ano])
+  @@index([pessoaId])
 }
 
-model Matricula {
-  id              String            @id @default(uuid())
-  alunoId         String
-  aluno           Aluno             @relation(fields: [alunoId], references: [id])
-  turmaId         String
-  turma           Turma             @relation(fields: [turmaId], references: [id])
-  dataMatricula   DateTime          @default(now())
-  status          String            @default("ATIVA") // ATIVA, CANCELADA, CONCLUIDA
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-
-  @@map("matriculas")
+model calendario_escolar {
+  id                 String               @id
+  ano                Int                  @unique
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  eventos_calendario eventos_calendario[]
 }
 
-model Nota {
-  id              String            @id @default(uuid())
-  alunoId         String
-  aluno           Aluno             @relation(fields: [alunoId], references: [id])
-  disciplinaId    String
-  disciplina      Disciplina        @relation(fields: [disciplinaId], references: [id])
-  nota            Float
-  bimestre        Int               // 1, 2, 3, 4
-  observacao      String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+model communication_channels {
+  id        String   @id
+  channel   String   @unique
+  provider  String
+  isActive  Boolean  @default(true)
+  config    Json
+  limits    Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
 
-  @@map("notas")
+  @@index([channel])
+  @@index([isActive])
 }
 
-model Frequencia {
-  id              String            @id @default(uuid())
-  alunoId         String
-  aluno           Aluno             @relation(fields: [alunoId], references: [id])
-  turmaId         String
-  turma           Turma             @relation(fields: [turmaId], references: [id])
-  data            DateTime
-  presente        Boolean           @default(true)
-  observacao      String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+model configuracao_jornada {
+  id                     String     @id
+  pessoaId               String     @unique
+  tipoPessoa             TipoPessoa
+  cargaHorariaSemanal    Int        @default(40)
+  cargaHorariaDiaria     Int        @default(8)
+  horarioEntrada         String?
+  horarioSaida           String?
+  horarioIntervaloInicio String?
+  horarioIntervaloFim    String?
+  diasTrabalho           String[]   @default(["SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA"])
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime
 
-  @@map("frequencias")
+  @@index([pessoaId])
 }
 
-model Configuracao {
-  id              String            @id @default(uuid())
-  nomeEscola      String
-  redeEscolar     String?
-  endereco        String
-  telefone        String?
-  email           String?
-  logoUrl         String?
-  temaModo        String            @default("light") // light ou dark
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+model configuracao_notificacao {
+  id                  String                @id
+  usuarioId           String                @unique
+  tipoPerfil          TipoPerfilNotificacao
+  whatsappAtivo       Boolean               @default(true)
+  smsAtivo            Boolean               @default(false)
+  notificarFrequencia Boolean               @default(true)
+  notificarNotas      Boolean               @default(true)
+  notificarAlertas    Boolean               @default(true)
+  resumoDiario        Boolean               @default(false)
+  horarioInicio       String?               @default("08:00")
+  horarioFim          String?               @default("20:00")
+  frequenciaMensagens FrequenciaMensagens   @default(TODAS)
+  disciplinasIds      String?
+  turmasIds           String?
+  alunosIds           String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
 
-  @@map("configuracoes")
+  @@index([tipoPerfil])
+  @@index([usuarioId])
+}
+
+model configuracoes {
+  id          String   @id
+  nomeEscola  String
+  redeEscolar String?
+  endereco    String
+  telefone    String?
+  email       String?
+  logoUrl     String?
+  temaModo    String   @default("light")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+model disciplinas {
+  id                  String                @id
+  nome                String
+  cargaHoraria        Int
+  professorId         String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  professores         professores?          @relation(fields: [professorId], references: [id])
+  disciplinas_turmas  disciplinas_turmas[]
+  horarios_aula       horarios_aula[]
+  notas               notas[]
+  notas_finais        notas_finais[]
+  registro_frequencia registro_frequencia[]
+  turmas              turmas[]              @relation("DisciplinaToTurma")
+}
+
+model disciplinas_turmas {
+  id           String       @id
+  disciplinaId String
+  turmaId      String
+  professorId  String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime
+  disciplinas  disciplinas  @relation(fields: [disciplinaId], references: [id], onDelete: Cascade)
+  professores  professores? @relation(fields: [professorId], references: [id])
+  turmas       turmas       @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+
+  @@unique([disciplinaId, turmaId])
+}
+
+model equipe_diretiva {
+  id                   String   @id
+  nome                 String
+  cpf                  String
+  email                String
+  telefone             String?
+  cargo                String
+  cargaHorariaSemanal  Int?     @default(40)
+  horarioEntradaPadrao String?
+  horarioSaidaPadrao   String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime
+}
+
+model eventos_calendario {
+  id                 String             @id
+  calendarioId       String
+  tipo               TipoEvento
+  descricao          String?
+  dataInicio         DateTime
+  dataFim            DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime
+  calendario_escolar calendario_escolar @relation(fields: [calendarioId], references: [id], onDelete: Cascade)
+}
+
+model frequencias {
+  id         String   @id
+  alunoId    String
+  turmaId    String
+  data       DateTime
+  presente   Boolean  @default(true)
+  observacao String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  alunos     alunos   @relation(fields: [alunoId], references: [id])
+  turmas     turmas   @relation(fields: [turmaId], references: [id])
+
+  @@index([alunoId, data])
+  @@index([alunoId])
+  @@index([data])
+  @@index([presente])
+  @@index([turmaId, data])
+  @@index([turmaId])
+}
+
+model funcionarios {
+  id                   String   @id
+  nome                 String
+  cpf                  String
+  email                String
+  telefone             String?
+  cargo                String
+  setor                String?
+  cargaHorariaSemanal  Int?     @default(40)
+  horarioEntradaPadrao String?
+  horarioSaidaPadrao   String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime
+}
+
+model grade_horaria {
+  id            String          @id
+  turmaId       String          @unique
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime
+  turmas        turmas          @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+  horarios_aula horarios_aula[]
+}
+
+model horarios_aula {
+  id                  String                @id
+  gradeId             String
+  diaSemana           DiaSemana
+  periodo             String
+  ordem               Int
+  horaInicio          String
+  horaFim             String
+  disciplinaId        String?
+  professorId         String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  disciplinas         disciplinas?          @relation(fields: [disciplinaId], references: [id])
+  grade_horaria       grade_horaria         @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+  professores         professores?          @relation(fields: [professorId], references: [id])
+  registro_frequencia registro_frequencia[]
+}
+
+model log_notificacao {
+  id                String                @id
+  destinatarioId    String
+  tipoPerfil        TipoPerfilNotificacao
+  canal             CanalNotificacao
+  tipoEvento        TipoEventoNotificacao
+  conteudo          String
+  metadata          String?
+  status            StatusNotificacao     @default(PENDENTE)
+  tentativas        Int                   @default(0)
+  erroMsg           String?
+  enviadoEm         DateTime?
+  confirmarRecebido Boolean               @default(false)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime
+
+  @@index([canal])
+  @@index([createdAt])
+  @@index([destinatarioId])
+  @@index([destinatarioId, status])
+  @@index([status])
+  @@index([tipoEvento])
+}
+
+model maintenance_mode {
+  id          Int       @id @default(autoincrement())
+  enabled     Boolean?  @default(false)
+  message     String?
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  updated_at  DateTime? @default(now()) @db.Timestamp(6)
+  start_time  DateTime? @db.Timestamp(6)
+  end_time    DateTime? @db.Timestamp(6)
+  reason      String?
+  allowed_ips String?
+}
+
+model matriculas {
+  id            String   @id
+  alunoId       String
+  turmaId       String
+  dataMatricula DateTime @default(now())
+  status        String   @default("ATIVA")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+  alunos        alunos   @relation(fields: [alunoId], references: [id])
+  turmas        turmas   @relation(fields: [turmaId], references: [id])
+}
+
+model message_analytics {
+  id              String   @id
+  date            DateTime @db.Date
+  channel         String
+  sent            Int      @default(0)
+  delivered       Int      @default(0)
+  failed          Int      @default(0)
+  read            Int      @default(0)
+  clicked         Int      @default(0)
+  averageDelivery Float?
+  cost            Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime
+
+  @@unique([date, channel])
+  @@index([channel])
+  @@index([date])
+}
+
+model message_schedules {
+  id                String            @id
+  templateId        String
+  channel           String
+  recipientType     String
+  recipientIds      Json?
+  scheduledFor      DateTime
+  recurrence        String?
+  isActive          Boolean           @default(true)
+  lastSentAt        DateTime?
+  nextSendAt        DateTime?
+  sentCount         Int               @default(0)
+  createdBy         String
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime
+  message_templates message_templates @relation(fields: [templateId], references: [id])
+
+  @@index([isActive])
+  @@index([nextSendAt])
+  @@index([scheduledFor])
+}
+
+model message_templates {
+  id                String              @id
+  name              String
+  category          String
+  channel           String
+  subject           String?
+  content           String
+  variables         Json
+  isActive          Boolean             @default(true)
+  createdBy         String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  message_schedules message_schedules[]
+  messages          messages[]
+
+  @@index([category])
+  @@index([channel])
+  @@index([isActive])
+}
+
+model messages {
+  id                String             @id
+  templateId        String?
+  channel           String
+  recipientType     String
+  recipientId       String?
+  recipient         String
+  subject           String?
+  content           String
+  status            String             @default("pending")
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  errorMessage      String?
+  metadata          Json?
+  sentBy            String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime
+  message_templates message_templates? @relation(fields: [templateId], references: [id])
+
+  @@index([channel])
+  @@index([createdAt])
+  @@index([recipientType])
+  @@index([sentAt])
+  @@index([status])
+}
+
+model ml_models {
+  id           String   @id
+  name         String   @unique
+  type         String
+  version      String
+  accuracy     Float?
+  parameters   Json
+  trainingData Json?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+
+  @@index([active])
+  @@index([type])
+}
+
+model notas {
+  id                 String      @id
+  alunoId            String
+  disciplinaId       String
+  trimestre          Int
+  anoLetivo          Int         @default(2025)
+  avaliacao01        Float?
+  avaliacao02        Float?
+  avaliacao03        Float?
+  mediaM1            Float?
+  avaliacaoEAC       Float?
+  observacao         String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime
+  notaFinalTrimestre Float?
+  alunos             alunos      @relation(fields: [alunoId], references: [id])
+  disciplinas        disciplinas @relation(fields: [disciplinaId], references: [id])
+
+  @@unique([alunoId, disciplinaId, trimestre, anoLetivo])
+  @@index([alunoId, disciplinaId, trimestre])
+  @@index([alunoId])
+  @@index([alunoId, trimestre])
+  @@index([createdAt])
+  @@index([disciplinaId])
+  @@index([disciplinaId, trimestre])
+  @@index([trimestre])
+}
+
+model notas_finais {
+  id           String      @id
+  alunoId      String
+  disciplinaId String
+  anoLetivo    Int         @default(2025)
+  mediaFinal   Float?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime
+  aprovado     Boolean     @default(false)
+  trimestre1   Float?
+  trimestre2   Float?
+  trimestre3   Float?
+  alunos       alunos      @relation(fields: [alunoId], references: [id])
+  disciplinas  disciplinas @relation(fields: [disciplinaId], references: [id])
+
+  @@unique([alunoId, disciplinaId, anoLetivo])
+}
+
+model permissions {
+  id               String             @id
+  name             String             @unique
+  description      String?
+  resource         String
+  action           String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  role_permissions role_permissions[]
+
+  @@index([action])
+  @@index([resource, action])
+  @@index([resource])
+}
+
+model presenca_aluno {
+  id                  String              @id
+  registroId          String
+  alunoId             String
+  presente            Boolean             @default(true)
+  justificativa       String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime
+  aulaIndex           Int                 @default(0)
+  alunos              alunos              @relation(fields: [alunoId], references: [id])
+  registro_frequencia registro_frequencia @relation(fields: [registroId], references: [id], onDelete: Cascade)
+
+  @@unique([registroId, alunoId, aulaIndex])
+}
+
+model professores {
+  id                   String                @id
+  nome                 String
+  cpf                  String
+  email                String
+  telefone             String
+  especialidade        String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime
+  area                 String?
+  componentes          String?
+  turmasVinculadas     String?
+  cargaHorariaSemanal  Int?                  @default(40)
+  horarioEntradaPadrao String?
+  horarioSaidaPadrao   String?
+  disciplinas          disciplinas[]
+  disciplinas_turmas   disciplinas_turmas[]
+  horarios_aula        horarios_aula[]
+  registro_frequencia  registro_frequencia[]
+  turmas               turmas[]
+}
+
+model reconhecimento_facial {
+  id           String     @id
+  pessoaId     String     @unique
+  tipoPessoa   TipoPessoa
+  descritores  String
+  fotos        String[]
+  cadastradoEm DateTime   @default(now())
+  atualizadoEm DateTime
+  ativo        Boolean    @default(true)
+
+  @@index([pessoaId])
+  @@index([tipoPessoa])
+}
+
+model registro_frequencia {
+  id             String           @id
+  turmaId        String
+  disciplinaId   String
+  professorId    String
+  data           DateTime
+  horarioAulaId  String?
+  observacao     String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  periodo        String?
+  presenca_aluno presenca_aluno[]
+  disciplinas    disciplinas      @relation(fields: [disciplinaId], references: [id])
+  horarios_aula  horarios_aula?   @relation(fields: [horarioAulaId], references: [id])
+  professores    professores      @relation(fields: [professorId], references: [id])
+  turmas         turmas           @relation(fields: [turmaId], references: [id])
+}
+
+model registro_ponto {
+  id               String            @id
+  pessoaId         String
+  tipoPessoa       TipoPessoa
+  data             DateTime          @default(now())
+  horaRegistro     DateTime
+  tipoRegistro     TipoRegistroPonto
+  localizacao      String?
+  observacao       String?
+  aprovado         Boolean           @default(true)
+  fotoPath         String?
+  attestado        Boolean           @default(false)
+  reconhecimentoIA Boolean           @default(false)
+  confianca        Float?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime
+
+  @@index([pessoaId, data])
+  @@index([tipoPessoa])
+}
+
+model role_permissions {
+  id           String      @id
+  roleId       String
+  permissionId String
+  createdAt    DateTime    @default(now())
+  permissions  permissions @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  roles        roles       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([permissionId])
+  @@index([roleId])
+}
+
+model roles {
+  id               String             @id
+  name             String             @unique
+  description      String?
+  level            Int                @default(0)
+  isSystem         Boolean            @default(false)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  role_permissions role_permissions[]
+  user_roles       user_roles[]
+
+  @@index([level])
+}
+
+model student_predictions {
+  id              String   @id
+  studentId       String
+  predictionType  String
+  predictedValue  Float
+  confidence      Float
+  features        Json
+  modelVersion    String
+  recommendations Json?
+  createdAt       DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([predictionType])
+  @@index([studentId])
+}
+
+model turmas {
+  id                  String                @id
+  nome                String
+  ano                 Int
+  periodo             String
+  professorId         String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  anoLetivo           Int                   @default(2025)
+  alunos              alunos[]
+  disciplinas_turmas  disciplinas_turmas[]
+  frequencias         frequencias[]
+  grade_horaria       grade_horaria?
+  matriculas          matriculas[]
+  registro_frequencia registro_frequencia[]
+  professores         professores?          @relation(fields: [professorId], references: [id])
+  disciplinas         disciplinas[]         @relation("DisciplinaToTurma")
+
+  @@index([anoLetivo])
+  @@index([ano, periodo])
+  @@index([nome])
+  @@index([professorId])
+}
+
+model two_factor_auth {
+  id          String   @id
+  userId      String   @unique
+  secret      String
+  enabled     Boolean  @default(false)
+  backupCodes String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  usuarios    usuarios @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([enabled])
+  @@index([userId])
+}
+
+model two_factor_logs {
+  id        String   @id
+  userId    String
+  success   Boolean
+  method    String
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model user_roles {
+  id        String   @id
+  userId    String
+  roleId    String
+  userType  String
+  createdAt DateTime @default(now())
+  roles     roles    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  usuarios  usuarios @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([roleId])
+  @@index([userId])
+  @@index([userType])
+}
+
+model usuarios {
+  id               String           @id
+  nome             String
+  email            String           @unique
+  senha            String
+  role             String           @default("PROFESSOR")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime
+  lastLogin        DateTime?
+  photoUrl         String?
+  profileImage     String?
+  isActive         Boolean          @default(true)
+  cargo            String?
+  resetToken       String?
+  resetTokenExpira DateTime?
+  api_keys         api_keys[]
+  audit_logs       audit_logs[]
+  two_factor_auth  two_factor_auth?
+  user_roles       user_roles[]
+
+  @@index([email])
+  @@index([isActive])
+  @@index([role])
+}
+
+model webhook_message {
+  id             String   @id
+  origem         String
+  remetenteId    String
+  destinatarioId String?
+  mensagem       String
+  metadata       String?
+  processado     Boolean  @default(false)
+  respostaIA     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime
+
+  @@index([createdAt])
+  @@index([processado])
+  @@index([remetenteId])
+}
+
+enum CanalNotificacao {
+  WHATSAPP
+  SMS
+  TELEGRAM
+  EMAIL
+}
+
+enum DiaSemana {
+  SEGUNDA
+  TERCA
+  QUARTA
+  QUINTA
+  SEXTA
+  SABADO
+}
+
+enum FrequenciaMensagens {
+  TODAS
+  ALERTAS
+  RESUMO
+}
+
+enum StatusNotificacao {
+  PENDENTE
+  ENVIADO
+  FALHA
+  ENTREGUE
+}
+
+enum TipoEvento {
+  INICIO_ANO_LETIVO
+  FIM_ANO_LETIVO
+  DIA_LETIVO
+  DIA_NAO_LETIVO
+  PARADA_PEDAGOGICA
+  RECESSO
+  SABADO_LETIVO
+  FERIADO
+  INICIO_TRIMESTRE
+  FIM_TRIMESTRE
+  PERIODO_EAC
+  OUTRO
+}
+
+enum TipoEventoNotificacao {
+  NOTA_LANCADA
+  FREQUENCIA_FALTA
+  FREQUENCIA_PRESENCA
+  ALERTA_MEDIA_BAIXA
+  ALERTA_FREQUENCIA_BAIXA
+  RESUMO_DIARIO
+  MENSAGEM_IA
+}
+
+enum TipoPerfilNotificacao {
+  GESTAO
+  PROFESSOR
+  RESPONSAVEL
+}
+
+enum TipoPessoa {
+  PROFESSOR
+  FUNCIONARIO
+  EQUIPE_DIRETIVA
+}
+
+enum TipoRegistroPonto {
+  ENTRADA
+  SAIDA
+  INTERVALO_INICIO
+  INTERVALO_FIM
 }

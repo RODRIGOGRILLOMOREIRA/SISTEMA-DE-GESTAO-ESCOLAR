@@ -1,0 +1,66 @@
+# ========================================
+# CODEOWNERS - Proprietários do Código
+# Copyright (c) 2026 SGE - PROPRIETARY
+# ========================================
+# 
+# Define quem deve revisar mudanças em cada parte do código.
+# Pelo menos 1 aprovação é necessária antes de fazer merge.
+#
+# Sintaxe: <padrão de arquivo> <@username ou @org/team>
+
+# ============================
+# DONO PRINCIPAL (Tudo)
+# ============================
+* @RODRIGOGRILLOMOREIRA
+
+# ============================
+# BACKEND (API e Serviços)
+# ============================
+/backend/ @RODRIGOGRILLOMOREIRA
+/backend/src/controllers/ @RODRIGOGRILLOMOREIRA
+/backend/src/services/ @RODRIGOGRILLOMOREIRA
+/backend/src/routes/ @RODRIGOGRILLOMOREIRA
+
+# Arquivos críticos do backend
+/backend/prisma/schema.prisma @RODRIGOGRILLOMOREIRA
+/backend/src/server.ts @RODRIGOGRILLOMOREIRA
+/backend/src/middlewares/ @RODRIGOGRILLOMOREIRA
+
+# ============================
+# FRONTEND (Interface)
+# ============================
+/frontend/ @RODRIGOGRILLOMOREIRA
+/frontend/src/pages/ @RODRIGOGRILLOMOREIRA
+/frontend/src/components/ @RODRIGOGRILLOMOREIRA
+/frontend/src/contexts/ @RODRIGOGRILLOMOREIRA
+
+# ============================
+# SEGURANÇA E CONFIGURAÇÕES
+# ============================
+/.github/ @RODRIGOGRILLOMOREIRA
+/LICENSE @RODRIGOGRILLOMOREIRA
+/SECURITY.md @RODRIGOGRILLOMOREIRA
+/.gitignore @RODRIGOGRILLOMOREIRA
+*.env.example @RODRIGOGRILLOMOREIRA
+
+# ============================
+# DEPENDÊNCIAS
+# ============================
+package.json @RODRIGOGRILLOMOREIRA
+package-lock.json @RODRIGOGRILLOMOREIRA
+/backend/package.json @RODRIGOGRILLOMOREIRA
+/frontend/package.json @RODRIGOGRILLOMOREIRA
+
+# ============================
+# DOCUMENTAÇÃO
+# ============================
+*.md @RODRIGOGRILLOMOREIRA
+/README.md @RODRIGOGRILLOMOREIRA
+/backend/README.md @RODRIGOGRILLOMOREIRA
+/frontend/README.md @RODRIGOGRILLOMOREIRA
+
+# ============================
+# CI/CD E WORKFLOWS
+# ============================
+/.github/workflows/ @RODRIGOGRILLOMOREIRA
+/.github/dependabot.yml @RODRIGOGRILLOMOREIRA
