@@ -1,0 +1,102 @@
+/* Botão Voltar Componente Reutilizável */
+.back-button-component {
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #263238 0%, #37474f 100%);
+  border: 3px solid #00BCD4;
+  border-radius: 12px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 0 auto 2rem auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* Desktop: posição fixa no canto direito, similar ao hamburguer */
+@media (min-width: 641px) {
+  .back-button-component {
+    position: fixed;
+    top: 60px;
+    right: 60px;
+    z-index: 1003;
+    background: linear-gradient(135deg, #00BCD4 0%, #00ACC1 100%);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    margin: 0;
+    box-shadow: 0 4px 16px rgba(0, 188, 212, 0.5);
+  }
+
+  .back-arrow-desktop {
+    display: block;
+  }
+
+  .back-text-mobile {
+    display: none;
+  }
+}
+
+/* Mobile: botão centralizado com texto */
+@media (max-width: 640px) {
+  .back-button-component {
+    position: relative;
+    width: auto;
+    margin: 6rem auto 2rem auto;
+    background: white;
+    color: #00BCD4;
+    border: 3px solid #00BCD4;
+  }
+
+  .back-arrow-desktop {
+    display: none;
+  }
+
+  .back-text-mobile {
+    display: inline;
+  }
+
+  .back-button-component:hover {
+    background: #f0f9ff;
+    color: #0097A7;
+  }
+}
+
+.back-button-component:hover {
+  background: linear-gradient(135deg, #00BCD4 0%, #00ACC1 50%, #0097A7 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 188, 212, 0.5);
+}
+
+@media (min-width: 641px) {
+  .back-button-component:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 188, 212, 0.7);
+  }
+}
+
+.back-button-component:active {
+  transform: translateY(0);
+}
+
+@media (min-width: 641px) {
+  .back-button-component:active {
+    transform: scale(0.95);
+  }
+}
+
+[data-theme="dark"] .back-button-component {
+  background: linear-gradient(135deg, #00BCD4 0%, #00ACC1 50%, #0097A7 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="dark"] .back-button-component:hover {
+  border-color: white;
+  box-shadow: 0 6px 25px rgba(0, 188, 212, 0.6);
+}
